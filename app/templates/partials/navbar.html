@@ -1,0 +1,30 @@
+<!-- app/templates/partials/navbar.html - 全站统一导航栏（有 Logo 优先显示 Logo，无 Logo 显示公司名称文字） -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            {% if company_logo_url %}
+                <!-- 有 Logo 时：全站统一显示 Logo -->
+                <img src="{{ company_logo_url }}?v={{ range(1,1000000)|random }}"
+                     alt="{{ company_name }}"
+                     id="navbar-logo">
+            {% else %}
+                <!-- 无 Logo 时：全站统一显示公司名称文字 -->
+                <span class="fw-bold">{{ company_name }}</span>
+            {% endif %}
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/products">Products</a></li>
+                <li class="nav-item"><a class="nav-link" href="/featured">Featured Series</a></li>
+                <li class="nav-item"><a class="nav-link" href="/about">About Us</a></li>
+                <li class="nav-item"><a class="nav-link" href="/contact">Contact Us</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>

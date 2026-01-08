@@ -1,0 +1,160 @@
+/* themes/wafu-sakura.css - 和风粉色主题（按钮改为深粉色，其他保持优雅统一） */
+
+:root {
+    /* 主配色 - 和风樱花粉为核心，按钮专用深粉 */
+    --primary: #F8B8C8;              /* 和风主樱粉（链接、强调等） */
+    --primary-dark: #F06292;         /* 深樱粉（按钮专用背景、hover） */
+    --primary-light: #FFF0F5;        /* 极浅樱粉（边框、细部） */
+    --accent: #FAD9E4;               /* 淡樱粉（主背景） */
+    --accent2: #FCE8EF;              /* 更浅樱粉（次背景） */
+    --accent3: #FAD9E4;              /* 淡樱粉（页脚） */
+
+    /* 文字 - 高可读性，优雅日式 */
+    --text-primary: #555555;
+    --text-secondary: #888888;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 全站统一和风樱花粉大色块 */
+    --bg-main: #FAE3EB;              /* 主背景：柔和樱花粉 */
+    --bg-secondary: #FCE8EF;         /* 次背景：更浅樱粉 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #F4A3B6;            /* 主菜单：柔和深樱粉（保持上一次调浅版本） */
+    --footer-bg: #FAD9E4;            /* 页脚：淡樱粉大色块 */
+    --hero-overlay: rgba(255, 255, 255, 0.5);
+
+    /* 边框与分割 - 樱花般轻柔 */
+    --border: #FFE0E8;
+    --divider: #F8D0DC;
+
+    /* 阴影 - 日式蓬松自然光影 */
+    --shadow: 0 12px 35px rgba(244, 163, 182, 0.12);
+    --shadow-md: 0 6px 18px rgba(244, 163, 182, 0.08);
+    --shadow-hover: 0 25px 55px rgba(244, 163, 182, 0.18);
+
+    /* 悬停与交互 - 樱花飘落般温柔 */
+    --hover-bg: rgba(255, 255, 255, 0.4);
+    --hover-text: #FFFFFF;
+
+    /* 状态色 - 和风协调 */
+    --success: #B8E6D8;
+    --warning: #FFF0B3;
+    --error: #FFB6C1;
+
+    /* 渐变 - 按钮专用深粉渐变（关键调整） */
+    --gradient-primary: linear-gradient(135deg, #F06292, #EC407A);   /* 默认深粉渐变 */
+    --gradient-navbar: linear-gradient(to right, #F4A3B6, #F7B8C8);
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #FFF8FA);
+}
+
+/* 主题特有强化 - 按钮深粉色调整 */
+body {
+    background: var(--bg-main) !important;
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 4px solid #F4A3B6;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #F4A3B6, #F7B8C8) !important;
+    box-shadow: var(--shadow-hover);
+}
+
+/* 主菜单文字（不变） */
+.navbar-brand {
+    color: #FFFFFF !important;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #FFFFFF !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* === 关键：按钮改为深粉色渐变 === */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important; /* 深樱粉渐变：#F06292 → #EC407A */
+    background-color: transparent;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #EC407A, #D81B60) !important; /* hover 更深粉渐变 */
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+    color: #FFFFFF !important;
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片与内容区（不变） */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 28px;
+    border: none;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* hero 区（不变） */
+.hero-section {
+    color: var(--text-inverse) !important;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFFFFF !important;
+    text-shadow:
+        0 0 15px rgba(244, 163, 182, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.5);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* 页脚（不变） */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #FAD9E4, #FCE8EF);
+    color: var(--text-primary);
+}

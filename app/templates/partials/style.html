@@ -1,0 +1,14 @@
+{# partials/style.html - 项目核心 CSS 加载 + 动态主题切换 #}
+
+<!-- 1. 基础结构（布局、组件，全变量驱动） -->
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/base.css') }}?v={{ range(1,1000000)|random }}">
+
+<!-- 2. 变量声明（必须在主题文件之前） -->
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/themes/variables.css') }}?v={{ range(1,1000000)|random }}">
+
+<!-- 3. 动态加载当前选择的主题（使用注入的 theme 变量） -->
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/themes/' ~ (theme or 'default') ~ '.css') }}"
+      id="theme-link">

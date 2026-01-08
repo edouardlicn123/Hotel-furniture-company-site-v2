@@ -1,0 +1,151 @@
+/* themes/macaron.css - 马卡龙大色块主题 */
+
+:root {
+    /* 主配色 - 保持马卡龙风格，仅调整指定部分 */
+    --primary: #D7A1F9;              /* 马卡龙淡紫粉（--primary 保持不变） */
+    --primary-dark: #C17BE8;         /* 深版马卡龙紫粉 */
+    --primary-light: #F0E0FF;        /* 浅紫粉 */
+    --accent: #D8BFE8;               /* 背景紫色调浅一些（原 #C39BD3 → 更柔和浅紫） */
+    --accent2: #96D8C1;              /* 加深马卡龙薄荷绿（主菜单背景不变） */
+    --accent3: #E8C0F0;              /* 页脚淡紫也相应调浅一些，更协调 */
+    --accent4: #FFFF99;              /* 加深马卡龙淡黄（点缀不变） */
+
+    /* 文字 - 不变 */
+    --text-primary: #444444;
+    --text-secondary: #777777;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 关键调整：紫色调浅一些，更梦幻轻盈 */
+    --bg-main: #D8BFE8;              /* 主背景：调浅后的柔和马卡龙紫（原较深紫变浅） */
+    --bg-secondary: #96D8C1;         /* 次背景：薄荷绿不变 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #96D8C1;            /* 主菜单背景：加深马卡龙薄荷绿不变 */
+    --footer-bg: #E8C0F0;            /* 页脚：相应调浅淡紫，更统一 */
+    --hero-overlay: rgba(255, 255, 255, 0.45);
+
+    /* 边框与分割 - 轻柔调整为更浅紫调 */
+    --border: #F0E0FF;
+    --divider: #E8D8FF;
+
+    /* 阴影 - 略微减弱强度，与浅背景更协调 */
+    --shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 25px 55px rgba(0, 0, 0, 0.15);
+
+    /* 悬停与交互 - 不变 */
+    --hover-bg: rgba(255, 255, 255, 0.35);
+    --hover-text: #FFFFFF;
+
+    /* 状态色 - 不变 */
+    --success: #96D8C1;
+    --warning: #FFFF99;
+    --error: #FF9BB0;
+
+    /* 按钮专用深马卡龙蓝渐变（关键：蓝色深一些） */
+    --gradient-btn-default: linear-gradient(135deg, #5A7BB8, #4566A3);     /* 默认：更深的马卡龙蓝 */
+    --gradient-btn-hover: linear-gradient(135deg, #4566A3, #34528A);       /* hover：进一步加深蓝 */
+}
+
+/* 主题特有强化 - 仅调整背景紫调浅 + 按钮蓝调深，其他完全不变 */
+body {
+    background: var(--bg-main) !important; /* 调浅后的柔和马卡龙紫大背景 */
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    border-bottom: 4px solid #78C7B0;
+    box-shadow: var(--shadow-md);
+}
+
+.navbar.scrolled {
+    background: #78C7B0 !important;
+    box-shadow: var(--shadow-hover);
+}
+
+/* 主菜单文字（不变） */
+.navbar-brand {
+    color: #FFFFFF !important;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #FFFFFF !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按钮：蓝色深一些（其他样式不变） */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-btn-default) !important; /* 更深的马卡龙蓝渐变 */
+    background-color: transparent;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: var(--gradient-btn-hover) !important; /* 更深蓝渐变 */
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+    color: #FFFFFF !important;
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-btn-default) !important;
+}
+
+/* 卡片、hero、页脚等保持不变 */
+.card, .product-card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    border: none;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+}
+
+.hero-section {
+    color: var(--text-inverse) !important;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFFFFF !important;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+    font-weight: 900;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+footer {
+    background: var(--footer-bg) !important;
+    color: var(--text-primary);
+}

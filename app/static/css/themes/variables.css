@@ -1,0 +1,44 @@
+/* themes/variables.css - 变量声明（共享） */
+
+:root {
+    /* 主配色 */
+    --primary: ;              /* 主按钮/链接色 */
+    --primary-dark: ;         /* 主色深版（hover） */
+    --primary-light: ;        /* 主色浅版（背景） */
+    --accent: ;               /* 强调色（金色等） */
+
+    /* 文字 */
+    --text-primary: ;         /* 主文字 */
+    --text-secondary: ;       /* 次文字 */
+    --text-inverse: ;         /* 反色文字（用于深底） */
+
+    /* 背景 */
+    --bg-main: ;              /* 页面主背景 */
+    --bg-secondary: ;         /* 次背景（section） */
+    --card-bg: ;              /* 卡片背景 */
+    --navbar-bg: ;            /* 导航栏背景 */
+    --footer-bg: ;            /* 页脚背景 */
+    --hero-overlay: ;         /* 英雄区叠加层 */
+
+    /* 边框与分割 */
+    --border: ;               /* 边框/分割线 */
+    --divider: ;              /* 分割线 */
+
+    /* 阴影 */
+    --shadow: ;               /* 默认阴影 */
+    --shadow-md: ;             /* 中等阴影 */
+    --shadow-hover: ;         /* hover 阴影 */
+
+    /* 悬停与交互 */
+    --hover-bg: ;             /* hover 背景 */
+    --hover-text: ;           /* hover 文字 */
+
+    /* 状态色 */
+    --success: ;
+    --warning: ;
+    --error: ;
+
+    /* 渐变（可选主题特有） */
+    --gradient-primary: ;
+    --gradient-card: ;
+}

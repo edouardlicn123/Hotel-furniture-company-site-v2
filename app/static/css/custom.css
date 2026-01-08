@@ -1,0 +1,12 @@
+/* custom.css - 入口文件，仅导入 */
+
+/* 导入基础结构 */
+@import url('base.css');
+
+/* 导入变量声明（必须在主题前） */
+@import url('themes/variables.css');
+
+/* 导入当前主题（默认） */
+@import url('themes/default.css');
+
+/* 如需动态切换，可后续用 JS 或模板替换此行 */

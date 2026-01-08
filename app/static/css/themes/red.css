@@ -1,0 +1,222 @@
+/* themes/japanese-redwhite.css - 日本红白色风格商务主题（干净专业、活力与纯净） */
+
+:root {
+    /* 主配色 - 日本国旗灵感：纯正红 + 纯白，商务专业版 */
+    --primary: #BC002D;              /* 主强调色：日本传统深红（活力、信任、重要性） */
+    --primary-dark: #9B001F;          /* 深红（按钮专用背景、hover） */
+    --primary-light: #FFE5E8;        /* 极浅红粉（边框、细部） */
+    --accent: #FFFFFF;               /* 纯白（主背景、高光） */
+    --accent2: #F8F8F8;              /* 浅灰白（次背景） */
+    --accent3: #EEEEEE;              /* 灰白（页脚） */
+
+    /* 文字 - 高可读专业感 */
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 全站纯白为主，干净明亮如日本商务网站常见风格 */
+    --bg-main: #FFFFFF;              /* 主背景：纯白（干净、专业、纯净） */
+    --bg-secondary: #FAFAFA;         /* 次背景：极浅灰白 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #BC002D;            /* 主菜单：深红实色（强势品牌感） */
+    --footer-bg: #333333;            /* 页脚：深灰（稳重收尾） */
+    --hero-overlay: linear-gradient(135deg, rgba(188, 0, 45, 0.75), rgba(155, 0, 31, 0.6)); /* 红叠加活力 */
+
+    /* 边框与分割 - 红高光轻柔 */
+    --border: #BC002D;
+    --divider: #E0E0E0;
+
+    /* 阴影 - 现代轻影，专业不浮夸 */
+    --shadow: 0 12px 35px rgba(188, 0, 45, 0.10);
+    --shadow-md: 0 6px 18px rgba(188, 0, 45, 0.06);
+    --shadow-hover: 0 25px 55px rgba(188, 0, 45, 0.15);
+
+    /* 悬停与交互 - 红高亮专业 */
+    --hover-bg: rgba(188, 0, 45, 0.1);
+    --hover-text: #BC002D;
+
+    /* 状态色 - 商务协调 */
+    --success: #008840;              /* 日本常见绿（可选点缀） */
+    --warning: #FF6B00;
+    --error: #BC002D;
+
+    /* 渐变 - 按钮专用深红渐变 */
+    --gradient-primary: linear-gradient(135deg, #BC002D, #9B001F);
+    --gradient-navbar: linear-gradient(to right, #BC002D, #D50032);
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #FAFAFA);
+}
+
+/* 主题特有强化 */
+body {
+    background: var(--bg-main) !important; /* 纯白底，干净专业如日本商务网站 */
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 5px solid #9B001F;       /* 深红底边，强势标志 */
+    box-shadow: var(--shadow-md);
+    transition: all 0```css
+/* themes/japanese-redwhite.css - 日本红白色商务风格主题（国旗灵感，专业活力版） */
+
+:root {
+    /* 主配色 - 日本国旗红白为核心，商务专业感 */
+    --primary: #BC002D;              /* 主强调色：日本国旗深红（活力、信任、传统） */
+    --primary-dark: #9D0024;          /* 深红（按钮专用背景、hover） */
+    --primary-light: #FFE5E8;         /* 极浅红粉（边框、细部） */
+    --accent: #FFFFFF;               /* 纯白（高光、辅助） */
+    --accent2: #F5F5F5;               /* 浅灰白（次背景） */
+    --accent3: #E0E0E0;               /* 灰白（页脚过渡） */
+
+    /* 文字 - 高对比专业 */
+    --text-primary: #222222;
+    --text-secondary: #555555;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 白底红强调，干净明亮商务风 */
+    --bg-main: #FFFFFF;              /* 主背景：纯白（纯净、简洁） */
+    --bg-secondary: #FAFAFA;         /* 次背景：极浅灰白 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #BC002D;            /* 主菜单：国旗红实色（强势品牌） */
+    --footer-bg: #222222;            /* 页脚：深灰（稳重） */
+    --hero-overlay: linear-gradient(135deg, rgba(188, 0, 45, 0.8), rgba(157, 0, 36, 0.65)); /* 浓红叠加 */
+
+    /* 边框与分割 - 红线轻柔 */
+    --border: #BC002D;
+    --divider: #EEEEEE;
+
+    /* 阴影 - 轻柔专业 */
+    --shadow: 0 12px 35px rgba(188, 0, 45, 0.1);
+    --shadow-md: 0 6px 18px rgba(188, 0, 45, 0.06);
+    --shadow-hover: 0 25px 55px rgba(188, 0, 45, 0.16);
+
+    /* 悬停与交互 - 红高亮 */
+    --hover-bg: rgba(188, 0, 45, 0.12);
+    --hover-text: #BC002D;
+
+    /* 状态色 - 协调 */
+    --success: #007A3D;               /* 日本绿点缀 */
+    --warning: #FF9900;
+    --error: #BC002D;
+
+    /* 渐变 - 按钮深红渐变 */
+    --gradient-primary: linear-gradient(135deg, #BC002D, #9D0024);
+    --gradient-navbar: linear-gradient(to right, #BC002D, #D1002B);
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #FAFAFA);
+}
+
+/* 主题特有强化 */
+body {
+    background: var(--bg-main) !important;
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 5px solid #9D0024;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #9D0024, #BC002D) !important;
+    box-shadow: var(--shadow-hover);
+}
+
+/* 主菜单文字 - 白字高对比 */
+.navbar-brand {
+    color: #FFFFFF !important;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #FFFFFF !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按钮：深红渐变 */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #9D0024, #80001A) !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片 */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 28px;
+    border: 1px solid #F0F0F0;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+    border-color: #BC002D;
+}
+
+/* Hero 区 - 红活力叠加 */
+.hero-section {
+    color: var(--text-inverse) !important;
+    background: #BC002D !important; /* Hero背景红，强势开场 */
+    position: relative;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFFFFF !important;
+    text-shadow:
+        0 0 20px rgba(188, 0, 45, 0.8),
+        0 4px 12px rgba(0, 0, 0, 0.6);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* 页脚 */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #222222, #111111);
+    color: #DDDDDD;
+    border-top: 5px solid #BC002D; /* 上边红条，国旗呼应 */
+}

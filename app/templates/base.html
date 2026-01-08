@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 引入统一 SEO 模板 -->
+    {% include 'partials/seo.html' %}
+    
+    <!-- ====================== 所有 CSS 加载区 ====================== -->
+    {% block extra_styles %}
+        {# 1. 第三方公共样式（Bootstrap、Font Awesome 等） #}
+        {% include 'partials/extra_styles.html' %}
+
+        {# 2. 项目核心样式 + 动态主题切换（关键） #}
+        {% include 'partials/style.html' %}
+    {% endblock %}
+    <!-- =========================================================== -->
+
+    <!-- 将后台公司名注入JS全局变量，用于hero栏js的调用 -->
+    <script>
+        window.COMPANY_NAME = "{{ company_name }}";
+    </script>
+
+</head>
+
+<body>
+    <!-- 前端导航菜单（动态公司名） -->
+    {% include 'partials/navbar.html' %}
+
+    <!-- 可选英雄区（首页使用 hero_large，其他页面使用 hero_small） -->
+    {% block hero_section %}{% endblock %}
+
+    <!-- 主体内容 -->
+    <main class="container my-5">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 页脚（动态公司名） -->
+    {% block footer %}
+        {% include 'partials/footer.html' %}
+    {% endblock %}
+
+    <!-- Bootstrap JS（国内稳定 CDN） -->
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js" defer></script>
+    
+    <!-- 脚本区域 -->
+    {% block extra_scripts %}
+        {% include 'partials/extra_scripts.html' %}
+        
+        <!-- 全局统一 Hero 内容控制脚本 -->
+        <script src="{{ url_for('static', filename='js/hero-config.js') }}" defer></script>
+    {% endblock %}
+</body>
+</html>

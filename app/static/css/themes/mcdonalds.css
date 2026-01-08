@@ -1,0 +1,166 @@
+/* themes/mcdonalds-blackgold.css - 麦当劳黑金奢华配色主题（高端大气版） */
+
+:root {
+    /* 主配色 - 麦当劳经典红黄基础，升级为黑金高端感 */
+    --primary: #FFB300;              /* 主强调色：麦当劳活力金黄（链接、强调） */
+    --primary-dark: #FFA000;          /* 深金（按钮、hover） */
+    --primary-light: #FFF8E1;         /* 极浅金黄（边框、细部） */
+    --accent: #212121;                /* 深黑灰（辅助背景、次色） */
+    --accent2: #424242;               /* 中黑灰（次背景） */
+    --accent3: #000000;               /* 纯黑（页脚基底） */
+
+    /* 文字 - 高对比奢华感 */
+    --text-primary: #FFFFFF;
+    --text-secondary: #FFD54F;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 全站黑金大气色块 */
+    --bg-main: #121212;              /* 主背景：深黑（高端稳重） */
+    --bg-secondary: #1E1E1E;          /* 次背景：稍亮黑灰 */
+    --card-bg: #1A1A1A;              /* 卡片背景：深黑灰，带轻微质感 */
+    --navbar-bg: #000000;            /* 主菜单：纯黑实色（奢华底座） */
+    --footer-bg: #000000;            /* 页脚：纯黑大色块 */
+    --hero-overlay: linear-gradient(135deg, rgba(255, 179, 0, 0.4), rgba(0, 0, 0, 0.7)); /* 金黑渐变叠加 */
+
+    /* 边框与分割 - 金色光泽 */
+    --border: #FFB300;
+    --divider: #424242;
+
+    /* 阴影 - 奢华浮起金光感 */
+    --shadow: 0 12px 35px rgba(255, 179, 0, 0.15);
+    --shadow-md: 0 6px 18px rgba(255, 179, 0, 0.10);
+    --shadow-hover: 0 25px 55px rgba(255, 179, 0, 0.25);
+
+    /* 悬停与交互 - 金色高光 */
+    --hover-bg: rgba(255, 179, 0, 0.2);
+    --hover-text: #FFFFFF;
+
+    /* 状态色 - 品牌协调 */
+    --success: #FFB300;
+    --warning: #FFCA28;
+    --error: #EF5350;
+
+    /* 渐变 - 按钮专用金色奢华渐变 */
+    --gradient-primary: linear-gradient(135deg, #FFB300, #FFA000);
+    --gradient-navbar: linear-gradient(to right, #000000, #212121);
+    --gradient-card: linear-gradient(to bottom, #1A1A1A, #242424);
+}
+
+/* 主题特有强化 */
+body {
+    background: var(--bg-main) !important; /* 深黑底，高端大气 */
+    color: #FFFFFF !important;
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 4px solid #FFB300;       /* 金色底边，高光标志性 */
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #000000, #121212) !important;
+    box-shadow: var(--shadow-hover);
+    border-bottom-color: #FFA000;
+}
+
+/* 主菜单文字 - 金白高对比 */
+.navbar-brand {
+    color: #FFB300 !important;
+    font-weight: 800;
+    text-shadow: 0 2px 8px rgba(255, 179, 0, 0.4);
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #FFB300 !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按钮：奢华金色渐变 */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: 2px solid #FFB300 !important;
+    color: #000000 !important;              /* 金底黑字，更强对比 */
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: none;
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #FFA000, #FF8F00) !important;
+    border-color: #FFA000 !important;
+    color: #000000 !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片 - 深黑底金光感 */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 28px;
+    border: 1px solid #333333;
+    box-shadow: var(--shadow);
+    color: #FFFFFF;
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+    border-color: #FFB300;
+}
+
+/* Hero 区 - 黑金奢华叠加 */
+.hero-section {
+    color: var(--text-inverse) !important;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFB300 !important;
+    text-shadow:
+        0 0 20px rgba(255, 179, 0, 0.6),
+        0 4px 12px rgba(0, 0, 0, 0.8);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* 页脚 */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #000000, #121212);
+    color: #FFD54F;
+    border-top: 4px solid #FFB300;
+}

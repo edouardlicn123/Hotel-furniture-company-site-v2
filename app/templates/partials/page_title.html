@@ -1,0 +1,8 @@
+<!-- 可复用于首页或其他页面的英雄区标题 -->
+<section class="bg-primary text-white py-5 mb-5 text-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold">{% block hero_title %}默认页面标题{% endblock %}</h1>
+        <p class="lead">{% block hero_subtitle %}副标题描述{% endblock %}</p>
+        {% block hero_buttons %}{% endblock %}
+    </div>
+</section>

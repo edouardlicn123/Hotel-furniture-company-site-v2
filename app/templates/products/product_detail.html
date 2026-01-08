@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - {{ company_name }}{% endblock %}
+
+{% block hero_section %}
+<section class="hero-section hero-small" 
+         style="background-image: url('{{ url_for('static', filename='uploads/products/' + product.image) if product.image else url_for('static', filename='img/placeholder-hero.jpg') }}');">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1 class="display-4 fw-bold">{{ product.name }}</h1>
+        <p class="lead">{{ product.category.name if product.category else 'Uncategorized' }}</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row g-5">
+        <!-- 主图区域 -->
+        <div class="col-lg-8">
+            <!-- 主图 -->
+            {% if product.image %}
+            <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}" 
+                 class="img-fluid rounded shadow-lg mb-5" 
+                 alt="{{ product.name }}" 
+                 style="max-height: 600px; object-fit: cover; width: 100%;">
+            {% else %}
+            <div class="bg-light border rounded d-flex align-items-center justify-content-center mb-5" style="height: 600px;">
+                <p class="text-muted h4">No main image available</p>
+            </div>
+            {% endif %}
+
+            <!-- 详情画廊（多图展示） -->
+            {% if product.photos %}
+            <h3 class="mb-4">Product Gallery</h3>
+            <div class="row g-4">
+                {% for photo in product.photos.split(',') %}
+                <div class="col-md-6">
+                    <img src="{{ url_for('static', filename='uploads/products/' + photo.strip()) }}" 
+                         class="img-fluid rounded shadow-sm" 
+                         alt="{{ product.name }} - {{ loop.index }} detail view"
+                         onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No additional photos available.</p>
+            {% endif %}
+
+            <!-- 产品描述 -->
+            <h3 class="mt-5 mb-4">Description</h3>
+            <p class="lead">{{ product.description or 'No description available.' }}</p>
+        </div>
+
+        <!-- 规格侧边栏 -->
+        <div class="col-lg-4">
+            <div class="card shadow sticky-top" style="top: 100px;">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Product Specifications</h4>
+                    <ul class="list-group list-group-flush">
+                        <!-- 产品编号 -->
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Product Code</strong>
+                            <span class="font-monospace">{{ product.product_code }}</span>
+                        </li>
+
+                        <!-- Dimensions -->
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Dimensions</strong>
+                            <span class="text-end">
+                                {% if product.length and product.width and product.height %}
+                                    {{ product.length }} × {{ product.width }} × {{ product.height }} mm<br>
+                                    <small class="text-muted">
+                                        ({{ (product.length / 25.4)|round(1) }} × {{ (product.width / 25.4)|round(1) }} × {{ (product.height / 25.4)|round(1) }} inches)
+                                    </small>
+                                {% else %}
+                                    <em>N/A</em>
+                                {% endif %}
+                            </span>
+                        </li>
+
+                        <!-- Seat Height -->
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Seat Height</strong>
+                            <span class="text-end">
+                                {% if product.seat_height %}
+                                    {{ product.seat_height }} mm<br>
+                                    <small class="text-muted">({{ (product.seat_height / 25.4)|round(1) }} inches)</small>
+                                {% else %}
+                                    <em>N/A</em>
+                                {% endif %}
+                            </span>
+                        </li>
+
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Base Material</strong>
+                            <span>{{ product.base_material or 'N/A' }}</span>
+                        </li>
+
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Surface Material</strong>
+                            <span>{{ product.surface_material or 'N/A' }}</span>
+                        </li>
+
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>For Space</strong>
+                            <span>{{ product.applicable_space or 'All Areas' }}</span>
+                        </li>
+
+                        <li class="list-group-item d-flex justify-content-between">
+                            <strong>Featured Series</strong>
+                            <span>{{ product.featured_series or 'Standard' }}</span>
+                        </li>
+                    </ul>
+
+                    <div class="mt-5">
+                        <a href="/contact" class="btn btn-primary btn-lg w-100">Inquire Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

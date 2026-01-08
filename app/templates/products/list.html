@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container featured-section">
+    <h2 class="section-title text-center">All Products</h2>
+    
+    <div class="product-grid">
+        {% if products %}
+            {% for product in products %}
+            <a href="{{ url_for('products.product_detail', product_id=product.id) }}" class="text-decoration-none">
+                <div class="product-card d-flex flex-column">
+                    <!-- 图片区域：固定高度，完整显示（contain 模式） -->
+                    <div class="product-card-img-wrapper">
+                        {% if product.image %}
+                        <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}" 
+                             class="product-card-img-complete" 
+                             alt="{{ product.name }}"
+                             onerror="this.src='https://via.placeholder.com/800x600?text=No+Image'; this.onerror=null;">
+                        {% else %}
+                        <img src="https://via.placeholder.com/800x600?text=No+Image" 
+                             class="product-card-img-complete" 
+                             alt="No Image">
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 文字信息区域：固定在卡片底部 -->
+                    <div class="product-card-body mt-auto">
+                        <h3 class="product-card-title mb-2">{{ product.name }}</h3>
+                        <p class="product-card-brand mb-0">
+                            {% if product.featured_series %}
+                                {{ product.featured_series }}
+                            {% else %}
+                                {{ product.category.name if product.category else 'Uncategorized' }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5">
+                <p class="text-muted h5">No products available yet.</p>
+                <small class="text-muted">Please add products in the admin panel.</small>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

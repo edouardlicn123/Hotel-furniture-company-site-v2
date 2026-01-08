@@ -1,0 +1,160 @@
+/* themes/mandarin-oriental.css - 东方文华酒店奢华风格主题（黑金青瓷优雅版） */
+
+:root {
+    /* 主配色 - 东方文华经典黑金 + 新品牌青瓷绿，高端东方奢华 */
+    --primary: #BFA46F;              /* 主强调色：优雅暖金（品牌金升级版，链接、强调） */
+    --primary-dark: #A68A5C;          /* 深金（按钮、hover） */
+    --primary-light: #F5E8D0;         /* 极浅奶油金（边框、细部） */
+    --accent: #8FA89A;                /* 青瓷绿（次强调，东方陶瓷灵感） */
+    --accent2: #A8B5AD;               /* 浅青灰（次背景） */
+    --accent3: #1A1A1A;               /* 深黑灰（页脚） */
+
+    /* 文字 - 高贵可读，奢华感 */
+    --text-primary: #333333;
+    --text-secondary: #555555;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 全站优雅奶油金 + 黑金对比 */
+    --bg-main: #FAF6F0;               /* 主背景：暖奶油白（像高级酒店大堂） */
+    --bg-secondary: #F0E8E0;          /* 次背景：更浅奶油金 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #0F0F0F;             /* 主菜单：深黑（高端稳重） */
+    --footer-bg: #1A1A1A;             /* 页脚：深黑灰大色块 */
+    --hero-overlay: linear-gradient(135deg, rgba(15, 15, 15, 0.6), rgba(143, 168, 154, 0.3)); /* 黑 + 青瓷叠加 */
+
+    /* 边框与分割 - 金光优雅 */
+    --border: #BFA46F;
+    --divider: #D4C9B8;
+
+    /* 阴影 - 柔和金光奢华感 */
+    --shadow: 0 12px 35px rgba(191, 164, 111, 0.12);
+    --shadow-md: 0 6px 18px rgba(191, 164, 111, 0.08);
+    --shadow-hover: 0 25px 55px rgba(191, 164, 111, 0.18);
+
+    /* 悬停与交互 - 金青温柔过渡 */
+    --hover-bg: rgba(191, 164, 111, 0.15);
+    --hover-text: #FFFFFF;
+
+    /* 状态色 - 品牌协调 */
+    --success: #8FA89A;               /* 青瓷绿 */
+    --warning: #BFA46F;
+    --error: #A06868;
+
+    /* 渐变 - 按钮专用金渐变 */
+    --gradient-primary: linear-gradient(135deg, #BFA46F, #A68A5C);
+    --gradient-navbar: linear-gradient(to right, #0F0F0F, #1E1E1E);
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #FAF6F0);
+}
+
+/* 主题特有强化 */
+body {
+    background: var(--bg-main) !important; /* 暖奶油底，优雅奢华如酒店大堂 */
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 4px solid #BFA46F;       /* 金色底边，品牌高光 */
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #000000, #0F0F0F) !important;
+    box-shadow: var(--shadow-hover);
+}
+
+/* 主菜单文字 - 金白高对比 */
+.navbar-brand {
+    color: #BFA46F !important;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #BFA46F !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按钮：奢华金渐变 */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: none !important;
+    color: #000000 !important;              /* 金底黑字，强对比奢华 */
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: none;
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #A68A5C, #8B724A) !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片 */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 28px;
+    border: none;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Hero 区 - 黑金青瓷奢华叠加 */
+.hero-section {
+    color: var(--text-inverse) !important;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #BFA46F !important;
+    text-shadow:
+        0 0 20px rgba(191, 164, 111, 0.6),
+        0 4px 12px rgba(0, 0, 0, 0.6);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* 页脚 */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #1A1A1A, #000000);
+    color: #BFA46F;
+    border-top: 4px solid #BFA46F;  /* 上边金条，高端收尾 */
+}
