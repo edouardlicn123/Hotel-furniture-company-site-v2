@@ -31,11 +31,14 @@ def create_app():
     from app.routes.products import products_bp
     from app.routes.featured import featured_bp
     from app.routes.admin import admin_bp
+    from app.routes.series import series_bp
+    
 
     app.register_blueprint(main_bp)
     app.register_blueprint(products_bp, url_prefix='/products')
     app.register_blueprint(featured_bp, url_prefix='/featured')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(series_bp)
 
     # ====================== 新增：全局上下文处理器 ======================
     # 原来只在 main_bp 下，现在提升到 app 级别，所有页面（包括 products、featured）都能访问

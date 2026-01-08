@@ -16,37 +16,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="container featured-section">
-    <h2 class="section-title text-center">Featured Series</h2>
-    <div class="product-grid">
-        <!-- Luxury Sofa Example -->
-        <div class="product-card">
-            <img src="https://www.caffelattehome.com/img/inspirations/luxury-hotel-lobby-by-stuart-cg-studio/luxury-hotel-lobby-by-stuart-cg-studio.jpg" class="product-card-img" alt="Luxury Hotel Sofa">
-            <div class="product-card-body">
-                <h3 class="product-card-title">Luxury Fabric Sofa Collection</h3>
-                <p class="product-card-brand">Modern Hotel Series</p>
-            </div>
-        </div>
-
-        <!-- King Size Bed Example -->
-        <div class="product-card">
-            <img src="https://www.shutterstock.com/image-photo/luxury-hotel-room-modern-classic-600nw-2521917539.jpg" class="product-card-img" alt="King Size Hotel Bed">
-            <div class="product-card-body">
-                <h3 class="product-card-title">Premium King Size Bed</h3>
-                <p class="product-card-brand">Luxury Classic Series</p>
-            </div>
-        </div>
-
-        <!-- Dining Set Example -->
-        <div class="product-card">
-            <img src="https://image.made-in-china.com/2f0j00dpyclMSJUFqO/Italian-Modern-Marble-Dining-Table-Set-Metal-Frame-Dining-Tables-Luxury-Hotel-Villa-Dining-Room-Furniture.webp" class="product-card-img" alt="Modern Dining Set">
-            <div class="product-card-body">
-                <h3 class="product-card-title">Italian Marble Dining Set</h3>
-                <p class="product-card-brand">Contemporary Series</p>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- 动态专题展示 -->
+    {% include 'partials/featured_series.html' %}
 
 <!-- Why Choose Us Section -->
 <div class="container mt-5">

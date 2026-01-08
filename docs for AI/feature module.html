@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专题系列（Series）功能完整实施步骤方案</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f9f9f9;
+            margin: 0;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            color: #B8860B;
+            margin-bottom: 1em;
+        }
+        h2 {
+            font-size: 2rem;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.5em;
+            margin-top: 2em;
+        }
+        h3 {
+            font-size: 1.6rem;
+            color: #555;
+            margin-top: 1.8em;
+        }
+        ol, ul {
+            padding-left: 2em;
+        }
+        li {
+            margin: 0.8em 0;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: Consolas, Monaco, monospace;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .note {
+            background: #fffbe6;
+            border-left: 4px solid #ffe564;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .stage {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .stage h3 {
+            margin-top: 0;
+            color: #B8860B;
+        }
+    </style>
+</head>
+<body>
+
+<h1>专题系列（Series）功能完整实施步骤方案</h1>
+
+<p><strong>项目</strong>：Hotel-furniture-company-site-v2<br>
+<strong>日期</strong>：2026年1月8日<br>
+<strong>功能目标</strong>：新增独立“专题系列”内容类型，实现后台管理、前端展示、首页随机推荐及统一SEO支持</p>
+
+<div class="note">
+    <strong>核心原则</strong>：<br>
+    • 最大化复用现有产品模块代码与模板<br>
+    • 严格遵循项目现有SEO统一注入机制<br>
+    • 首页展示采用随机方式，完全沿用现有卡片样式，并抽离为独立 partial 模板<br>
+    • 产品关联继续使用现有 featured_series 字段（逗号分隔）<br>
+    • 实施顺序强调安全、可回滚、先后台后前端
+</div>
+
+<div class="stage">
+    <h3>阶段 0：准备工作（必须先完成）</h3>
+    <ol>
+        <li>备份当前完整项目代码（Git 或压缩包）</li>
+        <li>备份当前数据库文件 <code>instance/site.db</code></li>
+        <li>确认项目能正常启动、无报错</li>
+        <li>确认 Flask-Migrate 环境正常可用</li>
+    </ol>
+</div>
+
+<div class="stage">
+    <h3>阶段 1：数据层 — 新增模型与数据库迁移（最优先）</h3>
+    <p><strong>目标</strong>：安全添加新表，不影响现有数据</p>
+    <ol>
+        <li>修改 <code>app/models.py</code>，在文件末尾添加 <code>FeatureSeries</code> 模型（包含 name、slug、description、applicable_space、photos、seo_title、seo_description、seo_keywords、created_at 字段）</li>
+        <li>终端执行迁移命令：
+            <pre>flask db migrate -m "Add FeatureSeries model"</pre>
+        </li>
+        <li>检查生成的迁移文件（<code>migrations/versions/xxx_add_feature_series.py</code>），确认内容正确</li>
+        <li>执行升级：
+            <pre>flask db upgrade</pre>
+        </li>
+        <li>重启应用，确认数据库中已创建 <code>feature_series</code> 表</li>
+    </ol>
+    <p><strong>验证</strong>：后台无报错，数据库出现新表</p>
+</div>
+
+<div class="stage">
+    <h3>阶段 2：后台管理层 — 实现完整 CRUD</h3>
+    <p><strong>目标</strong>：管理员可立即创建和管理系列内容</p>
+    <ol>
+        <li>新建文件 <code>app/routes/admin/series.py</code>（复制 <code>admin/product.py</code> 结构改造）</li>
+        <li>实现功能：
+            <ul>
+                <li>系列列表（分页）</li>
+                <li>添加/编辑（支持多图上传，最多5张）</li>
+                <li>删除（同时清理关联图片）</li>
+                <li>slug 自动生成 + 手动编辑</li>
+            </ul>
+        </li>
+        <li>在 <code>app/routes/admin/__init__.py</code> 中导入并注册该子蓝图</li>
+        <li>新建模板：
+            <ul>
+                <li><code>templates/admin/series_list.html</code>（复用 product_list.html）</li>
+                <li><code>templates/admin/series_form.html</code>（复用 product_form.html）</li>
+            </ul>
+        </li>
+        <li>确保上传目录 <code>static/uploads/series/</code> 自动创建</li>
+    </ol>
+    <p><strong>验证</strong>：后台出现“Series”管理入口，可正常增删改查，图片上传成功</p>
+</div>
+
+<div class="stage">
+    <h3>阶段 3：前端路由层 — 实现列表页与详情页</h3>
+    <p><strong>目标</strong>：系列内容可公开访问</p>
+    <ol>
+        <li>新建文件 <code>app/routes/series.py</code></li>
+        <li>实现路由：
+            <ul>
+                <li><code>/series</code> → 系列列表页</li>
+                <li><code>/series/&lt;slug&gt;</code> → 系列详情页（显示系列信息 + 动态加载关联产品）</li>
+            </ul>
+        </li>
+        <li>在 <code>app/__init__.py</code> 的 <code>create_app()</code> 中注册 <code>series_bp</code></li>
+        <li>新建模板：
+            <ul>
+                <li><code>templates/series/list.html</code>（复用 products/list.html 风格）</li>
+                <li><code>templates/series/detail.html</code>（复用 products/product_detail.html，包含系列画廊 + 产品网格）</li>
+            </ul>
+        </li>
+    </ol>
+    <p><strong>验证</strong>：访问 /series 正常显示列表，点击进入详情页可见内容与关联产品</p>
+</div>
+
+<div class="stage">
+    <h3>阶段 4：SEO 层 — 统一注入系列页面 SEO</h3>
+    <p><strong>目标</strong>：系列页面拥有独立、优化的 meta 信息</p>
+    <ol>
+        <li>修改 <code>app/routes/main.py</code> 中的 <code>inject_seo_data()</code> 函数</li>
+        <li>添加对 <code>series.list</code> 和 <code>series.detail</code> 端点的判断逻辑：
+            <ul>
+                <li>列表页使用固定优化文案</li>
+                <li>详情页优先读取数据库自定义 SEO 字段，无值时自动降级生成</li>
+            </ul>
+        </li>
+        <li>确保系列模板在 <code>&lt;head&gt;</code> 中包含 <code>{% include 'partials/seo.html' %}</code></li>
+    </ol>
+    <p><strong>验证</strong>：查看系列页面源码，title、description、keywords 正确输出</p>
+</div>
+
+<div class="stage">
+    <h3>阶段 5：首页展示层 — 实现随机系列展示区</h3>
+    <p><strong>目标</strong>：替换硬编码为动态随机展示</p>
+    <ol>
+        <li>新建 partial 模板 <code>app/templates/partials/featured_series.html</code>（完全沿用现有卡片样式）</li>
+        <li>修改 <code>app/templates/index.html</code>，删除原有硬编码系列区，替换为：
+            <pre>{% include 'partials/featured_series.html' %}</pre>
+        </li>
+        <li>修改 <code>app/routes/main.py</code> 中的 <code>index()</code> 视图：
+            <ul>
+                <li>查询所有系列 → 过滤有产品的 → 随机选取最多3个 → 传入模板变量</li>
+            </ul>
+        </li>
+    </ol>
+    <p><strong>验证</strong>：首页显示3个随机系列卡片，点击正常跳转</p>
+</div>
+
+<div class="stage">
+    <h3>阶段 6：导航与收尾</h3>
+    <p><strong>目标</strong>：用户可便捷发现新功能</p>
+    <ol>
+        <li>修改 <code>app/templates/partials/navbar.html</code>，将原“Featured Series”改为“Series”，链接指向 <code>/series</code></li>
+        <li>全站功能测试（链接、图片、响应式、移动端）</li>
+        <li>清理缓存，确认无报错</li>
+        <li>提交代码，记录版本</li>
+    </ol>
+    <p><strong>验证</strong>：主菜单出现“Series”入口，整体体验流畅</p>
+</div>
+
+<div class="note">
+    <strong>风险控制建议</strong>：<br>
+    • 每完成一个阶段后立即测试并提交代码<br>
+    • 数据库迁移执行前务必备份<br>
+    • 如出现问题可快速回滚到上一阶段
+</div>
+
+<p style="text-align: center; margin-top: 60px; color: #999;">
+    本文档为专题系列功能实施的完整方案存档<br>
+    项目：Hotel-furniture-company-site-v2  日期：2026-01-08
+</p>
+
+</body>
+</html>

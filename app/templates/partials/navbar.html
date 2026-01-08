@@ -1,4 +1,6 @@
-<!-- app/templates/partials/navbar.html - 全站统一导航栏（有 Logo 优先显示 Logo，无 Logo 显示公司名称文字） -->
+{# app/templates/partials/navbar.html - 全站统一导航栏（最新完整版） #}
+{# 已将原 “Featured” 菜单改为 “Series”，链接指向 /series #}
+
 <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="/">
@@ -17,11 +19,11 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="collapse navbar-collapse" id="#navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="/products">Products</a></li>
-                <li class="nav-item"><a class="nav-link" href="/featured">Featured Series</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('series.list') }}">Series</a></li>
+                <li class="nav-item"><a class="nav-link" href="/products">Products</a></li>  
                 <li class="nav-item"><a class="nav-link" href="/about">About Us</a></li>
                 <li class="nav-item"><a class="nav-link" href="/contact">Contact Us</a></li>
             </ul>

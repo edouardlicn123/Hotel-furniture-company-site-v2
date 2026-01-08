@@ -10,6 +10,7 @@ from .site_info import site_info_bp
 from .product import product_bp
 from .feature import feature_bp
 from .password import password_bp
+from .series import series_bp
 
 # 注册子蓝图
 admin_bp.register_blueprint(main_bp)
@@ -17,3 +18,4 @@ admin_bp.register_blueprint(site_info_bp)
 admin_bp.register_blueprint(product_bp)
 admin_bp.register_blueprint(feature_bp)
 admin_bp.register_blueprint(password_bp)
+admin_bp.register_blueprint(series_bp)

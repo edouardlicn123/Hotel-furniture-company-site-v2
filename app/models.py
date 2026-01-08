@@ -76,3 +76,35 @@ class Product(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     category = db.relationship('Category', backref='products')
+
+
+class FeatureSeries(db.Model):
+    __tablename__ = 'feature_series'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 显示名称（前台展示，必填，唯一）
+    name = db.Column(db.String(200), nullable=False, unique=True)
+    
+    # URL 标识符（用于路由和匹配产品 featured_series，必填，唯一）
+    slug = db.Column(db.String(100), nullable=False, unique=True)
+    
+    # 系列描述（可选，支持后续富文本）
+    description = db.Column(db.Text)
+    
+    # 适用空间（逗号分隔字符串，例如：Guest Room,Lobby,Restaurant）
+    applicable_space = db.Column(db.String(200))
+    
+    # 系列图片（最多5张，逗号分隔文件名，路径：uploads/series/）
+    photos = db.Column(db.String(1000))
+    
+    # SEO 字段（后台可自定义）
+    seo_title = db.Column(db.String(200))
+    seo_description = db.Column(db.Text)
+    seo_keywords = db.Column(db.Text)
+    
+    # 创建时间（用于排序）
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<FeatureSeries {self.name}>'

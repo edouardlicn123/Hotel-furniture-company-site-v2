@@ -1,0 +1,66 @@
+{% extends "admin/base.html" %}
+
+{% block title %}专题系列管理{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">专题系列管理</h2>
+    <a href="{{ url_for('admin.series.series_add') }}" class="btn btn-primary mb-3">添加新系列</a>
+
+    <div class="row">
+        {% for series in series_list %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                {% if series.photos %}
+                    {% set first_photo = series.photos.split(',')[0].strip() %}
+                    <img src="{{ url_for('static', filename='uploads/series/' + first_photo) }}"
+                         class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ series.name }}">
+                {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <span class="text-muted">无图片</span>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ series.name }}</h5>
+                    <p class="card-text text-muted small">Slug: {{ series.slug }}</p>
+                    <p class="card-text">{{ series.description[:100] }}...</p>
+                    <a href="{{ url_for('admin.series.series_edit', series_id=series.id) }}" class="btn btn-sm btn-outline-primary">编辑</a>
+                    <form action="{{ url_for('admin.series.series_delete', series_id=series.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定删除系列 {{ series.name }}？')">删除</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted">暂无专题系列，请点击上方按钮添加。</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 分页 -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item"><a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num) }}">上一页</a></li>
+            {% endif %}
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for(request.endpoint, page=page_num) }}">{{ page_num }}</a></li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+                <li class="page-item"><a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num) }}">下一页</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

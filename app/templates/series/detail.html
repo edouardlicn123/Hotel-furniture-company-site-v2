@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+    {% set hero_title = series.name %}
+    {% set hero_subtitle = series.applicable_space.replace(',', ', ') if series.applicable_space else "Premium Hotel Furniture Series" %}
+    {% set hero_background = url_for('static', filename='uploads/series/' + series.photos.split(',')[0].strip()) if series.photos else url_for('static', filename='img/hero-default-small.jpg') %}
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- 系列描述 -->
+    {% if series.description %}
+    <div class="row mb-5">
+        <div class="col-lg-10 mx-auto text-center">
+            <p class="lead">{{ series.description }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 系列图片画廊 -->
+    {% if series.photos %}
+    <div class="row g-4 mb-5">
+        {% for photo in series.photos.split(',') %}
+        <div class="col-md-6 col-lg-4">
+            <img src="{{ url_for('static', filename='uploads/series/' + photo.strip()) }}"
+                 class="img-fluid rounded shadow-sm"
+                 alt="{{ series.name }} - Gallery {{ loop.index }}">
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 关联产品列表 -->
+    <div class="products-section">
+        <h2 class="section-title text-center mb-5">Products in This Series</h2>
+        
+        {% if products %}
+        <div class="product-grid">
+            {% for product in products %}
+            <a href="{{ url_for('products.product_detail', product_id=product.id) }}" class="text-decoration-none">
+                <div class="product-card d-flex flex-column">
+                    <div class="product-card-img-wrapper">
+                        {% if product.image %}
+                            <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}"
+                                 class="product-card-img-complete"
+                                 alt="{{ product.name }}">
+                        {% else %}
+                            <img src="https://via.placeholder.com/800x600?text=No+Image"
+                                 class="product-card-img-complete"
+                                 alt="No Image">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-card-body mt-auto">
+                        <h3 class="product-card-title mb-2">{{ product.name }}</h3>
+                        <p class="product-card-brand mb-0">
+                            {{ product.product_code }}
+                        </p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <p class="text-muted h5">No products assigned to this series yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

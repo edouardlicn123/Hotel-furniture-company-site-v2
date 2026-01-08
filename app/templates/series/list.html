@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+    {% set hero_title = "Series & Collections" %}
+    {% set hero_subtitle = "Explore our curated hotel furniture series designed for luxury hospitality spaces." %}
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block content %}
+<!-- 主容器使用标准 container（最大宽度 1320px）并增加上下内边距 -->
+<div class="container products-section py-5 py-lg-6">
+    <!-- 直接使用 product-grid，网格本身会自动居中并留出左右空间 -->
+    <div class="product-grid">
+        {% if series_list %}
+            {% for series in series_list %}
+            <a href="{{ url_for('series.detail', slug=series.slug) }}" class="text-decoration-none">
+                <div class="product-card d-flex flex-column">
+                    <div class="product-card-img-wrapper">
+                        {% set photo_list = series.photos.split(',') if series.photos else [] %}
+                        {% set first_photo = photo_list[0].strip() if photo_list else None %}
+                        {% if first_photo %}
+                            <img src="{{ url_for('static', filename='uploads/series/' + first_photo) }}"
+                                 class="product-card-img-complete"
+                                 alt="{{ series.name }}">
+                        {% else %}
+                            <img src="https://via.placeholder.com/800x600?text={{ series.name|urlencode }}"
+                                 class="product-card-img-complete"
+                                 alt="{{ series.name }}">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-card-body mt-auto">
+                        <h3 class="product-card-title mb-2">{{ series.name }}</h3>
+                        <p class="product-card-brand mb-0">
+                            {% if series.applicable_space %}
+                                {{ series.applicable_space.replace(',', ', ') }}
+                            {% else %}
+                                Luxury Hotel Collection
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted h5">No series available yet.</p>
+                <small class="text-muted">Please add series in the admin panel.</small>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
