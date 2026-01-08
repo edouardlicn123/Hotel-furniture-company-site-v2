@@ -1,4 +1,4 @@
-/* themes/mandarin-oriental.css - 东方文华酒店奢华风格主题（黑金青瓷优雅版） */
+/* themes/mandarin-oriental.css - 默认主题，东方文华酒店奢华风格*/
 
 :root {
     /* 主配色 - 东方文华经典黑金 + 新品牌青瓷绿，高端东方奢华 */
@@ -57,11 +57,13 @@ body {
     border-bottom: 4px solid #BFA46F;       /* 金色底边，品牌高光 */
     box-shadow: var(--shadow-md);
     transition: all 0.4s ease;
+    opacity: 0.85;                           /* 新增：默认状态下主菜单透明度 70% */
 }
 
 .navbar.scrolled {
     background-image: linear-gradient(to right, #000000, #0F0F0F) !important;
     box-shadow: var(--shadow-hover);
+    opacity: 1 !important;                  /* 滚动后恢复完全不透明，提升可读性 */
 }
 
 /* 主菜单文字 - 金白高对比 */

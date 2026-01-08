@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 
 {% block hero_section %}
+    {% set hero_title = "About us" %}
+    {% set hero_subtitle = "Specializing in the design and manufacturing of luxury hotel furniture." %}
+    {% set hero_background = url_for('static', filename='img/about-hero.jpg') %}
+
     {% include 'partials/hero_small.html' %}
 {% endblock %}
 

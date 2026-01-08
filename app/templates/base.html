@@ -29,8 +29,15 @@
     <!-- 前端导航菜单（动态公司名） -->
     {% include 'partials/navbar.html' %}
 
-    <!-- 可选英雄区（首页使用 hero_large，其他页面使用 hero_small） -->
-    {% block hero_section %}{% endblock %}
+    <!-- 所有页面共用的 Hero 区域，可被子模板完全覆盖 -->
+    {% block hero_section %}
+        <!-- 默认行为：首页使用大 Hero，其他页面使用小 Hero -->
+        {% if request.endpoint == 'main.index' %}
+            {% include 'partials/hero_large.html' %}
+        {% else %}
+            {% include 'partials/hero_small.html' %}
+        {% endif %}
+    {% endblock %}
 
     <!-- 主体内容 -->
     <main class="container my-5">

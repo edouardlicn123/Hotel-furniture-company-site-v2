@@ -3,14 +3,11 @@
 {% block title %}{{ product.name }} - {{ company_name }}{% endblock %}
 
 {% block hero_section %}
-<section class="hero-section hero-small" 
-         style="background-image: url('{{ url_for('static', filename='uploads/products/' + product.image) if product.image else url_for('static', filename='img/placeholder-hero.jpg') }}');">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <h1 class="display-4 fw-bold">{{ product.name }}</h1>
-        <p class="lead">{{ product.category.name if product.category else 'Uncategorized' }}</p>
-    </div>
-</section>
+    {% set hero_title = product.name %}
+    {% set hero_subtitle = product.category.name if product.category else "高端酒店家具定制" %}
+    {% set hero_background = url_for('static', filename='uploads/products/' + product.image) if product.image else url_for('static', filename='img/hero-default-small.jpg') %}
+
+    {% include 'partials/hero_small.html' %}
 {% endblock %}
 
 {% block content %}

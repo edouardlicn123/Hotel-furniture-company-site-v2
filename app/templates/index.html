@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 
 {% block hero_section %}
+    {% set hero_title = company_name %}
+    {% set hero_subtitle = "Professional hotel furniture manufacturer, providing high-end solutions for five-star hotels
+
+" %}
+    {% set hero_background = url_for('static', filename='img/home-hero.jpg') %} {# 可选：自定义首页背景 #}
+
+    {% set hero_buttons %}
+        <a href="/products" class="btn btn-primary me-3">Export products</a>
+        <a href="/contact" class="btn btn-outline-dark">Contact us</a>
+    {% endset %}
+
     {% include 'partials/hero_large.html' %}
 {% endblock %}
 
