@@ -113,6 +113,18 @@
                     <div class="mt-5">
                         <a href="/contact" class="btn btn-primary btn-lg w-100">Inquire Now</a>
                     </div>
+
+                    <!-- 新增：Add to Cart 按钮（结构完全不变，仅在此处追加） -->
+                    <div class="mt-3">
+                        <button id="add-to-cart"
+                                class="btn btn-primary btn-lg w-100"
+                                data-product-id="{{ product.id }}"
+                                data-product-code="{{ product.product_code }}"
+                                data-product-name="{{ product.name }}"
+                                data-product-image="{{ url_for('static', filename='uploads/products/' + product.image) if product.image else '' }}">
+                            Add to Cart
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

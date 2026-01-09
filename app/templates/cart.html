@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Inquiry Cart - {{ company_name }}{% endblock %}
+
+{% block hero_section %}
+    {% set hero_title = "My Inquiry Cart" %}
+    {% set hero_subtitle = "Temporary list of selected products for quotation" %}
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- 操作按钮 -->
+    <div class="d-flex flex-wrap gap-3 mb-4">
+        <button id="screenshot-btn" class="btn btn-primary btn-lg">Screenshot</button>
+        <button id="export-csv-btn" class="btn btn-primary btn-lg">Export as CSV</button>
+        <button id="reset-btn" class="btn btn-primary btn-lg">Reset Cart</button>
+    </div>
+
+    <!-- 重要提示 -->
+    <div class="alert alert-warning p-4 mb-5">
+        <h5 class="alert-heading">Important Notice</h5>
+        <p class="mb-2">
+            This inquiry cart is stored <strong>temporarily in your browser only</strong>. 
+            The list will be lost if you close the browser, clear cache, or switch devices.
+        </p>
+        <p class="mb-0">
+            Please use the <strong>"Screenshot"</strong> button above to save your cart as an image, 
+            then send the screenshot to us via the Contact page or email for a detailed quotation.
+        </p>
+    </div>
+
+    <!-- 购物车列表 -->
+    <div id="cart-items" class="list-group mb-5">
+        <!-- JS will insert items here -->
+    </div>
+
+    <!-- 空状态 -->
+    <div id="empty-state" class="text-center py-5 d-none">
+        <h3 class="text-muted mb-4">Your inquiry cart is empty</h3>
+        <p class="lead text-muted mb-4">
+            Browse our products and click "Add to Cart" on any item you're interested in.
+        </p>
+        <a href="{{ url_for('products.list_products') }}" class="btn btn-primary btn-lg">
+            Browse All Products
+        </a>
+    </div>
+</div>
+
+<!-- html2canvas for screenshot -->
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<script>
+// 全局变量 key
+const CART_KEY = 'inquiryCart';
+
+// 渲染购物车
+function renderCart() {
+    const items = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    const container = document.getElementById('cart-items');
+    const empty = document.getElementById('empty-state');
+
+    container.innerHTML = '';
+
+    if (items.length === 0) {
+        empty.classList.remove('d-none');
+        return;
+    }
+
+    empty.classList.add('d-none');
+
+    items.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'list-group-item d-flex align-items-center py-3';
+        div.innerHTML = `
+            <img src="${item.image || '/static/img/placeholder.jpg'}" 
+                 alt="${item.name}" 
+                 class="me-4 rounded" 
+                 style="width: 80px; height: 80px; object-fit: cover;">
+            <div class="flex-grow-1">
+                <h5 class="mb-1">${item.name}</h5>
+                <p class="mb-0 text-muted">Code: <strong>${item.code}</strong></p>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="removeItem(${index})">
+                Remove
+            </button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// 删除单项
+function removeItem(index) {
+    let items = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    items.splice(index, 1);
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    renderCart();
+}
+
+// 截图
+document.getElementById('screenshot-btn')?.addEventListener('click', () => {
+    html2canvas(document.body, {scale: 2, useCORS: true}).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+});
+
+// 导出 CSV
+document.getElementById('export-csv-btn')?.addEventListener('click', () => {
+    const items = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    if (items.length === 0) return alert('Cart is empty');
+
+    let csv = 'Product Code,Product Name,Image URL\n';
+    items.forEach(item => {
+        csv += `"${item.code}","${item.name.replace(/"/g, '""')}","${item.image}"\n`;
+    });
+
+    const blob = new Blob([csv], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// 清空
+document.getElementById('reset-btn')?.addEventListener('click', () => {
+    if (confirm('Clear entire cart?')) {
+        localStorage.removeItem(CART_KEY);
+        renderCart();
+    }
+});
+
+// 页面加载时渲染
+document.addEventListener('DOMContentLoaded', renderCart);
+</script>
+{% endblock %}

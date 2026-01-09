@@ -1,22 +1,93 @@
 {% extends "base.html" %}
 
 {% block hero_section %}
-    {% set hero_title = "Contact us" %}
+    {% set hero_title = "Contact Us" %}
     {% set hero_subtitle = "Inquire for custom quotes, project collaboration, or factory visit appointments." %}
 
     {% include 'partials/hero_small.html' %}
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <h3>Contact Information</h3>
-            <p>Phone: +86-400-888-1234<br>Email: sales@hotel-furniture.com<br>Address: Furniture Industrial Park, XXX City, China</p>
+<div class="container my-5">
+    <div class="row g-5 justify-content-center">
+        <!-- 联系信息（左侧） -->
+        <div class="col-lg-6">
+            <h3 class="mb-4">Contact Information</h3>
+            <div class="lead">
+                <!-- 电话 -->
+                {% set phones = [] %}
+                {% if phone1 %}{{ phones.append(phone1) or '' }}{% endif %}
+                {% if phone2 %}{{ phones.append(phone2) or '' }}{% endif %}
+                {% if phone3 %}{{ phones.append(phone3) or '' }}{% endif %}
+                {% if phones %}
+                <p class="mb-2">
+                    <strong>Phone:</strong><br>
+                    {{ phones | join('<br>') | safe }}
+                </p>
+                {% endif %}
+
+                <!-- 电邮 -->
+                {% set emails = [] %}
+                {% if email1 %}{{ emails.append(email1) or '' }}{% endif %}
+                {% if email2 %}{{ emails.append(email2) or '' }}{% endif %}
+                {% if email3 %}{{ emails.append(email3) or '' }}{% endif %}
+                {% if emails %}
+                <p class="mb-2">
+                    <strong>Email:</strong><br>
+                    {{ emails | join('<br>') | safe }}
+                </p>
+                {% endif %}
+
+                <!-- WhatsApp -->
+                {% set whatsapps = [] %}
+                {% if whatsapp1 %}{{ whatsapps.append(whatsapp1) or '' }}{% endif %}
+                {% if whatsapp2 %}{{ whatsapps.append(whatsapp2) or '' }}{% endif %}
+                {% if whatsapps %}
+                <p class="mb-2">
+                    <strong>WhatsApp:</strong><br>
+                    {{ whatsapps | join('<br>') | safe }}
+                </p>
+                {% endif %}
+
+                <!-- WeChat -->
+                {% set wechats = [] %}
+                {% if wechat1 %}{{ wechats.append(wechat1) or '' }}{% endif %}
+                {% if wechat2 %}{{ wechats.append(wechat2) or '' }}{% endif %}
+                {% if wechats %}
+                <p class="mb-2">
+                    <strong>WeChat:</strong><br>
+                    {{ wechats | join('<br>') | safe }}
+                </p>
+                {% endif %}
+
+                <!-- 传真 -->
+                {% if fax %}
+                <p class="mb-2">
+                    <strong>Fax:</strong><br>
+                    {{ fax }}
+                </p>
+                {% endif %}
+
+                <!-- 地址 -->
+                {% if address %}
+                <p class="mb-2">
+                    <strong>Address:</strong><br>
+                    {{ address | replace('\n', '<br>') | safe }}
+                </p>
+                {% endif %}
+
+                <!-- 无内容提示 -->
+                {% if not phones and not emails and not whatsapps and not wechats and not fax and not address %}
+                <p class="text-muted">No contact information available. Please fill in the "Website Settings" in the admin panel.</p>
+                {% endif %}
+            </div>
         </div>
-        <div class="col-md-6">
-            <h3>Send Message</h3>
-            <p>Inquiry form coming soon...</p>
+
+        <!-- 留言表单（右侧） -->
+        <div class="col-lg-6">
+            <h3 class="mb-4">Send Message</h3>
+            <p class="text-muted mb-4">Inquiry form coming soon...</p>
+            <!-- 后续可在此添加完整的联系表单 -->
         </div>
     </div>
 </div>

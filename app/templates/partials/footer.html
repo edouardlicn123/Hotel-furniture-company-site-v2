@@ -1,26 +1,84 @@
 <footer class="bg-dark text-white py-5 mt-5">
     <div class="container">
         <div class="row">
+            <!-- 公司简介 -->
             <div class="col-md-4">
                 <h5>{{ company_name }}</h5>
                 <p>Professional Hotel Furniture Manufacturer<br>Creating Premium Hospitality Spaces Worldwide</p>
             </div>
+
+            <!-- 快速链接 -->
             <div class="col-md-4">
                 <h5>Quick Links</h5>
                 <ul class="list-unstyled">
-                    <li><a href="/" class="text-white">Home</a></li>
-                    <li><a href="/products" class="text-white">Products</a></li>
-                    <li><a href="/about" class="text-white">About Us</a></li>
-                    <li><a href="/contact" class="text-white">Contact Us</a></li>
+                    <li><a href="{{ url_for('main.index') }}" class="text-white">Home</a></li>
+                    <li><a href="{{ url_for('products.list_products') }}" class="text-white">Products</a></li>
+                    <li><a href="{{ url_for('series.list') }}" class="text-white">Series</a></li>
+                    <li><a href="{{ url_for('main.about') }}" class="text-white">About Us</a></li>
+                    <li><a href="{{ url_for('main.contact') }}" class="text-white">Contact Us</a></li>
+                    <li><a href="{{ url_for('main.cart') }}" class="text-white">Inquiry Cart</a></li>
                 </ul>
             </div>
+
+            <!-- 联系信息（动态读取后台设置） -->
             <div class="col-md-4">
                 <h5>Contact Information</h5>
-                <p>Phone: +86-400-888-1234<br>Email: sales@hotel-furniture.com<br>Address: Furniture Industrial Park, XXX City, China</p>
+
+                <!-- 电话 -->
+                <p class="mb-1">
+                    {% set phones = [] %}
+                    {% if phone1 %}{{ phones.append(phone1) or '' }}{% endif %}
+                    {% if phone2 %}{{ phones.append(phone2) or '' }}{% endif %}
+                    {% if phone3 %}{{ phones.append(phone3) or '' }}{% endif %}
+                    {% if phones %}
+                        Phone: {{ phones | join(', ') }}
+                    {% endif %}
+                </p>
+
+                <!-- 电邮 -->
+                <p class="mb-1">
+                    {% set emails = [] %}
+                    {% if email1 %}{{ emails.append(email1) or '' }}{% endif %}
+                    {% if email2 %}{{ emails.append(email2) or '' }}{% endif %}
+                    {% if email3 %}{{ emails.append(email3) or '' }}{% endif %}
+                    {% if emails %}
+                        Email: {{ emails | join(', ') }}
+                    {% endif %}
+                </p>
+
+                <!-- WhatsApp -->
+                <p class="mb-1">
+                    {% set whatsapps = [] %}
+                    {% if whatsapp1 %}{{ whatsapps.append(whatsapp1) or '' }}{% endif %}
+                    {% if whatsapp2 %}{{ whatsapps.append(whatsapp2) or '' }}{% endif %}
+                    {% if whatsapps %}
+                        WhatsApp: {{ whatsapps | join(', ') }}
+                    {% endif %}
+                </p>
+
+                <!-- WeChat -->
+                <p class="mb-1">
+                    {% set wechats = [] %}
+                    {% if wechat1 %}{{ wechats.append(wechat1) or '' }}{% endif %}
+                    {% if wechat2 %}{{ wechats.append(wechat2) or '' }}{% endif %}
+                    {% if wechats %}
+                        WeChat: {{ wechats | join(', ') }}
+                    {% endif %}
+                </p>
+
+                <!-- 地址 -->
+                {% if address %}
+                <p class="mb-0">
+                    Address:<br>
+                    {{ address | replace('\n', '<br>') | safe }}
+                </p>
+                {% endif %}
             </div>
         </div>
+
+        <!-- 版权信息 -->
         <div class="text-center mt-4">
-            <p class="mb-0">&copy; {{ current_year }} {{ company_name }} All Rights Reserved</p>
+            <p class="mb-0">&copy; 2025-{{ current_year }} {{ company_name }} All Rights Reserved</p>
         </div>
     </div>
 </footer>

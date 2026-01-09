@@ -35,12 +35,36 @@ def settings():
 
     if request.method == 'POST':
         try:
+            # 基本设置
             settings.company_name = request.form.get('company_name', '').strip()
             selected_theme = request.form.get('theme')
             if selected_theme in theme_files:
                 settings.theme = selected_theme
             else:
                 settings.theme = 'default'
+
+            # ==================== 新增：网站模式 ====================
+            settings.mode = request.form.get('mode', 'official')
+
+            # ==================== 新增：企业介绍 ====================
+            settings.basic_info = request.form.get('basic_info') or None
+            settings.company_advantages = request.form.get('company_advantages') or None
+
+            # ==================== 新增：联系方式 ====================
+            settings.phone1 = request.form.get('phone1') or None
+            settings.phone2 = request.form.get('phone2') or None
+            settings.phone3 = request.form.get('phone3') or None
+            settings.email1 = request.form.get('email1') or None
+            settings.email2 = request.form.get('email2') or None
+            settings.email3 = request.form.get('email3') or None
+            settings.fax = request.form.get('fax') or None
+            settings.address = request.form.get('address') or None
+
+            # ==================== 新增：社交联系方式 ====================
+            settings.whatsapp1 = request.form.get('whatsapp1') or None
+            settings.whatsapp2 = request.form.get('whatsapp2') or None
+            settings.wechat1 = request.form.get('wechat1') or None
+            settings.wechat2 = request.form.get('wechat2') or None
 
             # SEO 字段
             settings.seo_home_title = request.form.get('seo_home_title', '')

@@ -1,5 +1,5 @@
 # init_schema_full.py
-# 完整数据库初始化脚本（包含 FeatureSeries 模型，适用于删库后重建）
+# 完整数据库初始化脚本（最新版：地址英文 + 系列示例图片 + 社交联系方式范例）
 
 import os
 from datetime import datetime
@@ -30,30 +30,70 @@ with app.app_context():
         db.session.add(admin_user)
         print("管理员账号创建：admin / admin123")
 
-    # 2. 默认网站设置 + SEO
+    # 2. 默认网站设置 + SEO + 新增字段（地址改为英文 + 社交联系方式范例）
     if Settings.query.count() == 0:
         default_settings = Settings(
             company_name='XX Hotel Furniture Manufacturer',
             theme='default',
+            mode='official',  # 默认官方网站模式
 
+            # ==================== 企业介绍默认内容 ====================
+            basic_info=(
+                "We are a professional manufacturer specializing in high-end hotel furniture design, production, and customization, "
+                "with over 15 years of industry experience. Our factory is located in China's leading furniture manufacturing hub, "
+                "equipped with advanced production facilities and strict quality control systems, "
+                "providing one-stop furniture solutions for 5-star hotels, resorts, and premium commercial spaces worldwide."
+            ),
+            company_advantages=(
+                "• 15+ years focused on hotel furniture, familiar with international hotel brand standards\n"
+                "• Full customization support from concept to delivery\n"
+                "• Eco-friendly premium materials with international certifications (CARB P2, FSC)\n"
+                "• 5,000+㎡ showroom and mature supply chain for stable lead times\n"
+                "• Complete service: design, prototyping, manufacturing, and installation"
+            ),
+
+            # ==================== 联系方式（地址改为英文） ====================
+            phone1='+86 123-4567-8900',
+            phone2='+86 987-6543-2100',
+            phone3='',
+            email1='sales@hotel-furniture.com',
+            email2='info@hotel-furniture.com',
+            email3='',
+            fax='+86 123-4567-8901',
+            address=(
+                "Furniture Industrial Park, Lecong Town, Shunde District\n"
+                "Foshan City, Guangdong Province, China\n"
+                "Postal Code: 528315"
+            ),
+
+            # ==================== 新增：社交联系方式范例 ====================
+            whatsapp1='+86 123-4567-8900',   # 与 phone1 相同
+            whatsapp2='',
+            wechat1='+86 123-4567-8900',     # 与 phone1 相同
+            wechat2='',
+
+            # Homepage SEO
             seo_home_title='Home - Premium Hotel Furniture | {company_name}',
             seo_home_description='Professional hotel furniture manufacturer specializing in luxury beds, sofas, wardrobes and custom solutions for 5-star hotels worldwide.',
             seo_home_keywords='hotel furniture, luxury hotel beds, hotel sofas, custom hospitality furniture, hotel room furniture',
 
+            # Products Page SEO
             seo_products_title='Hotel Furniture Products | Beds, Sofas, Wardrobes - {company_name}',
             seo_products_description='Explore our complete collection of premium hotel furniture including beds, nightstands, sofas, wardrobes and custom case goods for luxury hospitality projects.',
             seo_products_keywords='hotel furniture products, hotel beds, hotel sofas, hotel wardrobes, luxury hotel furniture collection',
 
+            # About Page SEO
             seo_about_title='About Us - {company_name} | Leading Hotel Furniture Manufacturer',
             seo_about_description='Learn about {company_name}, a professional hotel furniture manufacturer with years of experience in custom hospitality furniture design and production.',
 
+            # Contact Page SEO
             seo_contact_title='Contact Us - {company_name} | Hotel Furniture Inquiry',
             seo_contact_description='Contact {company_name} for custom hotel furniture solutions, quotes, and partnership opportunities.'
         )
         db.session.add(default_settings)
-        print("默认网站设置已创建。")
+        print("默认网站设置已创建（包含社交联系方式范例）。")
 
-    # 3. 默认分类（酒店家具完整英文分类）
+    # 3. 默认分类（保持不变）
     if Category.query.count() == 0:
         loose_cats = [
             "Beds", "Nightstands/Bedside Tables", "Sofas and Armchairs",
@@ -73,7 +113,7 @@ with app.app_context():
             db.session.add(Category(name=cat_name))
         print(f"已创建 {len(all_cats)} 个默认分类。")
 
-    # 4. 预置 5 条真实产品数据（您之前指定的）
+    # 4. 预置 5 条产品数据（保持不变）
     if Product.query.count() == 0:
         products_data = [
             {
@@ -159,22 +199,24 @@ with app.app_context():
             db.session.add(product)
         print("已注入 5 条预置产品数据。")
 
-    # 5. （可选）预置一个测试专题系列
+    # 5. 预置一个测试专题系列（保持用户当前设置）
     if FeatureSeries.query.count() == 0:
         test_series = FeatureSeries(
-            name="Nordic Minimalism Collection",
-            slug="nordic-minimal-2025",
+            name="Basic Collection1",
+            slug="basic1",
             description="Clean lines, natural materials, and functional design for modern luxury hotels.",
             applicable_space="Guest Room,Lobby,Suite",
-            photos="",  # 可后续上传
+            photos="series_sample.jpeg",
             seo_title="Nordic Minimalism Hotel Furniture Series | {company_name}",
             seo_description="Discover our Nordic Minimalism hotel furniture collection featuring premium beds, sofas, and case goods with clean Scandinavian design.",
             seo_keywords="nordic hotel furniture, minimalist hospitality design, scandinavian hotel beds"
         )
         db.session.add(test_series)
-        print("已创建 1 个测试专题系列（Nordic Minimalism Collection）。")
+        print("已创建 1 个测试专题系列（slug: basic1，图片：series_sample.jpeg）。")
 
     db.session.commit()
     print("\n数据库初始化完成！")
     print("管理员账号：admin / admin123")
+    print("地址已设置为英文版")
+    print("社交联系方式范例已设置（WhatsApp1/WeChat1 与 phone1 相同）")
     print("可直接启动项目使用。")

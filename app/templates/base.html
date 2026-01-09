@@ -55,9 +55,11 @@
     <!-- 脚本区域 -->
     {% block extra_scripts %}
         {% include 'partials/extra_scripts.html' %}
-        
         <!-- 全局统一 Hero 内容控制脚本 -->
         <script src="{{ url_for('static', filename='js/hero-config.js') }}" defer></script>
+        <!-- 购物车脚本 -->
+        <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
     {% endblock %}
+
 </body>
 </html>

@@ -9,12 +9,35 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(200), nullable=False)  # 存储哈希密码
 
 
-# 网站设置表（单行记录，包含 SEO 配置）
+# 网站设置表（单行记录，包含 SEO 配置、主题、模式、企业信息、联系方式等）
 class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(100), default='XX Hotel Furniture Manufacturer')
-    theme = db.Column(db.String(20), default='light')
+    theme = db.Column(db.String(20), default='default')
     logo = db.Column(db.String(200))  # 公司 Logo 文件名（固定为 company_logo）
+
+    # ==================== 新增：网站模式 ====================
+    mode = db.Column(db.String(20), default='official')  # 'official' 或 'catalog'
+
+    # ==================== 新增：企业介绍 ====================
+    basic_info = db.Column(db.Text)               # 基本情况（用于关于我们页面）
+    company_advantages = db.Column(db.Text)        # 企业优势（用于关于我们页面）
+
+    # ==================== 新增：联系方式 ====================
+    phone1 = db.Column(db.String(50))
+    phone2 = db.Column(db.String(50))
+    phone3 = db.Column(db.String(50))
+    email1 = db.Column(db.String(100))
+    email2 = db.Column(db.String(100))
+    email3 = db.Column(db.String(100))
+    fax = db.Column(db.String(50))
+    address = db.Column(db.Text)
+
+    # ==================== 新增：社交联系方式 ====================
+    whatsapp1 = db.Column(db.String(50))
+    whatsapp2 = db.Column(db.String(50))
+    wechat1 = db.Column(db.String(50))
+    wechat2 = db.Column(db.String(50))
 
     # Homepage SEO
     seo_home_title = db.Column(db.String(200), default='Home - Premium Hotel Furniture | {company_name}')

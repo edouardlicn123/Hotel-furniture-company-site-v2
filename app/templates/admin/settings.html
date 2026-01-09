@@ -1,4 +1,3 @@
-<!-- app/templates/admin/settings.html -->
 {% extends "admin/base.html" %}
 
 {% block title %}网站设置{% endblock %}
@@ -13,7 +12,7 @@
         </button>
     </div>
 
-    <!-- 闪现消息（由 base.html 统一处理，此处保留兼容） -->
+    <!-- 闪现消息 -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -72,6 +71,109 @@
                                     <small class="text-muted"><i class="fas fa-info-circle me-1"></i>未上传 Logo，将显示文字公司名</small>
                                 </div>
                             {% endif %}
+                        </div>
+
+                        <!-- 新增：网站模式 -->
+                        <div class="mb-4">
+                            <label for="mode" class="form-label fw-bold">网站模式</label>
+                            <select class="form-select form-select-lg" id="mode" name="mode">
+                                <option value="official" {% if settings.mode == 'official' %}selected{% endif %}>官方网站模式</option>
+                                <option value="catalog" {% if settings.mode == 'catalog' %}selected{% endif %}>画册模式</option>
+                            </select>
+                            <div class="form-text">当前仅记录模式标识，后续可基于此实现功能切换（如隐藏联系方式、简化导航等）。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 新增：企业介绍 -->
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">企业介绍（用于“关于我们”页面）</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <label for="basic_info" class="form-label fw-bold">基本情况</label>
+                            <textarea class="form-control form-control-lg" id="basic_info" name="basic_info" rows="8">{{ settings.basic_info or '' }}</textarea>
+                            <div class="form-text">支持换行，显示时会自动转换为段落或<br>标签。</div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="company_advantages" class="form-label fw-bold">企业优势</label>
+                            <textarea class="form-control form-control-lg" id="company_advantages" name="company_advantages" rows="8">{{ settings.company_advantages or '' }}</textarea>
+                            <div class="form-text">建议使用 • 或 - 开头列表，每行一个优势，换行显示。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 新增：联系方式 -->
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">联系方式（用于联系页面 & 页脚）</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <label for="phone1" class="form-label">联系电话 1</label>
+                                <input type="text" class="form-control" id="phone1" name="phone1" value="{{ settings.phone1 or '' }}">
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <label for="phone2" class="form-label">联系电话 2</label>
+                                <input type="text" class="form-control" id="phone2" name="phone2" value="{{ settings.phone2 or '' }}">
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <label for="phone3" class="form-label">联系电话 3</label>
+                                <input type="text" class="form-control" id="phone3" name="phone3" value="{{ settings.phone3 or '' }}">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <label for="email1" class="form-label">电邮 1</label>
+                                <input type="email" class="form-control" id="email1" name="email1" value="{{ settings.email1 or '' }}">
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <label for="email2" class="form-label">电邮 2</label>
+                                <input type="email" class="form-control" id="email2" name="email2" value="{{ settings.email2 or '' }}">
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <label for="email3" class="form-label">电邮 3</label>
+                                <input type="email" class="form-control" id="email3" name="email3" value="{{ settings.email3 or '' }}">
+                            </div>
+                        </div>
+
+                        <!-- 新增：WhatsApp -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="whatsapp1" class="form-label">WhatsApp 1</label>
+                                <input type="text" class="form-control" id="whatsapp1" name="whatsapp1" value="{{ settings.whatsapp1 or '' }}">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="whatsapp2" class="form-label">WhatsApp 2</label>
+                                <input type="text" class="form-control" id="whatsapp2" name="whatsapp2" value="{{ settings.whatsapp2 or '' }}">
+                            </div>
+                        </div>
+
+                        <!-- 新增：WeChat -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="wechat1" class="form-label">WeChat 1</label>
+                                <input type="text" class="form-control" id="wechat1" name="wechat1" value="{{ settings.wechat1 or '' }}">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="wechat2" class="form-label">WeChat 2</label>
+                                <input type="text" class="form-control" id="wechat2" name="wechat2" value="{{ settings.wechat2 or '' }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="fax" class="form-label">传真</label>
+                            <input type="text" class="form-control" id="fax" name="fax" value="{{ settings.fax or '' }}">
+                        </div>
+                        <div class="mb-4">
+                            <label for="address" class="form-label">地址（支持多行）</label>
+                            <textarea class="form-control" id="address" name="address" rows="4">{{ settings.address or '' }}</textarea>
                         </div>
                     </div>
                 </div>

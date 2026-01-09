@@ -1,17 +1,13 @@
 # app/routes/main.py - 完整最新版
-# 包含：
-# - 全站统一 SEO 注入
-# - 专题系列页面 SEO 支持（列表页 + 详情页）
-# - OG 图片支持（系列详情页使用第一张图片，降级使用公司 Logo）
-# - 首页动态随机专题系列数据注入
 
 from flask import Blueprint, render_template, request, url_for
-from app.models import Settings, FeatureSeries, Product  # 新增 FeatureSeries 和 Product
+from app.models import Settings, FeatureSeries, Product
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 import random
+from datetime import datetime  # 用于获取当前年份
 
-db = SQLAlchemy()  # 如果项目中尚未全局定义，可保留（实际已在 __init__.py 中）
+db = SQLAlchemy()  # 实际已在 __init__.py 中全局定义，可保留
 
 main_bp = Blueprint('main', __name__)
 
@@ -27,11 +23,40 @@ def inject_seo_data():
         company_logo_url = None
         theme = 'default'
         page_og_image = None
+
+        # 新增字段默认值
+        mode = 'official'
+        basic_info = None
+        company_advantages = None
+        phone1 = phone2 = phone3 = None
+        email1 = email2 = email3 = None
+        fax = None
+        address = None
+        whatsapp1 = whatsapp2 = None
+        wechat1 = wechat2 = None
     else:
         company_name = settings.company_name
         company_logo_url = url_for('static', filename='uploads/logo/company_logo') if settings.logo else None
         theme = settings.theme or 'default'
         page_og_image = None  # 默认无专用 OG 图片
+
+        # ==================== 新增：注入所有后台设置字段 ====================
+        mode = settings.mode or 'official'
+        basic_info = settings.basic_info
+        company_advantages = settings.company_advantages
+        phone1 = settings.phone1
+        phone2 = settings.phone2
+        phone3 = settings.phone3
+        email1 = settings.email1
+        email2 = settings.email2
+        email3 = settings.email3
+        fax = settings.fax
+        address = settings.address
+        whatsapp1 = settings.whatsapp1
+        whatsapp2 = settings.whatsapp2
+        wechat1 = settings.wechat1
+        wechat2 = settings.wechat2
+        # ===================================================================
 
         endpoint = request.endpoint or ''
 
@@ -93,6 +118,13 @@ def inject_seo_data():
                 current_keywords = "hotel furniture, luxury collections"
         # ====================================================================
 
+        # ==================== 新增：Inquiry Cart 页面 SEO 支持 ====================
+        elif endpoint == 'main.cart':
+            current_title = f"My Inquiry Cart - {company_name}"
+            current_description = f"View your temporarily selected hotel furniture products for quotation at {company_name}."
+            current_keywords = "hotel furniture inquiry cart, quotation list, custom hotel furniture quote, product selection"
+        # ====================================================================
+
         else:
             current_title = f'{company_name} | Professional Hotel Furniture Manufacturer'
             current_description = 'Premium hotel furniture solutions for luxury hospitality.'
@@ -105,7 +137,28 @@ def inject_seo_data():
         page_keywords=current_keywords,
         company_logo_url=company_logo_url,
         theme=theme,
-        page_og_image=page_og_image  # 供 partials/seo.html 使用
+        page_og_image=page_og_image,
+
+        # ==================== 新增：注入所有后台设置字段 ====================
+        mode=mode,
+        basic_info=basic_info,
+        company_advantages=company_advantages,
+        phone1=phone1,
+        phone2=phone2,
+        phone3=phone3,
+        email1=email1,
+        email2=email2,
+        email3=email3,
+        fax=fax,
+        address=address,
+        whatsapp1=whatsapp1,
+        whatsapp2=whatsapp2,
+        wechat1=wechat1,
+        wechat2=wechat2,
+
+        # ==================== 当前年份（用于页脚版权） ====================
+        current_year=datetime.now().strftime('%Y')
+        # ==================================================================
     )
 # ============================================================================
 
@@ -145,3 +198,7 @@ def about():
 @main_bp.route('/contact')
 def contact():
     return render_template('contact.html')
+
+@main_bp.route('/cart')
+def cart():
+    return render_template('cart.html')

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block hero_section %}
-    {% set hero_title = "About us" %}
+    {% set hero_title = "About Us" %}
     {% set hero_subtitle = "Specializing in the design and manufacturing of luxury hotel furniture." %}
     {% set hero_background = url_for('static', filename='img/about-hero.jpg') %}
 
@@ -9,12 +9,37 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <p class="lead text-center mb-5">{{ company_name }} was established in 2015, specializing in high-end hotel furniture design and manufacturing. Our product range includes beds, wardrobes, desks, sofas, and more.</p>
-            <h3 class="section-title">Our Strengths</h3>
-            <p>With a factory covering 20,000㎡ and advanced production equipment, we achieve annual output value exceeding 100 million RMB, serving tens of thousands of hospitality clients worldwide.</p>
+        <div class="col-lg-10">
+
+            <!-- 基本情况 -->
+            {% if basic_info %}
+            <section class="mb-5 text-center">
+                <div class="lead">
+                    {{ basic_info | replace('\n', '<br>') | safe }}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- 企业优势 -->
+            {% if company_advantages %}
+            <section class="mb-5">
+                <h3 class="section-title text-center mb-4">Our Strengths</h3>
+                <div class="lead">
+                    {{ company_advantages | replace('\n', '<br>') | safe }}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- 如果后台尚未填写内容，显示提示 -->
+            {% if not basic_info and not company_advantages %}
+            <div class="text-center py-5">
+                <p class="text-muted h5">暂无关于我们内容</p>
+                <small class="text-muted">请在后台“网站设置”中填写“基本情况”和“企业优势”。</small>
+            </div>
+            {% endif %}
+
         </div>
     </div>
 </div>

@@ -3,6 +3,8 @@
 
 from flask import Blueprint, render_template
 from app.models import FeatureSeries, Product
+from app import db  # 关键：导入 db
+from sqlalchemy import or_  # 推荐显式导入 or_
 
 series_bp = Blueprint('series', __name__, url_prefix='/series')
 
@@ -16,15 +18,15 @@ def list():
 def detail(slug):
     series = FeatureSeries.query.filter_by(slug=slug).first_or_404()
     
-    # 精确匹配：只包含完整 slug 的产品（支持多系列逗号分隔）
-    # 例如 slug="basic" 只匹配 featured_series 包含 ",basic," 或 "^basic," 或 ",basic$" 的记录
+    # 精确匹配：查找 featured_series 字段中包含完整 slug 的产品
+    # 支持多系列逗号分隔，如 "modern,basic,luxury"
     products = Product.query.filter(
-        db.or_(
-            Product.featured_series == slug,  # 只有一个系列
-            Product.featured_series.like(f'{slug},%'),     # 开头
-            Product.featured_series.like(f'%,{slug}'),     # 中间
-            Product.featured_series.like(f'%,{slug},%'),   # 中间（多于两个）
-            Product.featured_series.like(f'{slug},')       # 结尾（兼容旧数据）
+        or_(
+            Product.featured_series == slug,                    # 只有一个系列
+            Product.featured_series.like(f'{slug},%'),          # 开头：slug,
+            Product.featured_series.like(f'%,{slug}'),          # 结尾：,slug
+            Product.featured_series.like(f'%,{slug},%'),        # 中间：,slug,
+            Product.featured_series.like(f'{slug},')            # 兼容旧数据结尾无逗号
         )
     ).order_by(Product.created_at.desc()).all()
     
