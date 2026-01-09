@@ -6,13 +6,13 @@ from flask_login import LoginManager
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
-login_manager.login_view = 'admin.login'  # 未登录跳转到登录页
+login_manager.login_view = 'admin.main.login'  # 未登录跳转到登录页
 login_manager.login_message = '请先登录后台管理系统'
 login_manager.login_message_category = 'warning'
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'your-very-secret-key-change-me'
+    app.config['SECRET_KEY'] = 'xai-super-secret-2026-random-string-abc123xyz'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

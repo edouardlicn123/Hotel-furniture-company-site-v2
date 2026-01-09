@@ -1,4 +1,4 @@
-/* themes/linkedin-professional.css - 领英（LinkedIn）专业蓝风格主题（干净现代版） */
+/* themes/linkedin-professional.css - 领英（LinkedIn）专业蓝风格主题（干净现代版 + 标题醒目优化） */
 
 :root {
     /* 主配色 - LinkedIn官方专业蓝为核心（2025最新主色#0A66C2） */
@@ -24,7 +24,7 @@
 
     /* 边框与分割 - 蓝灰轻柔 */
     --border: #0A66C2;
-    --divider: #CACC CE;
+    --divider: #CACCCE;
 
     /* 阴影 - 现代扁平轻影 */
     --shadow: 0 12px 35px rgba(10, 102, 194, 0.08);
@@ -65,13 +65,19 @@ body {
     border-bottom-color: #0A66C2;
 }
 
-/* 主菜单文字 - 黑字 + 蓝品牌高光 */
-.navbar-brand {
-    color: #000000 !important;
+/* 关键优化：导航栏标题（.navbar-brand span）使用 LinkedIn 经典蓝 */
+.navbar-brand span {
+    color: #0A66C2 !important;          /* 强制使用 LinkedIn 蓝，确保在白色背景上清晰可见 */
     font-weight: 800;
     text-shadow: none;
 }
 
+/* 滚动后也保持标题颜色一致 */
+.navbar.scrolled .navbar-brand span {
+    color: #0A66C2 !important;
+}
+
+/* 主菜单文字 - 黑字 + 蓝品牌高光 */
 .nav-link {
     color: #000000 !important;
     font-weight: 600;
