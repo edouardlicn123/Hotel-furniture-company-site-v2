@@ -30,6 +30,37 @@
         </p>
     </div>
 
+    <!-- 新增：WhatsApp 联系方式区块（全英文版） -->
+    <!-- 已做好隐藏准备：仅在 mode == 'official' 且至少有一个 WhatsApp 号码时显示 -->
+    {% if mode == 'official' and (whatsapp1 or whatsapp2) %}
+    <div class="contact-section text-center mt-5 mb-5 py-4 bg-light rounded shadow-sm">
+        <h4 class="mb-3 text-success">
+            <i class="fab fa-whatsapp me-2"></i>Quick Inquiry via WhatsApp
+        </h4>
+        <p class="lead mb-0">
+            WhatsApp:
+            {% if whatsapp1 %}
+            <a href="https://wa.me/{{ whatsapp1|replace('+', '')|replace('-', '')|replace(' ', '')|replace('(', '')|replace(')', '') }}"
+               class="text-success text-decoration-none fw-bold mx-2"
+               target="_blank" rel="noopener">
+                <i class="fab fa-whatsapp"></i> {{ whatsapp1 }}
+            </a>
+            {% endif %}
+            {% if whatsapp2 %}
+            {% if whatsapp1 %}/{% endif %}
+            <a href="https://wa.me/{{ whatsapp2|replace('+', '')|replace('-', '')|replace(' ', '')|replace('(', '')|replace(')', '') }}"
+               class="text-success text-decoration-none fw-bold mx-2"
+               target="_blank" rel="noopener">
+                <i class="fab fa-whatsapp"></i> {{ whatsapp2 }}
+            </a>
+            {% endif %}
+        </p>
+        <small class="text-muted d-block mt-2">
+            Click the number to start a WhatsApp conversation and get a quick quote.
+        </small>
+    </div>
+    {% endif %}
+
     <!-- 购物车列表 -->
     <div id="cart-items" class="list-group mb-5">
         <!-- JS will insert items here -->

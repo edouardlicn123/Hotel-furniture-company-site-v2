@@ -1,27 +1,41 @@
+{# app/templates/partials/footer.html - 全站统一页脚（最新完整版，支持模式切换） #}
+{# 新增：仅在 official 模式下显示联系信息列和快速链接中的 About Us / Contact Us #}
+
 <footer class="bg-dark text-white py-5 mt-5">
     <div class="container">
         <div class="row">
-            <!-- 公司简介 -->
-            <div class="col-md-4">
+
+            <!-- 公司简介（始终显示） -->
+            <div class="col-md-4 mb-4">
                 <h5>{{ company_name }}</h5>
-                <p>Professional Hotel Furniture Manufacturer<br>Creating Premium Hospitality Spaces Worldwide</p>
+                <p class="mb-0">
+                    Professional Hotel Furniture Manufacturer<br>
+                    Creating Premium Hospitality Spaces Worldwide
+                </p>
             </div>
 
-            <!-- 快速链接 -->
-            <div class="col-md-4">
+            <!-- 快速链接（部分链接仅在 official 模式下显示） -->
+            <div class="col-md-4 mb-4">
                 <h5>Quick Links</h5>
                 <ul class="list-unstyled">
                     <li><a href="{{ url_for('main.index') }}" class="text-white">Home</a></li>
                     <li><a href="{{ url_for('products.list_products') }}" class="text-white">Products</a></li>
                     <li><a href="{{ url_for('series.list') }}" class="text-white">Series</a></li>
+
+                    {# ============ 仅在 official 模式下显示 About Us 和 Contact Us ============ #}
+                    {% if mode == 'official' %}
                     <li><a href="{{ url_for('main.about') }}" class="text-white">About Us</a></li>
                     <li><a href="{{ url_for('main.contact') }}" class="text-white">Contact Us</a></li>
+                    {% endif %}
+                    {# ================================================================== #}
+
                     <li><a href="{{ url_for('main.cart') }}" class="text-white">Inquiry Cart</a></li>
                 </ul>
             </div>
 
-            <!-- 联系信息（动态读取后台设置） -->
-            <div class="col-md-4">
+            {# ============ 仅在 official 模式下显示联系信息列 ============ #}
+            {% if mode == 'official' %}
+            <div class="col-md-4 mb-4">
                 <h5>Contact Information</h5>
 
                 <!-- 电话 -->
@@ -74,11 +88,14 @@
                 </p>
                 {% endif %}
             </div>
+            {% endif %}
+            {# ================================================================== #}
+
         </div>
 
-        <!-- 版权信息 -->
+        <!-- 版权信息（始终显示） -->
         <div class="text-center mt-4">
-            <p class="mb-0">&copy; 2025-{{ current_year }} {{ company_name }} All Rights Reserved</p>
+            <p class="mb-0">&copy; {{ current_year }} {{ company_name }}. All Rights Reserved.</p>
         </div>
     </div>
 </footer>
