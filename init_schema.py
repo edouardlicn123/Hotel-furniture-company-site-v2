@@ -1,11 +1,11 @@
 # init_schema_full.py
-# 完整数据库初始化脚本（最新版：地址英文 + 系列示例图片 + 社交联系方式范例）
+# 完整数据库初始化脚本（最新版：地址英文 + 系列示例图片 + 社交联系方式范例 + SMTP 配置）
 
 import os
 from datetime import datetime
 from app import create_app, db
 from app.models import (
-    User, Settings, Category, Product, FeatureSeries
+    User, Settings, Category, Product, FeatureSeries, SmtpConfig
 )
 from werkzeug.security import generate_password_hash
 
@@ -19,7 +19,7 @@ with app.app_context():
     # 删除所有表并重新创建（相当于删库重来）
     db.drop_all()
     db.create_all()
-    print("所有表已重新创建。")
+    print("所有表已重新创建（包括新增的 smtp_config 表）。")
 
     # 1. 默认管理员账号
     if not User.query.filter_by(username='admin').first():
@@ -214,9 +214,26 @@ with app.app_context():
         db.session.add(test_series)
         print("已创建 1 个测试专题系列（slug: basic1，图片：series_sample.jpeg）。")
 
+    # 6. 新增：默认 SMTP 配置（gmail 预设，等待后台填写账号密码）
+    if SmtpConfig.query.count() == 0:
+        default_smtp = SmtpConfig(
+            provider='gmail',
+            mail_server='smtp.gmail.com',
+            mail_port=587,
+            mail_use_tls=True,
+            mail_use_ssl=False,
+            mail_username='',                    # 留空，后台填写
+            mail_password='',                    # 留空，后台填写
+            test_recipient='your_test_email@example.com',  # ← 请改为你能收到的真实邮箱，用于后续测试
+            default_sender_name='酒店家具官网询价系统'
+        )
+        db.session.add(default_smtp)
+        print("默认 SMTP 配置已创建（gmail 预设，等待后台填写账号密码）")
+
     db.session.commit()
     print("\n数据库初始化完成！")
     print("管理员账号：admin / admin123")
     print("地址已设置为英文版")
     print("社交联系方式范例已设置（WhatsApp1/WeChat1 与 phone1 相同）")
+    print("SMTP 默认配置已添加（请登录后台 /admin/smtp 填写 Gmail 账号和应用专用密码）")
     print("可直接启动项目使用。")

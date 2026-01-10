@@ -1,0 +1,167 @@
+{% extends "admin/base.html" %}
+
+{% block title %}SMTP 设置 - 邮件发送配置{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="h4 mb-0">SMTP 配置管理</h3>
+            <small>用于发送询价邮件、测试邮件等</small>
+        </div>
+
+        <div class="card-body p-5">
+            <!-- 闪现消息 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mb-4">
+                            {{ message | safe }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <!-- 服务商预设选择 -->
+                <div class="mb-4">
+                    <label for="provider" class="form-label fw-bold fs-5">选择邮件服务商</label>
+                    <select class="form-select form-select-lg" id="provider" name="provider">
+                        <option value="gmail" {% if config.provider == 'gmail' %}selected{% endif %}>Google Gmail（国外服务器首选）</option>
+                        <option value="outlook" {% if config.provider == 'outlook' %}selected{% endif %}>Microsoft Outlook / Hotmail</option>
+                        <option value="qq" {% if config.provider == 'qq' %}selected{% endif %}>QQ 邮箱</option>
+                        <option value="163" {% if config.provider == '163' %}selected{% endif %}>网易 163 邮箱</option>
+                        <option value="sendgrid" {% if config.provider == 'sendgrid' %}selected{% endif %}>SendGrid（API方式）</option>
+                        <option value="custom" {% if config.provider == 'custom' %}selected{% endif %}>自定义 SMTP（手动填写全部）</option>
+                    </select>
+                    <div class="form-text mt-2 text-muted">
+                        选择后系统会自动填充常见服务器/端口设置，减少手动输入错误。
+                    </div>
+                </div>
+
+                <!-- 动态显示的字段组 -->
+                <div id="server-group" class="smtp-field-group mb-4" style="display: none;">
+                    <label for="mail_server" class="form-label fw-bold">SMTP 服务器地址</label>
+                    <input type="text" class="form-control form-control-lg" id="mail_server" name="mail_server"
+                           value="{{ config.mail_server or '' }}" placeholder="例如：smtp.gmail.com">
+                </div>
+
+                <div id="port-group" class="smtp-field-group mb-4" style="display: none;">
+                    <label for="mail_port" class="form-label fw-bold">端口号</label>
+                    <input type="number" class="form-control form-control-lg" id="mail_port" name="mail_port"
+                           value="{{ config.mail_port or 587 }}" min="1" max="65535">
+                    <div class="form-text">常见端口：587 (TLS), 465 (SSL)</div>
+                </div>
+
+                <div id="tls-group" class="smtp-field-group form-check mb-4" style="display: none;">
+                    <input class="form-check-input" type="checkbox" id="mail_use_tls" name="mail_use_tls"
+                           {% if config.mail_use_tls %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="mail_use_tls">使用 STARTTLS（推荐 587 端口）</label>
+                </div>
+
+                <div id="ssl-group" class="smtp-field-group form-check mb-4" style="display: none;">
+                    <input class="form-check-input" type="checkbox" id="mail_use_ssl" name="mail_use_ssl"
+                           {% if config.mail_use_ssl %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="mail_use_ssl">使用 SSL（推荐 465 端口）</label>
+                </div>
+
+                <div id="username-group" class="smtp-field-group mb-4">
+                    <label for="mail_username" class="form-label fw-bold fs-5">用户名 / 邮箱地址 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-lg" id="mail_username" name="mail_username"
+                           value="{{ config.mail_username or '' }}" required placeholder="例如：yourname@gmail.com">
+                </div>
+
+                <div id="password-group" class="smtp-field-group mb-4">
+                    <label for="mail_password" class="form-label fw-bold fs-5">密码 / 授权码 <span class="text-danger">*</span></label>
+                    <div class="input-group input-group-lg">
+                        <input type="password" class="form-control" id="mail_password" name="mail_password"
+                               value="{{ config.mail_password or '' }}" required placeholder="Gmail 需使用应用专用密码">
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">显示</button>
+                    </div>
+                    <div class="form-text mt-2">
+                        Gmail：请使用“应用专用密码”（非邮箱密码）<br>
+                        QQ/163：请使用“授权码”
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="default_sender_name" class="form-label fw-bold">发件人显示名称</label>
+                    <input type="text" class="form-control form-control-lg" id="default_sender_name" name="default_sender_name"
+                           value="{{ config.default_sender_name or '酒店家具官网' }}">
+                    <div class="form-text">邮件中显示的发件人名称，例如：酒店家具官网询价系统</div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="test_recipient" class="form-label fw-bold">测试收件邮箱</label>
+                    <input type="email" class="form-control form-control-lg" id="test_recipient" name="test_recipient"
+                           value="{{ config.test_recipient or '' }}" placeholder="用于一键测试的邮箱地址">
+                </div>
+
+                <div class="form-check mb-5">
+                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                           {% if config.is_active %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="is_active">启用邮件发送功能</label>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="d-flex gap-3 justify-content-center mt-5">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">保存配置</button>
+                    
+                    <form action="{{ url_for('admin.smtp.test_send') }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-success btn-lg px-5">发送测试邮件</button>
+                    </form>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-footer bg-light text-muted text-center py-3">
+            <small>配置保存后立即生效，无需重启服务。建议先填写完整后点击“发送测试邮件”验证。</small>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript：动态显示/隐藏字段 -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const providerSelect = document.getElementById('provider');
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('mail_password');
+
+    const fieldGroups = {
+        'gmail': ['username-group', 'password-group'],
+        'outlook': ['username-group', 'password-group'],
+        'qq': ['username-group', 'password-group'],
+        '163': ['username-group', 'password-group'],
+        'sendgrid': ['username-group', 'password-group'],
+        'custom': ['server-group', 'port-group', 'tls-group', 'ssl-group', 'username-group', 'password-group']
+    };
+
+    function toggleFields() {
+        const selected = providerSelect.value;
+        document.querySelectorAll('.smtp-field-group').forEach(group => {
+            group.style.display = 'none';
+        });
+
+        if (fieldGroups[selected]) {
+            fieldGroups[selected].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'block';
+            });
+        }
+    }
+
+    // 密码显示/隐藏
+    if (togglePasswordBtn && passwordInput) {
+        togglePasswordBtn.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? '显示' : '隐藏';
+        });
+    }
+
+    providerSelect.addEventListener('change', toggleFields);
+    toggleFields();  // 页面加载时立即执行一次
+});
+</script>
+{% endblock %}

@@ -1,6 +1,8 @@
 from app import db
 from datetime import datetime
 from flask_login import UserMixin
+from datetime import datetime
+
 
 # 用户表（后台登录用）
 class User(db.Model, UserMixin):
@@ -131,3 +133,23 @@ class FeatureSeries(db.Model):
 
     def __repr__(self):
         return f'<FeatureSeries {self.name}>'
+
+
+class SmtpConfig(db.Model):
+    __tablename__ = 'smtp_config'  # 故意用独立表名，避免与现有表冲突
+    
+    id = db.Column(db.Integer, primary_key=True)
+    provider = db.Column(db.String(50), default='gmail', nullable=False)  # gmail / qq / custom 等
+    mail_server = db.Column(db.String(100))
+    mail_port = db.Column(db.Integer, default=587)
+    mail_use_tls = db.Column(db.Boolean, default=True)
+    mail_use_ssl = db.Column(db.Boolean, default=False)
+    mail_username = db.Column(db.String(120))
+    mail_password = db.Column(db.String(255))  # 暂时明文，生产环境可后续加密
+    test_recipient = db.Column(db.String(120), default='')  # 用于一键测试的邮箱
+    default_sender_name = db.Column(db.String(100), default='酒店家具官网')
+    is_active = db.Column(db.Boolean, default=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<SmtpConfig {self.provider} - {self.mail_username}>'
