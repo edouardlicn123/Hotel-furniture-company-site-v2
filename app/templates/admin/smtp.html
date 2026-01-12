@@ -23,6 +23,7 @@
                 {% endif %}
             {% endwith %}
 
+            <!-- 保存配置的独立 form -->
             <form method="POST">
                 <!-- 服务商预设选择 -->
                 <div class="mb-4">
@@ -30,13 +31,13 @@
                     <select class="form-select form-select-lg" id="provider" name="provider">
                         <option value="gmail" {% if config.provider == 'gmail' %}selected{% endif %}>Google Gmail（国外服务器首选）</option>
                         <option value="outlook" {% if config.provider == 'outlook' %}selected{% endif %}>Microsoft Outlook / Hotmail</option>
-                        <option value="qq" {% if config.provider == 'qq' %}selected{% endif %}>QQ 邮箱</option>
-                        <option value="163" {% if config.provider == '163' %}selected{% endif %}>网易 163 邮箱</option>
+                        <option value="qq" {% if config.provider == 'qq' %}selected{% endif %}>QQ 邮箱（国内推荐）</option>
+                        <option value="163" {% if config.provider == '163' %}selected{% endif %}>网易 163 邮箱（国内最稳定，推荐）</option>
                         <option value="sendgrid" {% if config.provider == 'sendgrid' %}selected{% endif %}>SendGrid（API方式）</option>
                         <option value="custom" {% if config.provider == 'custom' %}selected{% endif %}>自定义 SMTP（手动填写全部）</option>
                     </select>
                     <div class="form-text mt-2 text-muted">
-                        选择后系统会自动填充常见服务器/端口设置，减少手动输入错误。
+                        选择后系统会自动填充服务器/端口设置，减少手动输入错误。
                     </div>
                 </div>
 
@@ -73,15 +74,19 @@
                 </div>
 
                 <div id="password-group" class="smtp-field-group mb-4">
-                    <label for="mail_password" class="form-label fw-bold fs-5">密码 / 授权码 <span class="text-danger">*</span></label>
+                    <label for="mail_password" class="form-label fw-bold fs-5">授权码 / 密码 <span class="text-danger">*</span></label>
                     <div class="input-group input-group-lg">
                         <input type="password" class="form-control" id="mail_password" name="mail_password"
                                value="{{ config.mail_password or '' }}" required placeholder="Gmail 需使用应用专用密码">
                         <button class="btn btn-outline-secondary" type="button" id="togglePassword">显示</button>
                     </div>
-                    <div class="form-text mt-2">
-                        Gmail：请使用“应用专用密码”（非邮箱密码）<br>
-                        QQ/163：请使用“授权码”
+                    <div class="form-text mt-2 text-warning fw-bold">
+                        <strong>重要提示（请仔细阅读！）</strong>
+                        <ul class="mb-0">
+                            <li><strong>网易 163 / QQ 邮箱</strong>：必须使用官网生成的<strong>授权码</strong>（16位），不是登录密码！</li>
+                            <li><strong>Gmail</strong>：必须使用<strong>应用专用密码</strong>，在 https://myaccount.google.com/apppasswords 生成</li>
+                            <li>密码错误会导致553/535错误，请确保输入正确！</li>
+                        </ul>
                     </div>
                 </div>
 
@@ -89,7 +94,7 @@
                     <label for="default_sender_name" class="form-label fw-bold">发件人显示名称</label>
                     <input type="text" class="form-control form-control-lg" id="default_sender_name" name="default_sender_name"
                            value="{{ config.default_sender_name or '酒店家具官网' }}">
-                    <div class="form-text">邮件中显示的发件人名称，例如：酒店家具官网询价系统</div>
+                    <div class="form-text">邮件中显示的发件人名称</div>
                 </div>
 
                 <div class="mb-4">
@@ -104,19 +109,20 @@
                     <label class="form-check-label fw-bold" for="is_active">启用邮件发送功能</label>
                 </div>
 
-                <!-- 操作按钮 -->
-                <div class="d-flex gap-3 justify-content-center mt-5">
-                    <button type="submit" class="btn btn-primary btn-lg px-5">保存配置</button>
-                    
-                    <form action="{{ url_for('admin.smtp.test_send') }}" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-success btn-lg px-5">发送测试邮件</button>
-                    </form>
-                </div>
+                <!-- 保存配置按钮 -->
+                <button type="submit" class="btn btn-primary btn-lg px-5">保存配置</button>
             </form>
+
+            <!-- 测试发送按钮 - 完全独立的 form -->
+            <div class="mt-4 text-center">
+                <form action="{{ url_for('admin.smtp.test_send') }}" method="POST">
+                    <button type="submit" class="btn btn-success btn-lg px-5">发送测试邮件</button>
+                </form>
+            </div>
         </div>
 
         <div class="card-footer bg-light text-muted text-center py-3">
-            <small>配置保存后立即生效，无需重启服务。建议先填写完整后点击“发送测试邮件”验证。</small>
+            <small>配置保存后立即生效，无需重启服务。建议先用网易 163 邮箱测试，输入授权码后立即验证。</small>
         </div>
     </div>
 </div>
@@ -151,7 +157,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 密码显示/隐藏
     if (togglePasswordBtn && passwordInput) {
         togglePasswordBtn.addEventListener('click', function () {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -161,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     providerSelect.addEventListener('change', toggleFields);
-    toggleFields();  // 页面加载时立即执行一次
+    toggleFields();
 });
 </script>
 {% endblock %}

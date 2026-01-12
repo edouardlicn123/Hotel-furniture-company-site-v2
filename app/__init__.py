@@ -21,6 +21,9 @@ login_manager.login_message_category = 'warning'
 def create_app():
     app = Flask(__name__)
 
+    app.config['TESTING'] = False
+    app.testing = False
+
     # 基础配置
     app.config['SECRET_KEY'] = 'xai-super-secret-2026-random-string-abc123xyz'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'

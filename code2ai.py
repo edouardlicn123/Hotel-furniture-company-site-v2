@@ -7,7 +7,9 @@ code2ai.py - 项目核心源码汇总工具（优化结构版）
 功能：扫描项目目录，收集核心源码文件（排除图片、上传、数据库、缓存等），
       生成带时间戳的审查文件，供 AI 审查使用。
 
-当前状态（2026-01-09）：后台管理强化完成（新增网站模式切换、企业介绍、联系方式全动态管理，包括电话、电邮、WhatsApp、WeChat、传真、地址），前端全站同步显示（关于我们、联系页面、页脚），购物车功能已完整上线
+当前状态（2026-01-10）：后台管理强化完成（新增网站模式切换、企业介绍、联系方式全动态管理，包括电话、电邮、WhatsApp、WeChat、传真、地址），
+前端全站同步显示（关于我们、联系页面、页脚），购物车功能已完整上线，
+新增后台独立 SMTP 配置管理页面（/admin/smtp）及专用主题 admin.css。
 """
 
 import os
@@ -50,20 +52,22 @@ IMAGE_FONT_EXTENSIONS: Set[str] = {
     '.woff', '.woff2', '.ttf', '.otf', '.eot'
 }
 
-# 特殊包含规则（针对特定路径或文件名）
+# 特殊包含规则（针对特定路径或文件名） - 2026-01-10 更新
 SPECIAL_INCLUDE_RULES = [
-    # 主题 CSS
+    # 主题 CSS（包含新增的 admin.css）
     lambda p: p.suffix.lower() == '.css' and 'themes' in p.parts,
-    # admin 模板
+    # admin 后台所有模板（新增 SMTP 相关页面）
     lambda p: p.suffix.lower() == '.html' and 'admin' in p.parts,
-    # partials 模板
-    lambda p: p.suffix.lower() == '.html' and 'partials' in p.parts,
+    # partials 模板（新增 admin_style.html）
+    lambda p: p.suffix.lower() == '.html' and 'partials' in p.parts and 'admin' in p.name.lower(),
     # series 前端模板
     lambda p: p.suffix.lower() == '.html' and p.parts[-2] == 'series' and 'templates' in p.parts,
     # 购物车页面模板
     lambda p: p.name == 'cart.html' and 'templates' in p.parts,
     # 购物车 JS
     lambda p: p.name == 'cart.js' and p.parent.name == 'js' and 'static' in p.parts,
+    # SMTP 路由文件（新增）
+    lambda p: p.name == 'smtp.py' and 'admin' in p.parts,
     # Dockerfile（无扩展名）
     lambda p: p.name.lower() == 'dockerfile',
 ]
@@ -91,6 +95,10 @@ def is_excluded(path: Path) -> bool:
     if 'static/uploads' in str(path):
         return True
 
+    # 新增：排除 instance 目录下的所有文件（数据库已重建，不需重复监控）
+    if 'instance' in path.parts:
+        return True
+
     return False
 
 
@@ -100,7 +108,7 @@ def is_included(path: Path) -> bool:
     if path.suffix.lower() in INCLUDE_EXTENSIONS:
         return True
 
-    # 特殊包含规则
+    # 特殊包含规则（已扩展 SMTP 和 admin 相关）
     for rule in SPECIAL_INCLUDE_RULES:
         if rule(path):
             return True
@@ -184,7 +192,9 @@ def main() -> None:
 # 生成时间：{datetime.now().isoformat()}
 # 包含文件数：{len(files)}
 # 已优化排除：图片、上传文件、数据库、缓存、IDE 配置等
-# 当前状态：后台管理强化完成（新增网站模式切换、企业介绍、联系方式全动态管理，包括电话、电邮、WhatsApp、WeChat、传真、地址），前端全站同步显示（关于我们、联系页面、页脚），购物车功能已完整上线
+# 当前状态（2026-01-10）：后台管理强化完成（新增网站模式切换、企业介绍、联系方式全动态管理，包括电话、电邮、WhatsApp、WeChat、传真、地址），
+# 前端全站同步显示（关于我们、联系页面、页脚），购物车功能已完整上线，
+# 新增后台独立 SMTP 配置管理页面（/admin/smtp）及专用主题 admin.css。
 
 {"=" * 80}
 
