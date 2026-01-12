@@ -54,7 +54,7 @@
         </button>
     </div>
 
-    <!-- 联系信息填写区 + 验证码（仅 official 模式） -->
+    <!-- 联系信息填写区 + 验证码图片（仅 official 模式） -->
     {% if mode == 'official' %}
     <div class="card mb-5 shadow-sm">
         <div class="card-body">
@@ -73,21 +73,23 @@
                 </div>
             </div>
 
-            <!-- Verification Code -->
+            <!-- 验证码图片区域 -->
             <div class="row g-3 mt-3">
                 <div class="col-md-6">
                     <label class="form-label">Verification Code <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="verification-input" 
                                placeholder="Enter 4-digit code" maxlength="4" required>
-                        <span class="input-group-text bg-light fw-bold" id="verification-code-display" 
-                              style="min-width: 80px; text-align:center; font-size:1.1rem;">
-                            <!-- JS fills this -->
-                        </span>
+                        <div class="input-group-text p-0 border-0" style="width:120px; height:42px; background:#f8f9fa; overflow:hidden;">
+                            <canvas id="verification-canvas" width="120" height="42"></canvas>
+                        </div>
                     </div>
-                    <small class="text-muted d-block mt-1">
-                        Please enter the code shown above
-                    </small>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-verification">
+                            Refresh Code
+                        </button>
+                        <small class="text-muted ms-2">Please enter the code shown in the image</small>
+                    </div>
                 </div>
             </div>
 
@@ -109,7 +111,7 @@
         </p>
         <p class="mb-0">
             {% if mode == 'official' %}
-            Please fill in your contact information, enter the verification code and use "Send Email Inquiry" for fastest response.
+            Please fill in your contact information, enter the verification code shown in the image and use "Send Email Inquiry" for fastest response.
             {% else %}
             Use "Screenshot" or "Export as CSV" to save your selection and contact us manually.
             {% endif %}
@@ -129,19 +131,51 @@
             Browse Products
         </a>
     </div>
+
+    <!-- Toast 容器 -->
+    <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+        <div id="toast-container"></div>
+    </div>
 </div>
 
-<!-- html2canvas for screenshot -->
+<!-- html2canvas -->
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
 <script>
 // ==================== Global Config ====================
 const CART_KEY = 'inquiryCart';
+const LAST_SEND_KEY = 'lastInquirySendTime';
+const SEND_COOLDOWN = 120000; // 2 minutes
 let generatedCode = '';
 
-// ==================== Cart Core Functions ====================
+// ==================== Toast ====================
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.role = 'alert';
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    container.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+    bsToast.show();
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
+// ==================== Cart Functions ====================
 function getCart() {
-    return JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    const data = localStorage.getItem(CART_KEY);
+    if (!data) return [];
+    try {
+        return JSON.parse(data);
+    } catch (e) {
+        console.error('Failed to parse cart data:', e);
+        return [];
+    }
 }
 
 function saveCart(items) {
@@ -192,65 +226,91 @@ function removeItem(index) {
     renderCart();
 }
 
-// ==================== Verification Code Functions ====================
+// ==================== Verification Code Image Generation ====================
 function generateVerificationCode() {
     generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-    const display = document.getElementById('verification-code-display');
-    if (display) {
-        display.textContent = generatedCode;
+    
+    const canvas = document.getElementById('verification-canvas');
+    if (!canvas) {
+        console.warn('Verification canvas not found');
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        console.warn('Cannot get canvas context');
+        return;
+    }
+    
+    // Clear and draw background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Interference lines
+    for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.strokeStyle = `rgba(0,0,0,${Math.random()*0.3 + 0.1})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+    
+    // Draw text
+    ctx.font = 'bold 28px Arial';
+    ctx.textBaseline = 'middle';
+    
+    for (let i = 0; i < generatedCode.length; i++) {
+        const x = 15 + i * 26;
+        const y = 21 + (Math.random() * 8 - 4);
+        const rotation = (Math.random() * 30 - 15) * Math.PI / 180;
+        
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
+        ctx.fillStyle = ['#2c3e50', '#34495e', '#7f8c8d', '#95a5a6'][Math.floor(Math.random()*4)];
+        ctx.fillText(generatedCode[i], -10, 0);
+        ctx.restore();
+    }
+    
+    // Noise dots
+    for (let i = 0; i < 40; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        ctx.fillStyle = `rgba(0,0,0,${Math.random()*0.4})`;
+        ctx.fillRect(x, y, 1.5, 1.5);
     }
 }
 
+// Refresh button
+document.getElementById('refresh-verification')?.addEventListener('click', generateVerificationCode);
+
+// Validate code
 function validateVerificationCode() {
     const input = document.getElementById('verification-input')?.value.trim();
     return input === generatedCode;
 }
 
-// ==================== Button Handlers ====================
-document.getElementById('reset-btn')?.addEventListener('click', () => {
-    if (confirm('Clear entire cart? This cannot be undone.')) {
-        localStorage.removeItem(CART_KEY);
-        renderCart();
-    }
-});
-
-document.getElementById('screenshot-btn')?.addEventListener('click', () => {
-    html2canvas(document.getElementById('cart-items'), {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: null
-    }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    });
-});
-
-document.getElementById('export-csv-btn')?.addEventListener('click', () => {
-    const items = getCart();
-    if (items.length === 0) return alert('Cart is empty');
-
-    let csv = 'Product Code,Product Name,Image URL\n';
-    items.forEach(item => {
-        csv += `"${item.code}","${item.name.replace(/"/g, '""')}","${item.image || ''}"\n`;
-    });
-
-    const blob = new Blob([csv], {type: 'text/csv'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-});
-
-// Send Email Inquiry (with verification)
+// ==================== Send Email with Toast ====================
 document.getElementById('send-email-btn')?.addEventListener('click', async () => {
     const items = getCart();
     if (items.length === 0) {
-        alert("Your inquiry cart is empty. Please add some products first.");
+        showToast('Your inquiry cart is empty. Please add some products first.', 'danger');
         return;
+    }
+
+    // Cooldown check
+    const lastSendTime = localStorage.getItem(LAST_SEND_KEY);
+    if (lastSendTime) {
+        const timeDiff = Date.now() - parseInt(lastSendTime);
+        if (timeDiff < SEND_COOLDOWN) {
+            const remaining = SEND_COOLDOWN - timeDiff;
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            showToast(`Please wait before sending another inquiry. You can send again in ${minutes} minute${minutes !== 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}.`, 'danger');
+            return;
+        }
     }
 
     let email = '';
@@ -260,13 +320,13 @@ document.getElementById('send-email-btn')?.addEventListener('click', async () =>
     whatsapp = document.getElementById('user-whatsapp')?.value.trim();
 
     if (!email) {
-        alert("Please enter your email address.");
+        showToast('Please enter your email address.', 'danger');
         document.getElementById('user-email')?.focus();
         return;
     }
 
     if (!validateVerificationCode()) {
-        alert("Verification code is incorrect. Please check and try again.");
+        showToast('The verification code is incorrect. Please check the image and try again.', 'danger');
         document.getElementById('verification-input')?.focus();
         return;
     }
@@ -294,15 +354,15 @@ document.getElementById('send-email-btn')?.addEventListener('click', async () =>
         const result = await response.json();
 
         if (response.ok) {
-            alert(result.message || "Inquiry sent successfully! We will contact you soon.");
-            // Refresh code after success
+            showToast(result.message || 'Inquiry sent successfully! We will contact you soon.', 'success');
+            localStorage.setItem(LAST_SEND_KEY, Date.now().toString());
             generateVerificationCode();
             document.getElementById('verification-input').value = '';
         } else {
-            alert("Failed to send: " + (result.error || "Unknown error"));
+            showToast(result.error || 'Failed to send inquiry. Please try again later.', 'danger');
         }
     } catch (err) {
-        alert("Connection error: " + err.message);
+        showToast('Network error. Please check your connection and try again.', 'danger');
     } finally {
         btn.disabled = false;
         spinner?.classList.add('d-none');
@@ -310,11 +370,54 @@ document.getElementById('send-email-btn')?.addEventListener('click', async () =>
     }
 });
 
+// ==================== Other Buttons ====================
+document.getElementById('screenshot-btn')?.addEventListener('click', () => {
+    html2canvas(document.getElementById('cart-items'), {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+});
+
+document.getElementById('export-csv-btn')?.addEventListener('click', () => {
+    const items = getCart();
+    if (items.length === 0) {
+        showToast('Cart is empty.', 'danger');
+        return;
+    }
+
+    let csv = 'Product Code,Product Name,Image URL\n';
+    items.forEach(item => {
+        csv += `"${item.code}","${item.name.replace(/"/g, '""')}","${item.image || ''}"\n`;
+    });
+
+    const blob = new Blob([csv], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+document.getElementById('reset-btn')?.addEventListener('click', () => {
+    if (confirm('Clear entire cart? This cannot be undone.')) {
+        localStorage.removeItem(CART_KEY);
+        renderCart();
+        showToast('Cart has been cleared.', 'info');
+    }
+});
+
 // ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
     renderCart();
     {% if mode == 'official' %}
-    generateVerificationCode();
+    generateVerificationCode(); // 确保在 official 模式下立即生成验证码
     {% endif %}
 });
 </script>
