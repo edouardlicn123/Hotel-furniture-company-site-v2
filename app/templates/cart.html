@@ -10,11 +10,57 @@
 
 {% block content %}
 <div class="container my-5">
-    <!-- 操作按钮 -->
-    <div class="d-flex flex-wrap gap-3 mb-4">
-        <button id="screenshot-btn" class="btn btn-primary btn-lg">Screenshot</button>
-        <button id="export-csv-btn" class="btn btn-primary btn-lg">Export as CSV</button>
-        <button id="reset-btn" class="btn btn-primary btn-lg">Reset Cart</button>
+    <!-- 操作按钮区域 - 使用统一标签方便管理 -->
+    <div class="d-flex flex-wrap gap-3 mb-5 operation-btn-group">
+        <!-- 1. WhatsApp 仅 official 模式显示（独立区块） -->
+        {% if mode == 'official' and (whatsapp1 or whatsapp2) %}
+        <div class="contact-section text-center w-100 py-4 bg-light rounded shadow-sm mb-4">
+            <h4 class="mb-3 text-success">
+                <i class="fab fa-whatsapp me-2"></i>Quick Inquiry via WhatsApp
+            </h4>
+            <p class="lead mb-0">
+                WhatsApp:
+                {% if whatsapp1 %}
+                <a href="https://wa.me/{{ whatsapp1|replace('+', '')|replace('-', '')|replace(' ', '')|replace('(', '')|replace(')', '') }}"
+                   class="text-success text-decoration-none fw-bold mx-2"
+                   target="_blank" rel="noopener">
+                    <i class="fab fa-whatsapp"></i> {{ whatsapp1 }}
+                </a>
+                {% endif %}
+                {% if whatsapp2 %}
+                {% if whatsapp1 %}/{% endif %}
+                <a href="https://wa.me/{{ whatsapp2|replace('+', '')|replace('-', '')|replace(' ', '')|replace('(', '')|replace(')', '') }}"
+                   class="text-success text-decoration-none fw-bold mx-2"
+                   target="_blank" rel="noopener">
+                    <i class="fab fa-whatsapp"></i> {{ whatsapp2 }}
+                </a>
+                {% endif %}
+            </p>
+            <small class="text-muted d-block mt-2">
+                Click the number to start a WhatsApp conversation and get a quick quote.
+            </small>
+        </div>
+        {% endif %}
+
+        <!-- 2 & 3. Screenshot + Export CSV 仅 catalog 模式显示 -->
+        {% if mode == 'catalog' %}
+        <button id="screenshot-btn" class="btn btn-primary btn-lg operation-btn catalog-only">
+            Screenshot
+        </button>
+        <button id="export-csv-btn" class="btn btn-primary btn-lg operation-btn catalog-only">
+            Export as CSV
+        </button>
+        {% endif %}
+
+        <!-- 4. 清空购物车 - 所有模式都显示 -->
+        <button id="reset-btn" class="btn btn-outline-danger btn-lg operation-btn">
+            Reset Cart
+        </button>
+
+        <!-- 5. 新增：发送邮件 - 所有模式都显示（占位） -->
+        <button id="send-email-btn" class="btn btn-success btn-lg operation-btn">
+            Send Email Inquiry
+        </button>
     </div>
 
     <!-- 重要提示 -->
@@ -25,41 +71,15 @@
             The list will be lost if you close the browser, clear cache, or switch devices.
         </p>
         <p class="mb-0">
-            Please use the <strong>"Screenshot"</strong> button above to save your cart as an image, 
-            then send the screenshot to us via the Contact page or email for a detailed quotation.
-        </p>
-    </div>
-
-    <!-- 新增：WhatsApp 联系方式区块（全英文版） -->
-    <!-- 已做好隐藏准备：仅在 mode == 'official' 且至少有一个 WhatsApp 号码时显示 -->
-    {% if mode == 'official' and (whatsapp1 or whatsapp2) %}
-    <div class="contact-section text-center mt-5 mb-5 py-4 bg-light rounded shadow-sm">
-        <h4 class="mb-3 text-success">
-            <i class="fab fa-whatsapp me-2"></i>Quick Inquiry via WhatsApp
-        </h4>
-        <p class="lead mb-0">
-            WhatsApp:
-            {% if whatsapp1 %}
-            <a href="https://wa.me/{{ whatsapp1|replace('+', '')|replace('-', '')|replace(' ', '')|replace('(', '')|replace(')', '') }}"
-               class="text-success text-decoration-none fw-bold mx-2"
-               target="_blank" rel="noopener">
-                <i class="fab fa-whatsapp"></i> {{ whatsapp1 }}
-            </a>
-            {% endif %}
-            {% if whatsapp2 %}
-            {% if whatsapp1 %}/{% endif %}
-            <a href="https://wa.me/{{ whatsapp2|replace('+', '')|replace('-', '')|replace(' ', '')|replace('(', '')|replace(')', '') }}"
-               class="text-success text-decoration-none fw-bold mx-2"
-               target="_blank" rel="noopener">
-                <i class="fab fa-whatsapp"></i> {{ whatsapp2 }}
-            </a>
+            {% if mode == 'catalog' %}
+            Please use <strong>"Screenshot"</strong> or <strong>"Export as CSV"</strong> to save your selection, 
+            then send it to us via email or contact page for quotation.
+            {% else %}
+            Please use the <strong>WhatsApp</strong> or <strong>Send Email Inquiry</strong> button 
+            to contact us directly for detailed quotation.
             {% endif %}
         </p>
-        <small class="text-muted d-block mt-2">
-            Click the number to start a WhatsApp conversation and get a quick quote.
-        </small>
     </div>
-    {% endif %}
 
     <!-- 购物车列表 -->
     <div id="cart-items" class="list-group mb-5">
@@ -78,7 +98,7 @@
     </div>
 </div>
 
-<!-- html2canvas for screenshot -->
+<!-- html2canvas for screenshot (只在需要时加载也可以，但这里保持原样) -->
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
 <script>
@@ -128,9 +148,13 @@ function removeItem(index) {
     renderCart();
 }
 
-// 截图
+// 截图（catalog only）
 document.getElementById('screenshot-btn')?.addEventListener('click', () => {
-    html2canvas(document.body, {scale: 2, useCORS: true}).then(canvas => {
+    html2canvas(document.querySelector('#cart-items'), {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null
+    }).then(canvas => {
         const link = document.createElement('a');
         link.download = `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -138,7 +162,7 @@ document.getElementById('screenshot-btn')?.addEventListener('click', () => {
     });
 });
 
-// 导出 CSV
+// 导出 CSV（catalog only）
 document.getElementById('export-csv-btn')?.addEventListener('click', () => {
     const items = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
     if (items.length === 0) return alert('Cart is empty');
@@ -157,15 +181,30 @@ document.getElementById('export-csv-btn')?.addEventListener('click', () => {
     URL.revokeObjectURL(url);
 });
 
-// 清空
+// 清空购物车（全模式）
 document.getElementById('reset-btn')?.addEventListener('click', () => {
-    if (confirm('Clear entire cart?')) {
+    if (confirm('Clear entire cart? This action cannot be undone.')) {
         localStorage.removeItem(CART_KEY);
         renderCart();
     }
 });
 
+// 发送邮件按钮（占位）
+document.getElementById('send-email-btn')?.addEventListener('click', () => {
+    alert('Email inquiry function is under development. Please use WhatsApp or screenshot for now.');
+});
+
 // 页面加载时渲染
 document.addEventListener('DOMContentLoaded', renderCart);
 </script>
+
+<style>
+/* 可选：给操作按钮组一些统一的视觉管理 */
+.operation-btn-group {
+    /* 可以在这里加 media query 或其他统一样式 */
+}
+.operation-btn {
+    min-width: 160px;
+}
+</style>
 {% endblock %}
