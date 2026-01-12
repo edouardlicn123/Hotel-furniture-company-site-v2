@@ -48,12 +48,14 @@ def create_app():
     from app.routes.featured import featured_bp
     from app.routes.admin import admin_bp
     from app.routes.series import series_bp
+    from app.routes.cart import cart_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(products_bp, url_prefix='/products')
     app.register_blueprint(featured_bp, url_prefix='/featured')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(series_bp)
+    app.register_blueprint(cart_bp)
 
     # 全局上下文处理器（注入 SEO、公司信息等变量到所有模板）
     app.context_processor(inject_seo_data)

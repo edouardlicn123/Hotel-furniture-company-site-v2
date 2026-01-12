@@ -10,9 +10,9 @@
 
 {% block content %}
 <div class="container my-5">
-    <!-- 操作按钮区域 - 使用统一标签方便管理 -->
-    <div class="d-flex flex-wrap gap-3 mb-5 operation-btn-group">
-        <!-- 1. WhatsApp 仅 official 模式显示（独立区块） -->
+    <!-- 操作按钮区域 -->
+    <div class="d-flex flex-wrap gap-3 mb-4 operation-btn-group">
+        <!-- WhatsApp 快速联系（仅 official 且有号码） -->
         {% if mode == 'official' and (whatsapp1 or whatsapp2) %}
         <div class="contact-section text-center w-100 py-4 bg-light rounded shadow-sm mb-4">
             <h4 class="mb-3 text-success">
@@ -21,104 +21,149 @@
             <p class="lead mb-0">
                 WhatsApp:
                 {% if whatsapp1 %}
-                <a href="https://wa.me/{{ whatsapp1|replace('+', '')|replace('-', '')|replace(' ', '')|replace('(', '')|replace(')', '') }}"
-                   class="text-success text-decoration-none fw-bold mx-2"
-                   target="_blank" rel="noopener">
-                    <i class="fab fa-whatsapp"></i> {{ whatsapp1 }}
+                <a href="https://wa.me/{{ whatsapp1|replace('+', '')|replace('-', '')|replace(' ', '') }}" 
+                   class="text-success fw-bold mx-2" target="_blank" rel="noopener">
+                    {{ whatsapp1 }}
                 </a>
                 {% endif %}
                 {% if whatsapp2 %}
                 {% if whatsapp1 %}/{% endif %}
-                <a href="https://wa.me/{{ whatsapp2|replace('+', '')|replace('-', '')|replace(' ', '')|replace('(', '')|replace(')', '') }}"
-                   class="text-success text-decoration-none fw-bold mx-2"
-                   target="_blank" rel="noopener">
-                    <i class="fab fa-whatsapp"></i> {{ whatsapp2 }}
+                <a href="https://wa.me/{{ whatsapp2|replace('+', '')|replace('-', '')|replace(' ', '') }}" 
+                   class="text-success fw-bold mx-2" target="_blank" rel="noopener">
+                    {{ whatsapp2 }}
                 </a>
                 {% endif %}
             </p>
-            <small class="text-muted d-block mt-2">
-                Click the number to start a WhatsApp conversation and get a quick quote.
+            <small class="text-muted mt-2 d-block">
+                Click to chat directly and get a quick quote.
             </small>
         </div>
         {% endif %}
 
-        <!-- 2 & 3. Screenshot + Export CSV 仅 catalog 模式显示 -->
+        <!-- catalog 模式专属按钮 -->
         {% if mode == 'catalog' %}
-        <button id="screenshot-btn" class="btn btn-primary btn-lg operation-btn catalog-only">
-            Screenshot
-        </button>
-        <button id="export-csv-btn" class="btn btn-primary btn-lg operation-btn catalog-only">
-            Export as CSV
-        </button>
+        <button id="screenshot-btn" class="btn btn-primary btn-lg operation-btn">Screenshot</button>
+        <button id="export-csv-btn" class="btn btn-primary btn-lg operation-btn">Export as CSV</button>
         {% endif %}
 
-        <!-- 4. 清空购物车 - 所有模式都显示 -->
-        <button id="reset-btn" class="btn btn-outline-danger btn-lg operation-btn">
-            Reset Cart
-        </button>
-
-        <!-- 5. 新增：发送邮件 - 所有模式都显示（占位） -->
-        <button id="send-email-btn" class="btn btn-success btn-lg operation-btn">
+        <!-- 全模式按钮 -->
+        <button id="reset-btn" class="btn btn-outline-danger btn-lg operation-btn">Reset Cart</button>
+        <button id="send-email-btn" class="btn btn-success btn-lg operation-btn" disabled>
+            <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
             Send Email Inquiry
         </button>
     </div>
 
-    <!-- 重要提示 -->
+    <!-- 联系信息填写区 + 验证码（仅 official 模式） -->
+    {% if mode == 'official' %}
+    <div class="card mb-5 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-4">Your Contact Information <small class="text-muted">(required for email inquiry)</small></h5>
+            
+            <div class="row g-3">
+                <!-- Email -->
+                <div class="col-md-6">
+                    <label for="user-email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="user-email" placeholder="your@email.com" required>
+                </div>
+                <!-- WhatsApp -->
+                <div class="col-md-6">
+                    <label for="user-whatsapp" class="form-label">WhatsApp Number</label>
+                    <input type="tel" class="form-control" id="user-whatsapp" placeholder="+86 123 4567 8900">
+                </div>
+            </div>
+
+            <!-- Verification Code -->
+            <div class="row g-3 mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Verification Code <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="verification-input" 
+                               placeholder="Enter 4-digit code" maxlength="4" required>
+                        <span class="input-group-text bg-light fw-bold" id="verification-code-display" 
+                              style="min-width: 80px; text-align:center; font-size:1.1rem;">
+                            <!-- JS fills this -->
+                        </span>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        Please enter the code shown above
+                    </small>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <small class="text-muted">
+                    We will use this information only to respond to your inquiry.
+                </small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Important Notice -->
     <div class="alert alert-warning p-4 mb-5">
         <h5 class="alert-heading">Important Notice</h5>
         <p class="mb-2">
             This inquiry cart is stored <strong>temporarily in your browser only</strong>. 
-            The list will be lost if you close the browser, clear cache, or switch devices.
+            Closing the browser or clearing cache will delete the list.
         </p>
         <p class="mb-0">
-            {% if mode == 'catalog' %}
-            Please use <strong>"Screenshot"</strong> or <strong>"Export as CSV"</strong> to save your selection, 
-            then send it to us via email or contact page for quotation.
+            {% if mode == 'official' %}
+            Please fill in your contact information, enter the verification code and use "Send Email Inquiry" for fastest response.
             {% else %}
-            Please use the <strong>WhatsApp</strong> or <strong>Send Email Inquiry</strong> button 
-            to contact us directly for detailed quotation.
+            Use "Screenshot" or "Export as CSV" to save your selection and contact us manually.
             {% endif %}
         </p>
     </div>
 
-    <!-- 购物车列表 -->
-    <div id="cart-items" class="list-group mb-5">
-        <!-- JS will insert items here -->
-    </div>
+    <!-- Cart Items -->
+    <div id="cart-items" class="list-group mb-5"></div>
 
-    <!-- 空状态 -->
+    <!-- Empty State -->
     <div id="empty-state" class="text-center py-5 d-none">
         <h3 class="text-muted mb-4">Your inquiry cart is empty</h3>
         <p class="lead text-muted mb-4">
-            Browse our products and click "Add to Cart" on any item you're interested in.
+            Start adding products you're interested in!
         </p>
         <a href="{{ url_for('products.list_products') }}" class="btn btn-primary btn-lg">
-            Browse All Products
+            Browse Products
         </a>
     </div>
 </div>
 
-<!-- html2canvas for screenshot (只在需要时加载也可以，但这里保持原样) -->
+<!-- html2canvas for screenshot -->
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
 <script>
-// 全局变量 key
+// ==================== Global Config ====================
 const CART_KEY = 'inquiryCart';
+let generatedCode = '';
 
-// 渲染购物车
+// ==================== Cart Core Functions ====================
+function getCart() {
+    return JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+}
+
+function saveCart(items) {
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+}
+
 function renderCart() {
-    const items = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    const items = getCart();
     const container = document.getElementById('cart-items');
-    const empty = document.getElementById('empty-state');
+    const emptyState = document.getElementById('empty-state');
+    const sendBtn = document.getElementById('send-email-btn');
 
     container.innerHTML = '';
 
     if (items.length === 0) {
-        empty.classList.remove('d-none');
+        emptyState.classList.remove('d-none');
+        if (sendBtn) sendBtn.disabled = true;
         return;
     }
 
-    empty.classList.add('d-none');
+    emptyState.classList.add('d-none');
+    if (sendBtn) sendBtn.disabled = false;
 
     items.forEach((item, index) => {
         const div = document.createElement('div');
@@ -127,10 +172,10 @@ function renderCart() {
             <img src="${item.image || '/static/img/placeholder.jpg'}" 
                  alt="${item.name}" 
                  class="me-4 rounded" 
-                 style="width: 80px; height: 80px; object-fit: cover;">
+                 style="width:80px;height:80px;object-fit:cover;">
             <div class="flex-grow-1">
                 <h5 class="mb-1">${item.name}</h5>
-                <p class="mb-0 text-muted">Code: <strong>${item.code}</strong></p>
+                <p class="mb-0 text-muted small">Code: <strong>${item.code}</strong></p>
             </div>
             <button class="btn btn-sm btn-danger" onclick="removeItem(${index})">
                 Remove
@@ -140,17 +185,37 @@ function renderCart() {
     });
 }
 
-// 删除单项
 function removeItem(index) {
-    let items = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    let items = getCart();
     items.splice(index, 1);
-    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    saveCart(items);
     renderCart();
 }
 
-// 截图（catalog only）
+// ==================== Verification Code Functions ====================
+function generateVerificationCode() {
+    generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const display = document.getElementById('verification-code-display');
+    if (display) {
+        display.textContent = generatedCode;
+    }
+}
+
+function validateVerificationCode() {
+    const input = document.getElementById('verification-input')?.value.trim();
+    return input === generatedCode;
+}
+
+// ==================== Button Handlers ====================
+document.getElementById('reset-btn')?.addEventListener('click', () => {
+    if (confirm('Clear entire cart? This cannot be undone.')) {
+        localStorage.removeItem(CART_KEY);
+        renderCart();
+    }
+});
+
 document.getElementById('screenshot-btn')?.addEventListener('click', () => {
-    html2canvas(document.querySelector('#cart-items'), {
+    html2canvas(document.getElementById('cart-items'), {
         scale: 2,
         useCORS: true,
         backgroundColor: null
@@ -162,14 +227,13 @@ document.getElementById('screenshot-btn')?.addEventListener('click', () => {
     });
 });
 
-// 导出 CSV（catalog only）
 document.getElementById('export-csv-btn')?.addEventListener('click', () => {
-    const items = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    const items = getCart();
     if (items.length === 0) return alert('Cart is empty');
 
     let csv = 'Product Code,Product Name,Image URL\n';
     items.forEach(item => {
-        csv += `"${item.code}","${item.name.replace(/"/g, '""')}","${item.image}"\n`;
+        csv += `"${item.code}","${item.name.replace(/"/g, '""')}","${item.image || ''}"\n`;
     });
 
     const blob = new Blob([csv], {type: 'text/csv'});
@@ -181,30 +245,77 @@ document.getElementById('export-csv-btn')?.addEventListener('click', () => {
     URL.revokeObjectURL(url);
 });
 
-// 清空购物车（全模式）
-document.getElementById('reset-btn')?.addEventListener('click', () => {
-    if (confirm('Clear entire cart? This action cannot be undone.')) {
-        localStorage.removeItem(CART_KEY);
-        renderCart();
+// Send Email Inquiry (with verification)
+document.getElementById('send-email-btn')?.addEventListener('click', async () => {
+    const items = getCart();
+    if (items.length === 0) {
+        alert("Your inquiry cart is empty. Please add some products first.");
+        return;
+    }
+
+    let email = '';
+    let whatsapp = '';
+    {% if mode == 'official' %}
+    email = document.getElementById('user-email')?.value.trim();
+    whatsapp = document.getElementById('user-whatsapp')?.value.trim();
+
+    if (!email) {
+        alert("Please enter your email address.");
+        document.getElementById('user-email')?.focus();
+        return;
+    }
+
+    if (!validateVerificationCode()) {
+        alert("Verification code is incorrect. Please check and try again.");
+        document.getElementById('verification-input')?.focus();
+        return;
+    }
+    {% endif %}
+
+    const payload = {
+        items: items,
+        email: email,
+        whatsapp: whatsapp
+    };
+
+    const btn = document.getElementById('send-email-btn');
+    const spinner = btn.querySelector('.spinner-border');
+    btn.disabled = true;
+    spinner?.classList.remove('d-none');
+    btn.lastChild.textContent = ' Sending...';
+
+    try {
+        const response = await fetch('/cart/send-inquiry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(result.message || "Inquiry sent successfully! We will contact you soon.");
+            // Refresh code after success
+            generateVerificationCode();
+            document.getElementById('verification-input').value = '';
+        } else {
+            alert("Failed to send: " + (result.error || "Unknown error"));
+        }
+    } catch (err) {
+        alert("Connection error: " + err.message);
+    } finally {
+        btn.disabled = false;
+        spinner?.classList.add('d-none');
+        btn.lastChild.textContent = 'Send Email Inquiry';
     }
 });
 
-// 发送邮件按钮（占位）
-document.getElementById('send-email-btn')?.addEventListener('click', () => {
-    alert('Email inquiry function is under development. Please use WhatsApp or screenshot for now.');
+// ==================== Initialization ====================
+document.addEventListener('DOMContentLoaded', () => {
+    renderCart();
+    {% if mode == 'official' %}
+    generateVerificationCode();
+    {% endif %}
 });
-
-// 页面加载时渲染
-document.addEventListener('DOMContentLoaded', renderCart);
 </script>
-
-<style>
-/* 可选：给操作按钮组一些统一的视觉管理 */
-.operation-btn-group {
-    /* 可以在这里加 media query 或其他统一样式 */
-}
-.operation-btn {
-    min-width: 160px;
-}
-</style>
 {% endblock %}
