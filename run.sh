@@ -8,12 +8,12 @@ clear
 
 echo
 echo "=================================================="
-echo "     酒店家具厂官网 - 一键启动脚本（国际源版）"
-echo "     使用官方 PyPI 源（国际源）"
+echo "     酒店家具厂官网 - 一键启动脚本（优化版）"
+echo "     支持自动生成 SECRET_KEY + 智能跳过重复安装"
 echo "=================================================="
 echo
 
-# 设置项目根目录为当前脚本所在目录
+# 项目根目录
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "[信息] 项目根目录: $PROJECT_ROOT"
 cd "$PROJECT_ROOT" || { echo "错误: 无法进入项目目录！"; exit 1; }
@@ -24,136 +24,155 @@ VENV_DIR="venv"
 # 使用官方 PyPI 源（国际源）
 PIP_INDEX="https://pypi.org/simple"
 
+# 环境文件
+ENV_FILE=".env"
+
 echo
 echo "[信息] 检查 Python3 是否已安装..."
 if ! command -v python3 >/dev/null 2>&1; then
-    echo "错误: 未在 PATH 中找到 python3！请先安装 Python 3 并确保其可访问。"
+    echo "错误: 未在 PATH 中找到 python3！请先安装 Python 3.9 或更高版本。"
     read -p "按 Enter 键退出..."
     exit 1
 fi
-echo "[信息] 已找到 python3 版本: $(python3 --version)"
+PYTHON_VERSION=$(python3 --version 2>&1)
+echo "[信息] 已找到 $PYTHON_VERSION"
 
-# 检查并创建虚拟环境
+# ===============================================
+# 步骤1：检查并处理 .env 文件 + SECRET_KEY
+# ===============================================
 echo
-if [ ! -d "$VENV_DIR" ]; then
-    echo "[1/5] 未检测到虚拟环境，正在创建虚拟环境（目录：$VENV_DIR）..."
+echo "[步骤 1/6] 检查并准备 SECRET_KEY（.env 文件）..."
+
+if [ ! -f "$ENV_FILE" ]; then
+    echo "[信息] 未找到 .env 文件，正在创建..."
+    touch "$ENV_FILE"
+fi
+
+if ! grep -q "FLASK_SECRET_KEY" "$ENV_FILE"; then
+    echo "[信息] 未检测到 FLASK_SECRET_KEY，正在生成安全的随机密钥..."
+    # 生成 64 字节的 URL-safe 随机密钥（足够安全）
+    SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(64))")
+    
+    # 写入 .env 文件（追加模式，避免覆盖其他配置）
+    echo "FLASK_SECRET_KEY=$SECRET_KEY" >> "$ENV_FILE"
+    echo "[成功] 已自动生成并写入 SECRET_KEY 到 $ENV_FILE"
+    echo "      （该密钥仅生成一次，后续启动将直接使用）"
+else
+    echo "[信息] 已检测到现有的 FLASK_SECRET_KEY，跳过生成。"
+fi
+
+# ===============================================
+# 步骤2：虚拟环境
+# ===============================================
+echo
+if [ ! -d "$VENV_DIR" ] || [ ! -f "$VENV_DIR/bin/activate" ]; then
+    echo "[步骤 2/6] 未检测到虚拟环境，正在创建（目录：$VENV_DIR）..."
     python3 -m venv "$VENV_DIR"
     if [ $? -ne 0 ]; then
-        echo "错误: 创建虚拟环境失败！请检查 Python3 和 venv 模块是否正确安装。"
-        read -p "按 Enter 键退出..."
+        echo "错误: 创建虚拟环境失败！请检查 Python3 和 venv 模块。"
         exit 1
     fi
     echo "[成功] 虚拟环境创建完成。"
 else
-    echo "[1/5] 已检测到现有虚拟环境（目录：$VENV_DIR）。"
+    echo "[步骤 2/6] 已检测到现有虚拟环境，跳过创建。"
 fi
 
 # 激活虚拟环境
-echo
-echo "[2/5] 正在激活虚拟环境..."
+echo "[信息] 正在激活虚拟环境..."
 source "$VENV_DIR/bin/activate"
 if [ $? -ne 0 ]; then
     echo "错误: 激活虚拟环境失败！"
-    read -p "按 Enter 键退出..."
     exit 1
 fi
-echo "[信息] 虚拟环境已激活。当前 Python 路径: $(which python)"
-echo "[信息] 当前 pip 路径: $(which pip)"
+echo "[信息] 虚拟环境已激活（Python: $(python --version)）"
 
-# 升级 pip 并安装依赖（使用官方源）
+# ===============================================
+# 步骤3：依赖安装（仅在必要时执行）
+# ===============================================
 echo
-echo "[3/5] 正在升级 pip 并安装项目依赖（使用官方 PyPI 源：$PIP_INDEX）..."
-pip install --upgrade pip -i "$PIP_INDEX" --verbose
-if [ $? -ne 0 ]; then
-    echo "警告: pip 升级失败，将继续使用现有版本..."
-else
-    echo "[信息] pip 已成功升级到 $(pip --version | awk '{print $2}')"
-fi
+echo "[步骤 3/6] 检查并安装项目依赖..."
 
-if [ -f "requirements.txt" ]; then
-    echo "[信息] 发现 requirements.txt，正在安装依赖包（详细输出）..."
-    pip install -r requirements.txt -i "$PIP_INDEX" --verbose
-    if [ $? -ne 0 ]; then
-        echo "警告: 部分依赖安装失败，程序可能无法正常运行。"
-        echo "请根据上方错误信息手动修复或安装缺失的包。"
+# 检查是否已安装核心依赖（以 flask 为代表）
+if python -c "import flask" 2>/dev/null; then
+    echo "[信息] 已检测到 Flask 等核心依赖已安装，跳过 pip install。"
+else
+    echo "[信息] 检测到依赖缺失或不完整，正在升级 pip 并安装..."
+    
+    pip install --upgrade pip -i "$PIP_INDEX" --quiet
+    if [ -f "requirements.txt" ]; then
+        echo "[信息] 正在安装 requirements.txt 中的依赖（详细输出）..."
+        pip install -r requirements.txt -i "$PIP_INDEX"
+        if [ $? -ne 0 ]; then
+            echo "警告: 部分依赖安装失败，请手动检查 requirements.txt"
+        else
+            echo "[成功] 所有依赖安装完成。"
+        fi
     else
-        echo "[成功] 所有依赖已安装完成。"
+        echo "警告: 未找到 requirements.txt！建议手动创建并添加依赖。"
     fi
-else
-    echo "警告: 未找到 requirements.txt 文件！将不安装任何依赖。"
-    echo "[信息] 如果项目需要依赖，请确保 requirements.txt 存在。"
 fi
 
-# 检查数据库是否存在
+# ===============================================
+# 步骤4：数据库初始化
+# ===============================================
 DB_PATH="instance/site.db"
 echo
 if [ ! -f "$DB_PATH" ]; then
-    echo "[4/5] 未检测到数据库文件（$DB_PATH），正在初始化数据库..."
+    echo "[步骤 4/6] 未检测到数据库，正在初始化..."
     if [ -f "init_schema.py" ]; then
-        echo "[信息] 正在执行 init_schema.py 创建数据库..."
         python init_schema.py
-        if [ $? -ne 0 ]; then
-            echo "错误: 执行 init_schema.py 失败！请检查脚本内容。"
-            read -p "按 Enter 键退出..."
+        if [ $? -eq 0 ] && [ -f "$DB_PATH" ]; then
+            echo "[成功] 数据库初始化完成。"
+        else
+            echo "错误: 数据库初始化失败！请检查 init_schema.py"
             deactivate
             exit 1
         fi
-        if [ -f "$DB_PATH" ]; then
-            echo "[成功] 数据库初始化完成（路径：$DB_PATH）。"
-        else
-            echo "警告: 初始化后仍未发现数据库文件，请检查 init_schema.py 的输出。"
-        fi
     else
-        echo "错误: 未找到 init_schema.py 脚本！无法初始化数据库。"
-        read -p "按 Enter 键退出..."
+        echo "错误: 未找到 init_schema.py，无法初始化数据库。"
         deactivate
         exit 1
     fi
 else
-    echo "[4/5] 已检测到现有数据库（$DB_PATH），跳过初始化。"
+    echo "[步骤 4/6] 已检测到现有数据库，跳过初始化。"
 fi
 
-# 启动 Flask 项目
+# ===============================================
+# 步骤5：启动 Flask
+# ===============================================
 echo
-echo "[5/5] 正在启动 Flask 项目..."
+echo "[步骤 5/6] 启动 Flask 项目..."
 echo "访问地址：http://127.0.0.1:5000"
 echo "按 Ctrl+C 可停止服务器。"
 echo
-echo "[信息] 正在尝试在浏览器新标签页中自动打开网站..."
 
-# 尝试在不同系统上以新标签页方式打开浏览器
+# 尝试自动打开浏览器（不同系统兼容）
 if command -v xdg-open >/dev/null 2>&1; then
-    # Linux：后台打开，避免阻塞脚本
-    echo "[信息] 系统为 Linux，使用 xdg-open 打开新标签页"
+    echo "[信息] Linux 系统，使用 xdg-open 打开浏览器..."
     nohup xdg-open http://127.0.0.1:5000 >/dev/null 2>&1 &
 elif command -v open >/dev/null 2>&1; then
-    # macOS：open 命令默认在新标签页打开（如果浏览器已运行）
-    echo "[信息] 系统为 macOS，使用 open 命令打开新标签页"
+    echo "[信息] macOS 系统，使用 open 打开浏览器..."
     open http://127.0.0.1:5000
 elif command -v start >/dev/null 2>&1; then
-    # Windows / Git Bash / WSL
-    echo "[信息] 系统为 Windows，使用 start 命令打开新标签页"
+    echo "[信息] Windows / Git Bash 系统，使用 start 打开浏览器..."
     start "" http://127.0.0.1:5000
 else
-    echo "[信息] 未检测到支持的浏览器打开命令，请手动在浏览器中打开 http://127.0.0.1:5000"
+    echo "[信息] 未找到浏览器打开命令，请手动访问 http://127.0.0.1:5000"
 fi
 
-echo
-echo "[信息] 正在启动 Flask 服务（执行 python app.py）..."
+echo "[信息] 启动 Flask 服务..."
 python app.py
 
 # 捕获退出状态
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
-    echo
-    echo "错误: Flask 项目运行出错，退出代码：$EXIT_CODE"
+    echo "错误: Flask 运行异常，退出代码：$EXIT_CODE"
 else
-    echo
     echo "[信息] Flask 项目已正常停止。"
 fi
 
 # 停用虚拟环境
-deactivate 2>/dev/null || echo "[信息] 虚拟环境已停用或未激活。"
+deactivate 2>/dev/null || true
 
 echo
 echo "=================================================="

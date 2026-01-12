@@ -77,6 +77,10 @@ SPECIAL_INCLUDE_RULES = [
     lambda p: p.name == 'cart.py' and 'routes' in p.parts,
     # Dockerfile（无扩展名）
     lambda p: p.name.lower() == 'dockerfile',
+    # 联系页路由
+    lambda p: p.name == 'contact.py' and 'routes' in p.parts,
+
+
 ]
 
 
