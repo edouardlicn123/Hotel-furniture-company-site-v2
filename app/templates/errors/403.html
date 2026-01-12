@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}403 - Access Denied{% endblock %}
+
+{% block content %}
+<div class="container my-5 py-5 text-center">
+    <h1 class="display-1 text-danger fw-bold mb-4">403</h1>
+    <h2 class="mb-4">Access Denied</h2>
+    <p class="lead text-muted mb-5">
+        You do not have permission to access this page.<br>
+        Please log in to the admin panel or contact the administrator for assistance.
+    </p>
+
+    <a href="{{ url_for('admin.main.login') }}" class="btn btn-primary btn-lg px-5">
+        Go to Login
+    </a>
+
+    <p class="mt-4 text-muted">
+        <small>If you believe this is an error, please contact us at: {{ settings.email1 or 'sales@hotel-furniture.com' }}</small>
+    </p>
+</div>
+{% endblock %}

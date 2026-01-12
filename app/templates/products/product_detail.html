@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ product.name }} - {{ company_name }}{% endblock %}
+{% block title %}{{ product.name }} - {{ settings.company_name or '酒店家具制造商' }}{% endblock %}
 
 {% block hero_section %}
     {% set hero_title = product.name %}
@@ -110,11 +110,14 @@
                         </li>
                     </ul>
 
+                    <!-- Inquire Now 按钮：仅在 official 模式显示 -->
+                    {% if settings.mode == 'official' %}
                     <div class="mt-5">
-                        <a href="/contact" class="btn btn-primary btn-lg w-100">Inquire Now</a>
+                        <a href="{{ url_for('main.contact') }}" class="btn btn-primary btn-lg w-100">Inquire Now</a>
                     </div>
+                    {% endif %}
 
-                    <!-- 新增：Add to Cart 按钮（结构完全不变，仅在此处追加） -->
+                    <!-- Add to Cart 按钮（无论模式都显示，保持原样） -->
                     <div class="mt-3">
                         <button id="add-to-cart"
                                 class="btn btn-primary btn-lg w-100"
