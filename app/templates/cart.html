@@ -4,179 +4,182 @@
 
 {% block hero_section %}
     {% set hero_title = "My Inquiry Cart" %}
-    {% set hero_subtitle = "Temporary list of selected products for quotation" %}
+    {% set hero_subtitle = "Selected products waiting for quotation" %}
     {% include 'partials/hero_small.html' %}
 {% endblock %}
 
 {% block content %}
 <div class="container my-5">
-    <!-- 操作按钮区域 -->
-    <div class="d-flex flex-wrap gap-3 mb-4 operation-btn-group">
-        <!-- WhatsApp 快速联系（仅 official 且有号码） -->
+    <!-- 1. 操作按钮区域 -->
+    <div class="d-flex flex-wrap gap-3 mb-5 justify-content-center justify-content-md-start operation-btn-group">
+        <!-- WhatsApp 快速联系（仅 official 模式） -->
         {% if settings.mode == 'official' and (settings.whatsapp1 or settings.whatsapp2) %}
-        <div class="contact-section text-center w-100 py-4 bg-light rounded shadow-sm mb-4">
+        <div class="contact-section w-100 text-center py-4 bg-light rounded-3 shadow-sm mb-4">
             <h4 class="mb-3 text-success">
-                <i class="fab fa-whatsapp me-2"></i>Quick Inquiry via WhatsApp
+                <i class="fab fa-whatsapp me-2 fs-3"></i>Quick Quote via WhatsApp
             </h4>
-            <p class="lead mb-0">
-                WhatsApp:
+            <p class="lead mb-2">
                 {% if settings.whatsapp1 %}
-                <a href="https://wa.me/{{ settings.whatsapp1|replace('+', '')|replace('-', '')|replace(' ', '') }}" 
-                   class="text-success fw-bold mx-2" target="_blank" rel="noopener">
+                <a href="https://wa.me/{{ settings.whatsapp1 | replace('+','') | replace('-','') | replace(' ','') }}"
+                   class="text-success fw-bold mx-2" target="_blank" rel="noopener noreferrer">
                     {{ settings.whatsapp1 }}
                 </a>
                 {% endif %}
                 {% if settings.whatsapp2 %}
                 {% if settings.whatsapp1 %}/{% endif %}
-                <a href="https://wa.me/{{ settings.whatsapp2|replace('+', '')|replace('-', '')|replace(' ', '') }}" 
-                   class="text-success fw-bold mx-2" target="_blank" rel="noopener">
+                <a href="https://wa.me/{{ settings.whatsapp2 | replace('+','') | replace('-','') | replace(' ','') }}"
+                   class="text-success fw-bold mx-2" target="_blank" rel="noopener noreferrer">
                     {{ settings.whatsapp2 }}
                 </a>
                 {% endif %}
             </p>
-            <small class="text-muted mt-2 d-block">
-                Click to chat directly and get a quick quote.
-            </small>
+            <small class="text-muted">Click to chat directly — fastest way to get quote</small>
         </div>
         {% endif %}
 
-        <!-- catalog 模式专属按钮 -->
+        <!-- catalog 模式专属工具 -->
         {% if settings.mode == 'catalog' %}
-        <button id="screenshot-btn" class="btn btn-primary btn-lg operation-btn">Screenshot</button>
-        <button id="export-csv-btn" class="btn btn-primary btn-lg operation-btn">Export as CSV</button>
+        <button id="screenshot-btn" class="btn btn-primary btn-lg px-5 operation-btn">
+            <i class="fas fa-camera me-2"></i>Screenshot
+        </button>
+        <button id="export-csv-btn" class="btn btn-primary btn-lg px-5 operation-btn">
+            <i class="fas fa-file-csv me-2"></i>Export CSV
+        </button>
         {% endif %}
 
-        <!-- 全模式通用按钮 -->
-        <button id="reset-btn" class="btn btn-primary btn-lg">Reset Cart</button>
+        <!-- 通用按钮 -->
+        <button id="reset-btn" class="btn btn-outline-danger btn-lg px-5">
+            <i class="fas fa-trash-alt me-2"></i>Reset Cart
+        </button>
 
-        <!-- 邮件发送按钮：仅在 official 模式下显示 -->
+        <!-- 邮件发送按钮（仅 official 模式） -->
         {% if settings.mode == 'official' %}
-        <button id="send-email-btn" class="btn btn-primary btn-lg" disabled>
-            <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
+        <button id="send-email-btn" class="btn btn-success btn-lg px-5 fw-bold" disabled>
+            <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
             Send Email Inquiry
         </button>
         {% endif %}
     </div>
 
-    <!-- 联系信息填写区 + 验证码图片：仅 official 模式 -->
+    <!-- 2. 联系信息 + 验证码（仅 official 模式） -->
     {% if settings.mode == 'official' %}
-    <div class="card mb-5 shadow-sm">
-        <div class="card-body">
-            <h5 class="card-title mb-4">Your Contact Information <small class="text-muted">(required for email inquiry)</small></h5>
-            
-            <div class="row g-3">
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="card-body p-4 p-md-5">
+            <h5 class="card-title mb-4 fw-bold">
+                Contact Information <small class="text-danger ms-2">(Required for email inquiry)</small>
+            </h5>
+
+            <div class="row g-4">
                 <div class="col-md-6">
-                    <label for="user-email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                    <input type="email" class="form-control" id="user-email" placeholder="your@email.com" required>
+                    <label for="user-email" class="form-label fw-medium">Email Address <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control form-control-lg" id="user-email" 
+                           placeholder="your@email.com" required autocomplete="email">
                 </div>
                 <div class="col-md-6">
-                    <label for="user-whatsapp" class="form-label">WhatsApp Number</label>
-                    <input type="tel" class="form-control" id="user-whatsapp" placeholder="+86 123 4567 8900">
+                    <label for="user-whatsapp" class="form-label fw-medium">WhatsApp Number</label>
+                    <input type="tel" class="form-control form-control-lg" id="user-whatsapp" 
+                           placeholder="+86 123 4567 8900" autocomplete="tel">
                 </div>
             </div>
 
-            <!-- 验证码图片区域 -->
-            <div class="row g-3 mt-4">
-                <div class="col-md-7">
-                    <label class="form-label">Verification Code <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="verification-input" 
-                               placeholder="Enter 4-digit code" maxlength="4" required autocomplete="off">
-                        <div class="input-group-text p-0 border-0" style="width:140px; height:46px; background:#f8f9fa; overflow:hidden;">
-                            <canvas id="verification-canvas" width="140" height="46"></canvas>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-verification">
-                            <i class="fas fa-sync-alt me-1"></i>Refresh Code
-                        </button>
-                        <small class="text-muted ms-3">Type the code you see above</small>
-                    </div>
+            <!-- 验证码 -->
+            <div class="mt-5">
+                <label class="form-label fw-medium">Verification Code <span class="text-danger">*</span></label>
+                <div class="input-group input-group-lg">
+                    <input type="text" class="form-control" id="verification-input" 
+                           placeholder="Enter 4-digit code" maxlength="4" required autocomplete="off">
+                    <span class="input-group-text p-0 border-0 bg-light" style="width:160px;">
+                        <canvas id="verification-canvas" width="160" height="52" class="rounded"></canvas>
+                    </span>
+                </div>
+                <div class="mt-3 d-flex align-items-center gap-3">
+                    <button type="button" class="btn btn-outline-secondary" id="refresh-verification">
+                        <i class="fas fa-sync-alt me-1"></i> Refresh Code
+                    </button>
+                    <small class="text-muted">Please type the code shown above</small>
                 </div>
             </div>
 
             <div class="mt-4">
                 <small class="text-muted">
-                    We will use this information only to respond to your inquiry.
+                    Your information will only be used to respond to this inquiry.
                 </small>
             </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- Important Notice -->
-    <div class="alert alert-warning p-4 mb-5">
-        <h5 class="alert-heading">Important Notice</h5>
+    <!-- 3. 重要提醒 -->
+    <div class="alert alert-warning border-warning shadow-sm mb-5" role="alert">
+        <h5 class="alert-heading mb-3">Important Notice</h5>
         <p class="mb-2">
-            This inquiry cart is stored <strong>temporarily in your browser only</strong>. 
-            Closing the browser or clearing cache will delete the list.
+            This cart is stored <strong>temporarily in your browser</strong>. 
+            Closing browser or clearing cache will delete the list.
         </p>
         <p class="mb-0">
             {% if settings.mode == 'official' %}
-            Please fill in your contact information, enter the verification code and use "Send Email Inquiry" for fastest response.
+            Please fill contact info, verify code and click "Send Email Inquiry" for fastest response.
             {% else %}
-            In catalog mode, please use "Screenshot" or "Export as CSV" to save your selection, then contact us manually.
+            In catalog mode, use Screenshot or Export CSV to save your selection, then contact us manually.
             {% endif %}
         </p>
     </div>
 
-    <!-- Cart Items -->
+    <!-- 4. 购物车商品列表 -->
     <div id="cart-items" class="list-group mb-5"></div>
 
-    <!-- Empty State -->
+    <!-- 5. 空状态 -->
     <div id="empty-state" class="text-center py-5 d-none">
-        <h3 class="text-muted mb-4">Your inquiry cart is empty</h3>
-        <p class="lead text-muted mb-4">
-            Start adding products you're interested in!
-        </p>
-        <a href="{{ url_for('products.list_products') }}" class="btn btn-primary btn-lg">
+        <div class="mb-4">
+            <i class="fas fa-shopping-cart fa-4x text-muted"></i>
+        </div>
+        <h3 class="text-muted mb-3">Your inquiry cart is empty</h3>
+        <p class="lead text-muted mb-4">Start adding products you're interested in!</p>
+        <a href="{{ url_for('products.list_products') }}" class="btn btn-primary btn-lg px-5">
             Browse Products
         </a>
     </div>
 
-    <!-- Toast 容器 -->
+    <!-- 6. Toast 容器 -->
     <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
         <div id="toast-container"></div>
     </div>
 </div>
 
-<!-- html2canvas -->
+<!-- html2canvas 用于截图 -->
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
 <script>
-// ==================== Global Config ====================
+// ==================== 配置常量 ====================
 const CART_KEY = 'inquiryCart';
 const LAST_SEND_KEY = 'lastInquirySendTime';
-const SEND_COOLDOWN = 120000; // 2 minutes in ms
+const SEND_COOLDOWN = 120 * 1000; // 2 分钟冷却（毫秒）
 
 let generatedCode = '';
 
-// ==================== Toast ====================
+// ==================== 工具函数 ====================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type} border-0`;
-    toast.role = 'alert';
-    toast.innerHTML = `
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center text-white bg-${type} border-0 shadow`;
+    toastEl.innerHTML = `
         <div class="d-flex">
-            <div class="toast-body">${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            <div class="toast-body fw-medium">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     `;
-    container.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+    container.appendChild(toastEl);
+    const bsToast = new bootstrap.Toast(toastEl, { delay: 5000, autohide: true });
     bsToast.show();
-    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
-// ==================== Cart Functions ====================
 function getCart() {
-    const data = localStorage.getItem(CART_KEY);
-    if (!data) return [];
     try {
-        return JSON.parse(data);
+        const data = localStorage.getItem(CART_KEY);
+        return data ? JSON.parse(data) : [];
     } catch (e) {
-        console.error('Failed to parse cart data:', e);
+        console.error('Parse cart failed:', e);
         return [];
     }
 }
@@ -203,22 +206,21 @@ function renderCart() {
     if (sendBtn) sendBtn.disabled = false;
 
     items.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'list-group-item d-flex align-items-center py-3';
-        div.innerHTML = `
+        const itemEl = document.createElement('div');
+        itemEl.className = 'list-group-item list-group-item-action d-flex align-items-center py-3 px-4 rounded-3 mb-3 shadow-sm';
+        itemEl.innerHTML = `
             <img src="${item.image || '/static/img/placeholder.jpg'}" 
-                 alt="${item.name}" 
-                 class="me-4 rounded" 
-                 style="width:80px;height:80px;object-fit:cover;">
+                 alt="${item.name}" class="me-4 rounded" 
+                 style="width:90px; height:90px; object-fit:cover; flex-shrink:0;">
             <div class="flex-grow-1">
-                <h5 class="mb-1">${item.name}</h5>
-                <p class="mb-0 text-muted small">Code: <strong>${item.code}</strong></p>
+                <h5 class="mb-1 fw-bold">${item.name}</h5>
+                <p class="mb-1 text-muted small">Code: <strong>${item.code || 'N/A'}</strong></p>
             </div>
-            <button class="btn btn-sm btn-danger" onclick="removeItem(${index})">
-                Remove
+            <button class="btn btn-sm btn-outline-danger px-3" onclick="removeItem(${index})">
+                <i class="fas fa-trash-alt"></i> Remove
             </button>
         `;
-        container.appendChild(div);
+        container.appendChild(itemEl);
     });
 }
 
@@ -227,51 +229,42 @@ function removeItem(index) {
     items.splice(index, 1);
     saveCart(items);
     renderCart();
+    showToast('Item removed from cart', 'info');
 }
 
-// ==================== Verification Code ====================
+// ==================== 验证码生成与验证 ====================
 function generateVerificationCode() {
     generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-    
     const canvas = document.getElementById('verification-canvas');
     if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
 
+    const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#f8f9fa';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 干扰线
-    for (let i = 0; i < 5; i++) {
+    // 干扰线 + 噪点 + 随机旋转颜色文字
+    for (let i = 0; i < 6; i++) {
         ctx.beginPath();
         ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
         ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
-        ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.5)`;
-        ctx.lineWidth = 1 + Math.random() * 2;
+        ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.6)`;
+        ctx.lineWidth = 1.5;
         ctx.stroke();
     }
 
-    // 文字
     const chars = generatedCode.split('');
     chars.forEach((char, i) => {
-        ctx.font = 'bold 32px Arial';
-        ctx.fillStyle = ['#2c3e50','#e74c3c','#3498db','#27ae60','#f39c12'][Math.floor(Math.random()*5)];
-        const x = 20 + i * 30;
-        const y = 30 + (Math.random() - 0.5) * 10;
+        ctx.font = 'bold 38px Arial';
+        ctx.fillStyle = ['#1e88e5','#d81b60','#43a047','#fb8c00','#8e24aa'][i % 5];
+        const x = 25 + i * 35;
+        const y = 38;
         ctx.save();
         ctx.translate(x, y);
-        ctx.rotate((Math.random() - 0.5) * 0.3);
-        ctx.fillText(char, -10, 10);
+        ctx.rotate((Math.random() - 0.5) * 0.35);
+        ctx.fillText(char, -12, 12);
         ctx.restore();
     });
-
-    // 噪点
-    for (let i = 0; i < 50; i++) {
-        ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.7)`;
-        ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 2);
-    }
 }
 
 function validateVerificationCode() {
@@ -279,16 +272,16 @@ function validateVerificationCode() {
     return input === generatedCode;
 }
 
-// ==================== Send Email Inquiry ====================
+// ==================== 发送邮件询价（仅 official 模式） ====================
 {% if settings.mode == 'official' %}
 document.getElementById('send-email-btn')?.addEventListener('click', async () => {
     const email = document.getElementById('user-email').value.trim();
     const whatsapp = document.getElementById('user-whatsapp').value.trim();
     const codeInput = document.getElementById('verification-input').value.trim();
 
-    // 基本验证
     if (!email) {
         showToast('Please enter your email address', 'danger');
+        document.getElementById('user-email').focus();
         return;
     }
 
@@ -306,96 +299,95 @@ document.getElementById('send-email-btn')?.addEventListener('click', async () =>
         return;
     }
 
-    // 频率限制检查
+    // 频率限制
     const lastSend = localStorage.getItem(LAST_SEND_KEY);
     if (lastSend && (Date.now() - parseInt(lastSend) < SEND_COOLDOWN)) {
-        const remaining = Math.ceil((SEND_COOLDOWN - (Date.now() - parseInt(lastSend))) / 1000 / 60);
-        showToast(`Please wait ${remaining} more minute(s) before sending again`, 'warning');
+        const remaining = Math.ceil((SEND_COOLDOWN - (Date.now() - parseInt(lastSend))) / 60000);
+        showToast(`Please wait ${remaining} more minute(s)`, 'warning');
         return;
     }
 
-    // 准备发送
     const payload = {
         items: items,
-        contact: {
-            email: email,
-            whatsapp: whatsapp || null
-        }
+        customer_email: email,
+        customer_whatsapp: whatsapp || null,
+        customer_name: '', // 可后续扩展表单
+        message: ''        // 可后续扩展留言框
     };
 
     const btn = document.getElementById('send-email-btn');
     const spinner = btn.querySelector('.spinner-border');
     spinner.classList.remove('d-none');
     btn.disabled = true;
+    btn.textContent = ' Sending...';
 
     try {
         const response = await fetch('/cart/send-inquiry', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        const data = await response.json();
+        const result = await response.json();
 
-        if (data.success) {
-            showToast('Inquiry sent successfully! We will contact you soon.', 'success');
+        if (result.success) {
+            showToast(result.message || 'Inquiry sent successfully!', 'success');
             localStorage.setItem(LAST_SEND_KEY, Date.now().toString());
-            // 可选：发送成功后清空购物车
+            // 可选：清空购物车
             // localStorage.removeItem(CART_KEY);
             // renderCart();
         } else {
-            showToast(data.error || 'Failed to send inquiry', 'danger');
+            showToast(result.message || 'Failed to send inquiry', 'danger');
         }
     } catch (err) {
-        console.error('Send inquiry error:', err);
-        showToast('Network error, please try again later', 'danger');
+        console.error('Send inquiry failed:', err);
+        showToast('Network error, please try again', 'danger');
     } finally {
         spinner.classList.add('d-none');
         btn.disabled = false;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm d-none me-2" role="status"></span> Send Email Inquiry';
     }
 });
 {% endif %}
 
-// ==================== Refresh Verification ====================
+// ==================== 事件绑定 ====================
 document.getElementById('refresh-verification')?.addEventListener('click', () => {
     generateVerificationCode();
     document.getElementById('verification-input').value = '';
     showToast('Verification code refreshed', 'info');
 });
 
-// ==================== Other Buttons ====================
 document.getElementById('screenshot-btn')?.addEventListener('click', () => {
     html2canvas(document.getElementById('cart-items'), {
         scale: 2,
         useCORS: true,
-        backgroundColor: null
+        backgroundColor: null,
+        logging: false
     }).then(canvas => {
         const link = document.createElement('a');
-        link.download = `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.png`;
+        link.download = `Hotel_Inquiry_Cart_${new Date().toISOString().slice(0,10)}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
-        showToast('Screenshot downloaded', 'success');
-    }).catch(() => {
+        showToast('Screenshot downloaded successfully', 'success');
+    }).catch(err => {
+        console.error('Screenshot failed:', err);
         showToast('Failed to generate screenshot', 'danger');
     });
 });
 
 document.getElementById('export-csv-btn')?.addEventListener('click', () => {
-    // 如果你有 CSV 导出逻辑，请在此处添加
     showToast('CSV export feature coming soon', 'info');
 });
 
 document.getElementById('reset-btn')?.addEventListener('click', () => {
-    if (confirm('Are you sure to clear the cart?')) {
+    if (confirm('Clear all items in the cart? This cannot be undone.')) {
         localStorage.removeItem(CART_KEY);
         renderCart();
         showToast('Cart has been cleared', 'info');
     }
 });
 
-// ==================== Init ====================
+// ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
     renderCart();
     {% if settings.mode == 'official' %}

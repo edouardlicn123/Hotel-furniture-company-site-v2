@@ -1,11 +1,12 @@
 # app/utils/mail.py
-# 统一邮件发送工具 - 当前稳定版（2026-01-13 更新）
-# 支持 Gmail/QQ/163/Outlook 等常见 SMTP，支持重试、指数退避、详细日志
-# 已兼容所有调用场景（cart.py, contact.py, admin/smtp.py）
+# Unified email sending utility - Final version with language separation (2026-01-13)
+# Normal business emails: English logs & messages
+# SMTP test (admin): Chinese user-facing messages
 
 import smtplib
 import time
 import logging
+import base64
 from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import formataddr
@@ -23,101 +24,134 @@ def send_email(
     subject: str,
     body: str,
     is_html: bool = False,
-    use_ssl: bool = False,          # True → SMTP_SSL (常见 465 端口)
-    use_tls: bool = True,           # True → 在 SMTP 后调用 starttls() (常见 587 端口)
-    sender_name: str = "酒店家具官网",
+    use_ssl: bool = False,
+    use_tls: bool = True,
+    sender_name: str = "Hotel Furniture Website",
     max_retries: int = 3,
     initial_delay: float = 2.0
 ) -> Tuple[bool, str]:
     """
-    健壮版邮件发送函数
-    返回: (success: bool, message: str)
-    
-    使用示例（兼容项目所有发送场景）：
-    success, msg = send_email(
-        smtp_server=smtp.mail_server,
-        smtp_port=smtp.mail_port,
-        username=smtp.mail_username,
-        password=smtp.mail_password,
-        from_addr=smtp.mail_username,
-        to_addr=recipient,
-        subject=mail_subject,
-        body=mail_body,
-        is_html=False,
-        use_ssl=smtp.mail_use_ssl,
-        use_tls=smtp.mail_use_tls,
-        sender_name=sender_name
-    )
+    Robust email sending for business use (English logs & messages)
+    Returns: (success: bool, message: str)
     """
     if not all([smtp_server, smtp_port, username, password, from_addr, to_addr]):
-        logger.error("SMTP 配置不完整，无法发送邮件")
-        return False, "SMTP 配置不完整（缺少服务器/端口/用户名/密码/发件人/收件人）"
+        logger.error("Incomplete SMTP configuration")
+        return False, "Incomplete SMTP configuration"
 
-    # 准备邮件内容（支持中文主题/名称）
-    if is_html:
-        msg = MIMEText(body, 'html', 'utf-8')
-    else:
-        msg = MIMEText(body, 'plain', 'utf-8')
-
+    subtype = 'html' if is_html else 'plain'
+    msg = MIMEText(body, subtype, 'utf-8')
     msg['Subject'] = Header(subject, 'utf-8')
     msg['From'] = formataddr((str(Header(sender_name, 'utf-8')), from_addr))
     msg['To'] = to_addr
 
-    server = None
     for attempt in range(1, max_retries + 1):
+        server = None
         try:
             if use_ssl:
                 server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=15)
             else:
                 server = smtplib.SMTP(smtp_server, smtp_port, timeout=15)
                 server.ehlo()
-                if use_tls:  # 根据 use_tls 参数决定是否升级 TLS
+                if use_tls:
                     server.starttls()
                     server.ehlo()
 
-            # 登录（标准方式，兼容绝大多数 SMTP 服务）
             server.login(username, password)
-            logger.info(f"SMTP 登录成功: {smtp_server}:{smtp_port} (尝试 {attempt})")
-
             server.send_message(msg)
             server.quit()
 
-            logger.info(f"邮件发送成功 → {to_addr} | 主题: {subject}")
-            return True, "发送成功"
+            logger.info(f"Email sent successfully → {to_addr} | Subject: {subject}")
+            return True, "Email sent successfully"
 
         except smtplib.SMTPAuthenticationError as e:
-            err_msg = f"认证失败（用户名/密码/授权码错误）: {str(e)}"
-            logger.error(err_msg)
-            return False, err_msg
+            logger.error(f"Authentication failed: {str(e)}")
+            return False, "Authentication failed (username or password incorrect)"
 
         except smtplib.SMTPRecipientsRefused as e:
-            err_msg = f"收件人被拒绝: {str(e)}"
-            logger.error(err_msg)
-            return False, err_msg
-
-        except (smtplib.SMTPConnectError, OSError, ConnectionError) as e:
-            err_msg = f"连接失败 (尝试 {attempt}/{max_retries}): {str(e)}"
-            logger.warning(err_msg)
-            if attempt < max_retries:
-                delay = initial_delay * (2 ** (attempt - 1))  # 指数退避：2s → 4s → 8s
-                logger.info(f"将在 {delay}s 后重试...")
-                time.sleep(delay)
-                continue
-            return False, f"连接超时或网络问题（已重试 {max_retries} 次）"
+            logger.error(f"Recipient refused: {str(e)}")
+            return False, "Recipient address refused by server"
 
         except Exception as e:
-            err_msg = f"未知错误 (尝试 {attempt}): {str(e)}"
-            logger.exception(err_msg)
-            if attempt < max_retries:
-                time.sleep(initial_delay * attempt)
-                continue
-            return False, err_msg
+            err_msg = f"Send failed (attempt {attempt}/{max_retries}): {str(e)}"
+            logger.warning(err_msg)
+
+            if attempt == max_retries:
+                logger.exception("Email sending ultimately failed")
+                return False, "Failed to send email after all retries"
+
+            delay = initial_delay * (2 ** (attempt - 1))
+            logger.info(f"Retrying in {delay:.1f} seconds...")
+            time.sleep(delay)
 
         finally:
-            if server is not None:
+            if server:
                 try:
                     server.quit()
                 except:
                     pass
 
-    return False, "所有重试均失败，请检查网络或 SMTP 配置"
+    return False, "All retry attempts failed. Please check network or SMTP settings."
+
+
+def test_send_email(
+    smtp_server: str,
+    smtp_port: int,
+    username: str,
+    password: str,
+    use_ssl: bool = False,
+    use_tls: bool = True,
+    test_recipient: str = "",
+    sender_name: str = "酒店家具官网测试"
+) -> Tuple[bool, str]:
+    """
+    SMTP configuration test function (Chinese user-facing messages for admin)
+    Returns: (success: bool, flash_message: str)
+    """
+    if not all([smtp_server, smtp_port, username, password, test_recipient]):
+        return False, "测试参数不完整（缺少服务器/端口/用户名/密码/收件人）"
+
+    test_subject = f"SMTP 配置测试 - {time.strftime('%Y-%m-%d %H:%M:%S')}"
+    test_body = (
+        "这是一封测试邮件，用于验证您的 SMTP 配置是否正确。\n\n"
+        f"发送时间：{time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        "如果您收到此邮件，说明配置基本正常。\n"
+        "请注意检查垃圾箱或促销邮件文件夹。"
+    )
+
+    msg = MIMEText(test_body, 'plain', 'utf-8')
+    msg['Subject'] = Header(test_subject, 'utf-8')
+    msg['From'] = username  # 强制纯邮箱地址，兼容严格服务商
+    msg['To'] = test_recipient
+
+    server = None
+    try:
+        if use_ssl:
+            server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=20)
+        else:
+            server = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
+            server.ehlo()
+            if use_tls:
+                server.starttls()
+                server.ehlo()
+
+        # 手动 AUTH LOGIN（最高兼容性）
+        server.docmd("AUTH LOGIN")
+        server.docmd(base64.b64encode(username.encode('utf-8')).decode('ascii'))
+        server.docmd(base64.b64encode(password.encode('utf-8')).decode('ascii'))
+
+        server.send_message(msg)
+        server.quit()
+
+        return True, f"测试邮件已成功发送至 {test_recipient}！请检查收件箱（或垃圾箱/促销邮件）。"
+
+    except Exception as e:
+        err_msg = f"测试发送失败：{str(e)}"
+        logger.exception("SMTP 测试发送失败")
+        return False, err_msg
+
+    finally:
+        if server:
+            try:
+                server.quit()
+            except:
+                pass
