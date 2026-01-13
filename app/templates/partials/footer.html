@@ -1,6 +1,5 @@
-{# app/templates/partials/footer.html - 全站统一页脚（修复联系信息丢失问题） #}
-{# 修复：使用 settings.phone1 / settings.email1 等正确变量 #}
-{# 支持 official/catalog 模式切换，仅 official 显示联系信息 & About/Contact 链接 #}
+{# app/templates/partials/footer.html - 全站统一页脚（最新完整版，支持模式切换） #}
+{# 新增：仅在 official 模式下显示联系信息列和快速链接中的 About Us / Contact Us #}
 
 <footer class="bg-dark text-white py-5 mt-5">
     <div class="container">
@@ -8,7 +7,7 @@
 
             <!-- 公司简介（始终显示） -->
             <div class="col-md-4 mb-4">
-                <h5>{{ settings.company_name or company_name or 'Hotel Furniture Manufacturer' }}</h5>
+                <h5>{{ company_name }}</h5>
                 <p class="mb-0">
                     Professional Hotel Furniture Manufacturer<br>
                     Creating Premium Hospitality Spaces Worldwide
@@ -23,70 +22,80 @@
                     <li><a href="{{ url_for('products.list_products') }}" class="text-white">Products</a></li>
                     <li><a href="{{ url_for('series.list') }}" class="text-white">Series</a></li>
 
-                    {# 仅在 official 模式显示 About Us / Contact Us #}
-                    {% if settings.mode == 'official' %}
+                    {# ============ 仅在 official 模式下显示 About Us 和 Contact Us ============ #}
+                    {% if mode == 'official' %}
                     <li><a href="{{ url_for('main.about') }}" class="text-white">About Us</a></li>
                     <li><a href="{{ url_for('main.contact') }}" class="text-white">Contact Us</a></li>
                     {% endif %}
+                    {# ================================================================== #}
 
                     <li><a href="{{ url_for('main.cart') }}" class="text-white">Inquiry Cart</a></li>
                 </ul>
             </div>
 
-            {# 仅在 official 模式显示联系信息列 #}
-            {% if settings.mode == 'official' %}
+            {# ============ 仅在 official 模式下显示联系信息列 ============ #}
+            {% if mode == 'official' %}
             <div class="col-md-4 mb-4">
                 <h5>Contact Information</h5>
 
                 <!-- 电话 -->
-                {% set phones = [] %}
-                {% if settings.phone1 %}{{ phones.append(settings.phone1) or '' }}{% endif %}
-                {% if settings.phone2 %}{{ phones.append(settings.phone2) or '' }}{% endif %}
-                {% if settings.phone3 %}{{ phones.append(settings.phone3) or '' }}{% endif %}
-                {% if phones %}
-                <p class="mb-1">Phone: {{ phones | join(', ') }}</p>
-                {% endif %}
+                <p class="mb-1">
+                    {% set phones = [] %}
+                    {% if phone1 %}{{ phones.append(phone1) or '' }}{% endif %}
+                    {% if phone2 %}{{ phones.append(phone2) or '' }}{% endif %}
+                    {% if phone3 %}{{ phones.append(phone3) or '' }}{% endif %}
+                    {% if phones %}
+                        Phone: {{ phones | join(', ') }}
+                    {% endif %}
+                </p>
 
                 <!-- 电邮 -->
-                {% set emails = [] %}
-                {% if settings.email1 %}{{ emails.append(settings.email1) or '' }}{% endif %}
-                {% if settings.email2 %}{{ emails.append(settings.email2) or '' }}{% endif %}
-                {% if settings.email3 %}{{ emails.append(settings.email3) or '' }}{% endif %}
-                {% if emails %}
-                <p class="mb-1">Email: {{ emails | join(', ') }}</p>
-                {% endif %}
+                <p class="mb-1">
+                    {% set emails = [] %}
+                    {% if email1 %}{{ emails.append(email1) or '' }}{% endif %}
+                    {% if email2 %}{{ emails.append(email2) or '' }}{% endif %}
+                    {% if email3 %}{{ emails.append(email3) or '' }}{% endif %}
+                    {% if emails %}
+                        Email: {{ emails | join(', ') }}
+                    {% endif %}
+                </p>
 
                 <!-- WhatsApp -->
-                {% set whatsapps = [] %}
-                {% if settings.whatsapp1 %}{{ whatsapps.append(settings.whatsapp1) or '' }}{% endif %}
-                {% if settings.whatsapp2 %}{{ whatsapps.append(settings.whatsapp2) or '' }}{% endif %}
-                {% if whatsapps %}
-                <p class="mb-1">WhatsApp: {{ whatsapps | join(', ') }}</p>
-                {% endif %}
+                <p class="mb-1">
+                    {% set whatsapps = [] %}
+                    {% if whatsapp1 %}{{ whatsapps.append(whatsapp1) or '' }}{% endif %}
+                    {% if whatsapp2 %}{{ whatsapps.append(whatsapp2) or '' }}{% endif %}
+                    {% if whatsapps %}
+                        WhatsApp: {{ whatsapps | join(', ') }}
+                    {% endif %}
+                </p>
 
                 <!-- WeChat -->
-                {% set wechats = [] %}
-                {% if settings.wechat1 %}{{ wechats.append(settings.wechat1) or '' }}{% endif %}
-                {% if settings.wechat2 %}{{ wechats.append(settings.wechat2) or '' }}{% endif %}
-                {% if wechats %}
-                <p class="mb-1">WeChat: {{ wechats | join(', ') }}</p>
-                {% endif %}
+                <p class="mb-1">
+                    {% set wechats = [] %}
+                    {% if wechat1 %}{{ wechats.append(wechat1) or '' }}{% endif %}
+                    {% if wechat2 %}{{ wechats.append(wechat2) or '' }}{% endif %}
+                    {% if wechats %}
+                        WeChat: {{ wechats | join(', ') }}
+                    {% endif %}
+                </p>
 
-                <!-- 地址（支持多行） -->
-                {% if settings.address %}
+                <!-- 地址 -->
+                {% if address %}
                 <p class="mb-0">
                     Address:<br>
-                    {{ settings.address | replace('\n', '<br>') | safe }}
+                    {{ address | replace('\n', '<br>') | safe }}
                 </p>
                 {% endif %}
             </div>
             {% endif %}
+            {# ================================================================== #}
 
         </div>
 
         <!-- 版权信息（始终显示） -->
         <div class="text-center mt-4">
-            <p class="mb-0">&copy; {{ current_year }} {{ settings.company_name or company_name or 'Hotel Furniture Manufacturer' }}. All Rights Reserved.</p>
+            <p class="mb-0">&copy; {{ current_year }} {{ company_name }}. All Rights Reserved.</p>
         </div>
     </div>
 </footer>

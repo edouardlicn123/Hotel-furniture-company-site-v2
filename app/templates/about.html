@@ -14,26 +14,26 @@
         <div class="col-lg-10">
 
             <!-- 基本情况 -->
-            {% if settings.basic_info %}
+            {% if basic_info %}
             <section class="mb-5 text-center">
                 <div class="lead">
-                    {{ settings.basic_info | replace('\n', '<br>') | safe }}
+                    {{ basic_info | replace('\n', '<br>') | safe }}
                 </div>
             </section>
             {% endif %}
 
             <!-- 企业优势 -->
-            {% if settings.company_advantages %}
+            {% if company_advantages %}
             <section class="mb-5">
                 <h3 class="section-title text-center mb-4">Our Strengths</h3>
                 <div class="lead">
-                    {{ settings.company_advantages | replace('\n', '<br>') | safe }}
+                    {{ company_advantages | replace('\n', '<br>') | safe }}
                 </div>
             </section>
             {% endif %}
 
             <!-- 如果后台尚未填写内容，显示提示 -->
-            {% if not settings.basic_info and not settings.company_advantages %}
+            {% if not basic_info and not company_advantages %}
             <div class="text-center py-5">
                 <p class="text-muted h5">暂无关于我们内容</p>
                 <small class="text-muted">请在后台“网站设置”中填写“基本情况”和“企业优势”。</small>
