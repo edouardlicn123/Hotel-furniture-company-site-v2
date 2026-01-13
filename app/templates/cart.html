@@ -77,22 +77,37 @@
                 </div>
             </div>
 
+<<<<<<< HEAD
             <!-- 验证码 -->
             <div class="row g-3 mt-4">
                 <div class="col-md-7 col-lg-6">
+=======
+            <!-- 验证码区域 -->
+            <div class="row g-3 mt-4">
+                <div class="col-md-7">
+>>>>>>> refs/remotes/origin/main
                     <label class="form-label">Verification Code <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="verification-input" 
                                placeholder="Enter 4-digit code" maxlength="4" required>
+<<<<<<< HEAD
                         <div class="input-group-text p-0 border-0" style="width:130px; height:44px; background:#f8f9fa; overflow:hidden;">
                             <canvas id="verification-canvas" width="130" height="44"></canvas>
+=======
+                        <div class="input-group-text p-0 border-0" style="width:140px; height:42px; background:#f8f9fa; overflow:hidden;">
+                            <canvas id="verification-canvas" width="140" height="42"></canvas>
+>>>>>>> refs/remotes/origin/main
                         </div>
                     </div>
                     <div class="mt-2">
                         <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-verification">
                             Refresh Code
                         </button>
+<<<<<<< HEAD
                         <small class="text-muted ms-3">Enter the code shown above</small>
+=======
+                        <small class="text-muted ms-3">请输入图片中的验证码</small>
+>>>>>>> refs/remotes/origin/main
                     </div>
                 </div>
             </div>
@@ -222,7 +237,11 @@ function removeItem(index) {
     renderCart();
 }
 
+<<<<<<< HEAD
 // ==================== Verification Code ====================
+=======
+// ==================== Verification Code (仅 official 模式使用) ====================
+>>>>>>> refs/remotes/origin/main
 function generateVerificationCode() {
     generatedCode = '';
     for (let i = 0; i < 4; i++) {
@@ -231,6 +250,7 @@ function generateVerificationCode() {
 
     const canvas = document.getElementById('verification-canvas');
     if (!canvas) return;
+<<<<<<< HEAD
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -246,10 +266,31 @@ function generateVerificationCode() {
         ctx.moveTo(Math.random() * w, Math.random() * h);
         ctx.lineTo(Math.random() * w, Math.random() * h);
         ctx.strokeStyle = `hsl(${Math.random()*360},80%,60%)`;
+=======
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // 清空 + 背景
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, w, h);
+
+    // 干扰线 (5~8条随机颜色)
+    for (let i = 0; i < Math.floor(Math.random() * 4) + 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * w, Math.random() * h);
+        ctx.lineTo(Math.random() * w, Math.random() * h);
+        ctx.strokeStyle = `hsl(${Math.random()*360}, 70%, 60%)`;
+>>>>>>> refs/remotes/origin/main
         ctx.lineWidth = 1 + Math.random() * 2;
         ctx.stroke();
     }
 
+<<<<<<< HEAD
     // 文字
     ctx.font = 'bold 32px Arial';
     ctx.textBaseline = 'middle';
@@ -271,6 +312,28 @@ function generateVerificationCode() {
         ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.7)`;
         ctx.fillRect(x, y, 1.5, 1.5);
     }
+=======
+    // 绘制验证码数字
+    ctx.font = 'bold 32px Arial';
+    ctx.textBaseline = 'middle';
+    const chars = generatedCode.split('');
+    chars.forEach((char, i) => {
+        ctx.save();
+        ctx.translate(30 + i * 28, h/2);
+        ctx.rotate((Math.random() - 0.5) * 0.6); // 轻微旋转
+        ctx.fillStyle = `hsl(${Math.random()*360}, 80%, 40%)`;
+        ctx.fillText(char, -12 + Math.random()*24, Math.random()*12);
+        ctx.restore();
+    });
+
+    // 添加噪点
+    for (let i = 0; i < 50; i++) {
+        ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.6)`;
+        ctx.fillRect(Math.random()*w, Math.random()*h, 2, 2);
+    }
+
+    console.log('验证码已生成:', generatedCode); // 调试用，上线可删除
+>>>>>>> refs/remotes/origin/main
 }
 
 function validateVerificationCode() {
@@ -278,6 +341,7 @@ function validateVerificationCode() {
     return input === generatedCode;
 }
 
+<<<<<<< HEAD
 // ==================== Event Listeners ====================
 document.getElementById('refresh-verification')?.addEventListener('click', generateVerificationCode);
 
@@ -289,6 +353,73 @@ document.getElementById('reset-btn')?.addEventListener('click', () => {
     }
 });
 
+=======
+// ==================== Send Email (仅 official 模式) ====================
+{% if settings.mode == 'official' %}
+document.getElementById('send-email-btn')?.addEventListener('click', async () => {
+    const email = document.getElementById('user-email')?.value.trim();
+    const whatsapp = document.getElementById('user-whatsapp')?.value.trim();
+    const codeInput = document.getElementById('verification-input')?.value.trim();
+
+    if (!email) {
+        showToast('请输入邮箱地址', 'danger');
+        return;
+    }
+    if (!validateVerificationCode()) {
+        showToast('验证码错误，请重新输入', 'danger');
+        generateVerificationCode(); // 自动刷新
+        return;
+    }
+
+    const lastSend = localStorage.getItem(LAST_SEND_KEY);
+    if (lastSend && Date.now() - parseInt(lastSend) < SEND_COOLDOWN) {
+        const remain = Math.ceil((SEND_COOLDOWN - (Date.now() - parseInt(lastSend))) / 1000 / 60);
+        showToast(`请等待 ${remain} 分钟后再尝试发送`, 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('send-email-btn');
+    btn.disabled = true;
+    btn.querySelector('.spinner-border').classList.remove('d-none');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>发送中...';
+
+    try {
+        const items = getCart();
+        const response = await fetch('/cart/send-inquiry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                items: items,
+                email: email,
+                whatsapp: whatsapp
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast('We will reply you soon.', 'success');
+            localStorage.setItem(LAST_SEND_KEY, Date.now().toString());
+            // 可选：清空购物车
+            // localStorage.removeItem(CART_KEY);
+            // renderCart();
+        } else {
+            showToast(result.error || '发送失败，请稍后再试', 'danger');
+        }
+    } catch (err) {
+        showToast('网络错误，请检查网络后重试', 'danger');
+        console.error(err);
+    } finally {
+        btn.disabled = false;
+        btn.querySelector('.spinner-border').classList.add('d-none');
+        btn.innerHTML = 'Send Email Inquiry';
+        generateVerificationCode(); // 发送后刷新验证码
+    }
+});
+{% endif %}
+
+// ==================== Other Buttons ====================
+>>>>>>> refs/remotes/origin/main
 document.getElementById('screenshot-btn')?.addEventListener('click', () => {
     html2canvas(document.getElementById('cart-items'), {
         scale: 2,
@@ -302,6 +433,7 @@ document.getElementById('screenshot-btn')?.addEventListener('click', () => {
     });
 });
 
+<<<<<<< HEAD
 // ==================== Send Email Inquiry ====================
 {% if settings.mode == 'official' %}
 document.addEventListener('DOMContentLoaded', () => {
@@ -381,14 +513,60 @@ document.addEventListener('DOMContentLoaded', () => {
             sendBtn.textContent = originalText;
         }
     });
+=======
+document.getElementById('export-csv-btn')?.addEventListener('click', () => {
+    const items = getCart();
+    if (items.length === 0) {
+        showToast('购物车为空', 'warning');
+        return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "序号,产品名称,产品编号\n";
+    
+    items.forEach((item, index) => {
+        csvContent += `${index+1},"${item.name.replace(/"/g, '""')}","${item.code}"\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
+
+document.getElementById('reset-btn')?.addEventListener('click', () => {
+    if (confirm('确定要清空购物车吗？此操作无法撤销。')) {
+        localStorage.removeItem(CART_KEY);
+        renderCart();
+        showToast('购物车已清空', 'info');
+    }
+>>>>>>> refs/remotes/origin/main
 });
 {% endif %}
 
 // ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
     renderCart();
+
+    // 只在 official 模式初始化验证码
     {% if settings.mode == 'official' %}
+<<<<<<< HEAD
     generateVerificationCode();
+=======
+    const verificationCanvas = document.getElementById('verification-canvas');
+    if (verificationCanvas) {
+        generateVerificationCode(); // 页面加载时首次生成
+
+        // 绑定刷新按钮
+        document.getElementById('refresh-verification')?.addEventListener('click', () => {
+            generateVerificationCode();
+            document.getElementById('verification-input').value = '';
+        });
+    }
+>>>>>>> refs/remotes/origin/main
     {% endif %}
 });
 </script>

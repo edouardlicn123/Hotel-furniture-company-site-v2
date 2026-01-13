@@ -1,5 +1,9 @@
 # app/routes/admin/smtp.py
+<<<<<<< HEAD
 # SMTP 配置管理 - 更新版（使用统一的 app.utils.mail.send_email 函数进行测试发送）
+=======
+# SMTP 配置管理 - 改进版：使用标准 smtplib 登录方式 + 重试机制
+>>>>>>> refs/remotes/origin/main
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
@@ -9,7 +13,14 @@ from datetime import datetime
 import traceback
 import socket
 import time
+<<<<<<< HEAD
 from app.utils.mail import send_email  # 已新建的统一邮件发送函数
+=======
+import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
+from email.utils import formataddr
+>>>>>>> refs/remotes/origin/main
 
 smtp_bp = Blueprint('smtp', __name__, url_prefix='/smtp')
 
@@ -31,7 +42,9 @@ def smtp_settings():
             'outlook': {'server': 'smtp-mail.outlook.com', 'port': 587, 'tls': True, 'ssl': False},
             'qq': {'server': 'smtp.qq.com', 'port': 465, 'tls': False, 'ssl': True},
             '163': {'server': 'smtp.163.com', 'port': 465, 'tls': False, 'ssl': True},
-            'sendgrid': {'server': 'smtp.sendgrid.net', 'port': 587, 'tls': True, 'ssl': False}
+            'sendgrid': {'server': 'smtp.sendgrid.net', 'port': 587, 'tls': True, 'ssl': False},
+            # 可自行添加更多，例如腾讯企业邮
+            'exmail': {'server': 'smtp.exmail.qq.com', 'port': 465, 'tls': False, 'ssl': True},
         }
 
         if config.provider in presets:
@@ -57,7 +70,6 @@ def smtp_settings():
 
         db.session.commit()
         flash('SMTP 配置已保存！', 'success')
-
         return redirect(url_for('admin.smtp.smtp_settings'))
 
     return render_template('admin/smtp.html', config=config)
@@ -82,27 +94,35 @@ def test_send():
 
     mail_server = config.mail_server
     mail_port = config.mail_port
+<<<<<<< HEAD
     mail_use_tls = config.mail_use_tls
     mail_use_ssl = config.mail_use_ssl
     mail_username = config.mail_username
     mail_password = config.mail_password
+=======
+    use_tls = config.mail_use_tls
+    use_ssl = config.mail_use_ssl
+    username = config.mail_username
+    password = config.mail_password
+>>>>>>> refs/remotes/origin/main
     sender_name = config.default_sender_name or '酒店家具官网'
 
-    print(f"★ [SMTP TEST] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} 开始测试...")
-    print(f"★ 配置：Server={mail_server}, Port={mail_port}")
-    print(f"★ TLS={mail_use_tls}, SSL={mail_use_ssl}")
-    print(f"★ Username: {mail_username}")
+    print(f"\n★ [SMTP TEST] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} 开始测试...")
+    print(f"★ 配置：Server={mail_server}, Port={mail_port}, SSL={use_ssl}, TLS={use_tls}")
+    print(f"★ Username: {username}")
     print(f"★ 收件人: {recipient}")
 
     try:
         ip = socket.gethostbyname(mail_server)
-        print(f"★ 解析 IP: {ip}")
+        print(f"★ 域名解析 IP: {ip}")
     except Exception as e:
         print(f"★ IP 解析失败: {e}")
 
-    retries = 2
-    for attempt in range(retries + 1):
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        server = None
         try:
+<<<<<<< HEAD
             # 使用统一的 send_email 函数发送测试邮件
             success, msg = send_email(
                 smtp_server=mail_server,
@@ -127,19 +147,73 @@ def test_send():
                 break
             else:
                 raise Exception(msg)
+=======
+            if use_ssl:
+                server = smtplib.SMTP_SSL(mail_server, mail_port, timeout=20)
+            else:
+                server = smtplib.SMTP(mail_server, mail_port, timeout=20)
+                server.ehlo()  # 标识客户端
+                if use_tls:
+                    server.starttls()
+                    server.ehlo()
+
+            print(f"★ 连接成功，正在登录 (尝试 {attempt}/{max_retries})...")
+            server.login(username, password)
+            print("★ 登录成功！")
+
+            # 准备测试邮件
+            msg = MIMEText(
+                "这是一封测试邮件，证明你的 SMTP 配置正确！\n\n"
+                f"发送时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                "如果收到此邮件，说明配置成功。\n\n"
+                "—— 酒店家具官网系统自动发送",
+                'plain', 'utf-8'
+            )
+
+            # 发件人（建议使用纯邮箱地址，避免中文发件名被拦截）
+            msg['From'] = formataddr((str(Header(sender_name, 'utf-8')), username))
+            msg['To'] = recipient
+            msg['Subject'] = Header(f"SMTP 测试邮件 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 'utf-8')
+
+            server.send_message(msg)
+            server.quit()
+
+            print("★ [SMTP TEST] 发送成功！")
+            flash(f'测试邮件已成功发送至 {recipient}！请检查收件箱或垃圾箱。', 'success')
+            break
+>>>>>>> refs/remotes/origin/main
+
+        except smtplib.SMTPAuthenticationError:
+            flash('认证失败：用户名或密码（授权码）错误，请检查 SMTP 配置', 'danger')
+            print("★ 认证失败（用户名/密码/授权码错误）")
+            break  # 认证错误无需重试
+
+        except (smtplib.SMTPConnectError, ConnectionError, OSError) as e:
+            error_msg = str(e)
+            print(f"★ 连接失败 (尝试 {attempt}): {error_msg}")
+            if attempt < max_retries:
+                delay = 3 * attempt  # 3s → 6s → 9s
+                print(f"★ 等待 {delay} 秒后重试...")
+                time.sleep(delay)
+                continue
+            flash(f'连接失败（尝试 {max_retries} 次）：{error_msg}<br>请检查网络或 SMTP 服务器地址/端口', 'danger')
 
         except Exception as e:
             error_msg = str(e)
-            full_traceback = traceback.format_exc()
-            print(f"★ [SMTP TEST] 第 {attempt + 1} 次失败: {error_msg}")
-            print(f"★ 完整 traceback:\n{full_traceback}")
-
-            if attempt < retries:
-                print("★ 等待 5 秒后重试...")
-                time.sleep(5)
+            full_trace = traceback.format_exc()
+            print(f"★ 未知错误 (尝试 {attempt}): {error_msg}")
+            print(f"★ 完整 traceback:\n{full_trace}")
+            if attempt < max_retries:
+                time.sleep(3)
                 continue
-            else:
-                flash(f'测试发送失败（尝试 {retries + 1} 次）：{error_msg}<br>请查看终端日志。', 'danger')
-                current_app.logger.error(f"SMTP 测试发送失败: {error_msg}\n{full_traceback}")
+            flash(f'发送失败（尝试 {max_retries} 次）：{error_msg}<br>请查看终端日志', 'danger')
+            current_app.logger.error(f"SMTP 测试失败: {error_msg}\n{full_trace}")
+
+        finally:
+            if server:
+                try:
+                    server.quit()
+                except:
+                    pass
 
     return redirect(url_for('admin.smtp.smtp_settings'))
