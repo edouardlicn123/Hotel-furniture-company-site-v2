@@ -36,4 +36,7 @@
 # Linux / macOS
 chmod +x run.sh
 ./run.sh
+```
+## 联系&打赏
 
+![联系我们](https://raw.githubusercontent.com/edouardlicn123/Hotel-furniture-company-site-v2/main/contact/contact.jpg)
