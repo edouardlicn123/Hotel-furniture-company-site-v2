@@ -1,49 +1,47 @@
 # app/routes/cart.py
-# Cart inquiry email sending - using pure smtplib (consistent with admin/smtp.py style)
-# 2026-01-12 version - no dependency on flask-mail, fully manual sending
-# Current version: email body in Chinese, no product image links
+# 购物车询价邮件发送 - 更新版（使用统一的 app.utils.mail.send_email 函数）
+# 邮件正文为中文，无产品图片链接
 
 from flask import Blueprint, request, jsonify, current_app
 from app.models import Settings, SmtpConfig
 from datetime import datetime
-import smtplib
-from email.mime.text import MIMEText
-import base64
-import traceback
+from app.utils.mail import send_email  # 已新建的统一邮件发送函数
 
 cart_bp = Blueprint('cart', __name__, url_prefix='/cart')
 
 @cart_bp.route('/send-inquiry', methods=['POST'])
 def send_inquiry():
     """
-    Handle cart inquiry request and send email manually via smtplib
-    - Uses SMTP settings from /admin/smtp
-    - Does not save to database
-    - Email content in Chinese, no product image links
+    处理购物车询价请求并发送邮件
+    - 使用 /admin/smtp 配置
+    - 不保存到数据库
+    - 邮件正文为中文，无产品图片链接
     """
     try:
         data = request.get_json()
         if not data or not data.get('items'):
-            return jsonify({'error': 'No items in cart'}), 400
+            return jsonify({'success': False, 'message': 'No items in cart'}), 400
 
-        # Get site settings (for recipient email and sender name)
+        # 获取站点设置（收件人 + 发送者名称）
         settings = Settings.query.first()
         if not settings:
-            return jsonify({'error': 'Site settings not found'}), 500
+            return jsonify({'success': False, 'message': 'Site settings not found'}), 500
 
         recipient = settings.email1
         if not recipient:
-            return jsonify({'error': 'No recipient email configured. Please set email1 in admin settings'}), 500
+            return jsonify({'success': False, 'message': 'No recipient email configured. Please set email1 in admin settings'}), 500
 
-        # Get SMTP configuration from SmtpConfig table
+        sender_name = settings.company_name or "Hotel Furniture Website"
+
+        # 获取 SMTP 配置
         smtp = SmtpConfig.query.first()
         if not smtp:
-            return jsonify({'error': 'SMTP configuration not found. Please set it up in /admin/smtp'}), 500
+            return jsonify({'success': False, 'message': 'SMTP configuration not found. Please set it up in /admin/smtp'}), 500
 
         if not smtp.mail_username or not smtp.mail_password:
-            return jsonify({'error': 'SMTP configuration missing username or password'}), 500
+            return jsonify({'success': False, 'message': 'SMTP configuration missing username or password'}), 500
 
-        # Build email subject and body (body in Chinese)
+        # 构建邮件主题和正文（中文）
         subject = f"New Hotel Furniture Inquiry - {len(data['items'])} items ({data.get('email', 'Anonymous')})"
 
         body = f"""您好，收到新的询价请求：
@@ -62,54 +60,42 @@ def send_inquiry():
 备注：此为网站购物车自动提交的询价，请尽快联系客户跟进。
 """
 
-        # Create email message
-        msg = MIMEText(body, 'plain', 'utf-8')
-        msg['Subject'] = subject
-        msg['From'] = smtp.mail_username          # Force pure email address
-        msg['To'] = recipient
+        current_app.logger.info(f"Cart inquiry: Sending to {recipient} | Subject: {subject}")
 
-        # Connect and send (same logic as admin/smtp.py test)
-        print(f"★ [CART INQUIRY] Starting send - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"★ Config: Server={smtp.mail_server}, Port={smtp.mail_port}")
-        print(f"★ TLS={smtp.mail_use_tls}, SSL={smtp.mail_use_ssl}")
-        print(f"★ Username: {smtp.mail_username}")
-        print(f"★ Recipient: {recipient}")
-
-        if smtp.mail_use_ssl:
-            server = smtplib.SMTP_SSL(smtp.mail_server, smtp.mail_port, timeout=20)
-        else:
-            server = smtplib.SMTP(smtp.mail_server, smtp.mail_port, timeout=20)
-            if smtp.mail_use_tls:
-                server.starttls()
-
-        server.ehlo()
-        server.docmd("AUTH LOGIN")
-        server.docmd(base64.b64encode(smtp.mail_username.encode('utf-8')).decode('ascii'))
-        server.docmd(base64.b64encode(smtp.mail_password.encode('utf-8')).decode('ascii'))
-
-        server.send_message(msg)
-        server.quit()
-
-        print("★ [CART INQUIRY] Send successful!")
-
-        current_app.logger.info(
-            f"Cart inquiry email sent successfully to {recipient} ({len(data['items'])} items)"
+        # 使用统一的 send_email 函数发送
+        success, msg = send_email(
+            smtp_server=smtp.mail_server,
+            smtp_port=smtp.mail_port,
+            username=smtp.mail_username,
+            password=smtp.mail_password,  # 后续可考虑加密存储
+            from_addr=smtp.mail_username,
+            to_addr=recipient,
+            subject=subject,
+            body=body,
+            is_html=False,
+            use_ssl=smtp.mail_use_ssl,
+            use_tls=smtp.mail_use_tls,
+            sender_name=sender_name
         )
 
+        if success:
+            current_app.logger.info(f"Cart inquiry email sent successfully to {recipient} ({len(data['items'])} items)")
+            return jsonify({
+                'success': True,
+                'message': 'Inquiry sent successfully! We will contact you soon.'
+            }), 200
+
+        current_app.logger.error(f"Cart inquiry email failed: {msg}")
         return jsonify({
-            'success': True,
-            'message': 'Inquiry sent successfully! We will contact you soon.'
-        }), 200
+            'success': False,
+            'message': msg or 'Failed to send email. Please try again later or use screenshot/CSV method.'
+        }), 500
 
     except Exception as e:
         error_msg = str(e)
         full_trace = traceback.format_exc()
-        print(f"★ [CART INQUIRY] Send failed: {error_msg}")
-        print(f"★ Full traceback:\n{full_trace}")
-
-        current_app.logger.error(f"Cart inquiry email send failed: {error_msg}\n{full_trace}")
-
+        current_app.logger.error(f"Cart inquiry unexpected error: {error_msg}\n{full_trace}")
         return jsonify({
             'success': False,
-            'error': error_msg or 'Failed to send email. Please try again later or use screenshot/CSV method to contact us.'
+            'message': 'Server error. Please try again later.'
         }), 500

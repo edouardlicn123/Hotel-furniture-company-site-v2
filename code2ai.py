@@ -2,17 +2,23 @@
 # -*- coding: utf-8 -*-
 
 """
-code2ai.py - 项目核心源码汇总工具（优化结构版）
+code2ai.py - 项目核心源码汇总工具（2026-01-13 更新版）
 
 功能：扫描项目目录，收集核心源码文件（排除图片、上传、数据库、缓存等），
       生成带时间戳的审查文件，供 AI 审查使用。
 
-当前状态（2026-01-12）：购物车功能完整上线（询价邮件发送、验证码图片、发送频率限制、toast 通知），
-联系页表单已实现（独立 /contact/send 路由，使用 smtplib 发送），验证码从文字改为图片，
-前端全站 toast 通知替换 alert，购物车与联系表单防刷机制完善，
-后台管理强化完成（网站模式切换、企业介绍、联系方式全动态管理，包括电话、电邮、WhatsApp、WeChat、传真、地址），
-前端全站同步显示（关于我们、联系页面、页脚），
-新增后台独立 SMTP 配置管理页面（/admin/smtp）及专用主题 admin.css。
+当前状态（2026-01-13）：
+- 购物车功能完整上线（询价邮件发送、验证码图片、发送频率限制、toast 通知）
+- 联系页表单已实现（独立 /contact/send 路由，使用 smtplib 发送）
+- 验证码从文字改为图片
+- 前端全站 toast 通知替换 alert
+- 购物车与联系表单防刷机制完善（30分钟冷却等）
+- 后台管理强化完成（网站模式切换、企业介绍、联系方式全动态管理，包括电话、电邮、WhatsApp、WeChat、传真、地址）
+- 前端全站同步显示（关于我们、联系页面、页脚）
+- 新增后台独立 SMTP 配置管理页面（/admin/smtp）及专用主题 admin.css
+- 邮件发送统一抽取到 app/utils/mail.py（smtplib + base64 AUTH），购物车、联系页、SMTP测试均已切换使用
+- 关于我们页面、页脚、SEO 等模板修复完成（正确使用 settings.xxx 变量）
+- 项目整体邮件发送、SEO占位符替换、模式切换（official/catalog）已稳定
 """
 
 import os
@@ -55,32 +61,34 @@ IMAGE_FONT_EXTENSIONS: Set[str] = {
     '.woff', '.woff2', '.ttf', '.otf', '.eot'
 }
 
-# 特殊包含规则（针对特定路径或文件名） - 2026-01-12 更新
+# 特殊包含规则（2026-01-13 更新：增加 utils/mail.py、更多模板覆盖）
 SPECIAL_INCLUDE_RULES = [
-    # 主题 CSS（包含新增的 admin.css）
+    # 主题 CSS（包含 admin.css）
     lambda p: p.suffix.lower() == '.css' and 'themes' in p.parts,
-    # admin 后台所有模板（新增 SMTP 相关页面）
+    # admin 后台所有模板（含 SMTP 页面）
     lambda p: p.suffix.lower() == '.html' and 'admin' in p.parts,
-    # partials 模板（新增 admin_style.html）
-    lambda p: p.suffix.lower() == '.html' and 'partials' in p.parts and 'admin' in p.name.lower(),
+    # partials 模板（含 admin_style.html、footer.html 等）
+    lambda p: p.suffix.lower() == '.html' and 'partials' in p.parts,
     # series 前端模板
     lambda p: p.suffix.lower() == '.html' and p.parts[-2] == 'series' and 'templates' in p.parts,
     # 购物车页面模板
     lambda p: p.name == 'cart.html' and 'templates' in p.parts,
-    # 联系页模板（新增完整表单）
+    # 联系页模板
     lambda p: p.name == 'contact.html' and 'templates' in p.parts,
+    # 关于我们页面
+    lambda p: p.name == 'about.html' and 'main' in p.parts,
     # 购物车 JS
     lambda p: p.name == 'cart.js' and p.parent.name == 'js' and 'static' in p.parts,
-    # SMTP 路由文件（新增）
+    # SMTP 路由文件
     lambda p: p.name == 'smtp.py' and 'admin' in p.parts,
     # 购物车路由文件
     lambda p: p.name == 'cart.py' and 'routes' in p.parts,
+    # 联系页路由文件
+    lambda p: p.name == 'contact.py' and 'routes' in p.parts,
+    # 统一邮件工具（新增）
+    lambda p: p.name == 'mail.py' and 'utils' in p.parts,
     # Dockerfile（无扩展名）
     lambda p: p.name.lower() == 'dockerfile',
-    # 联系页路由
-    lambda p: p.name == 'contact.py' and 'routes' in p.parts,
-
-
 ]
 
 
@@ -106,7 +114,7 @@ def is_excluded(path: Path) -> bool:
     if 'static/uploads' in str(path):
         return True
 
-    # 新增：排除 instance 目录下的所有文件（数据库已重建，不需重复监控）
+    # 排除 instance 目录下的所有文件（数据库已重建，不需监控）
     if 'instance' in path.parts:
         return True
 
@@ -119,7 +127,7 @@ def is_included(path: Path) -> bool:
     if path.suffix.lower() in INCLUDE_EXTENSIONS:
         return True
 
-    # 特殊包含规则（已扩展 SMTP、购物车、联系页相关）
+    # 特殊包含规则（已覆盖所有关键新增文件）
     for rule in SPECIAL_INCLUDE_RULES:
         if rule(path):
             return True
@@ -203,12 +211,18 @@ def main() -> None:
 # 生成时间：{datetime.now().isoformat()}
 # 包含文件数：{len(files)}
 # 已优化排除：图片、上传文件、数据库、缓存、IDE 配置等
-# 当前状态（2026-01-12）：购物车功能完整上线（询价邮件发送、验证码图片、发送频率限制、toast 通知），
-# 联系页表单已实现（独立 /contact/send 路由，使用 smtplib 发送），验证码从文字改为图片，
-# 前端全站 toast 通知替换 alert，购物车与联系表单防刷机制完善，
-# 后台管理强化完成（网站模式切换、企业介绍、联系方式全动态管理，包括电话、电邮、WhatsApp、WeChat、传真、地址），
-# 前端全站同步显示（关于我们、联系页面、页脚），
-# 新增后台独立 SMTP 配置管理页面（/admin/smtp）及专用主题 admin.css。
+# 当前状态（2026-01-13）：
+# - 购物车功能完整上线（询价邮件发送、验证码图片、发送频率限制、toast 通知）
+# - 联系页表单已实现（独立 /contact/send 路由，使用 smtplib 发送）
+# - 验证码从文字改为图片
+# - 前端全站 toast 通知替换 alert
+# - 购物车与联系表单防刷机制完善（30分钟冷却等）
+# - 后台管理强化完成（网站模式切换、企业介绍、联系方式全动态管理，包括电话、电邮、WhatsApp、WeChat、传真、地址）
+# - 前端全站同步显示（关于我们、联系页面、页脚）
+# - 新增后台独立 SMTP 配置管理页面（/admin/smtp）及专用主题 admin.css
+# - 邮件发送统一抽取到 app/utils/mail.py（smtplib + base64 AUTH），购物车、联系页、SMTP测试均已切换使用
+# - 关于我们页面、页脚、SEO 等模板修复完成（正确使用 settings.xxx 变量）
+# - 项目整体邮件发送、SEO占位符替换、模式切换（official/catalog）已稳定
 
 {"=" * 80}
 

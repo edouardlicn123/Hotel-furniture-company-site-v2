@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Inquiry Cart - {{ settings.company_name or 'Hotel Furniture' }}{% endblock %}
+{% block title %}
+    {{ seo_cart_title or ('Inquiry Cart - ' + (settings.company_name or 'Hotel Furniture')) }}
+{% endblock %}
 
 {% block hero_section %}
     {% set hero_title = "My Inquiry Cart" %}
@@ -49,7 +51,7 @@
         <!-- 全模式通用按钮 -->
         <button id="reset-btn" class="btn btn-primary btn-lg">Reset Cart</button>
 
-        <!-- 邮件发送按钮：仅在 official 模式下显示 -->
+        <!-- 邮件发送按钮：仅 official 模式 -->
         {% if settings.mode == 'official' %}
         <button id="send-email-btn" class="btn btn-primary btn-lg" disabled>
             <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
@@ -58,55 +60,53 @@
         {% endif %}
     </div>
 
-    <!-- 联系信息填写区 + 验证码图片：仅 official 模式 -->
+    <!-- 联系信息 + 验证码：仅 official 模式 -->
     {% if settings.mode == 'official' %}
     <div class="card mb-5 shadow-sm">
         <div class="card-body">
             <h5 class="card-title mb-4">Your Contact Information <small class="text-muted">(required for email inquiry)</small></h5>
             
             <div class="row g-3">
-                <!-- Email -->
                 <div class="col-md-6">
                     <label for="user-email" class="form-label">Email Address <span class="text-danger">*</span></label>
                     <input type="email" class="form-control" id="user-email" placeholder="your@email.com" required>
                 </div>
-                <!-- WhatsApp -->
                 <div class="col-md-6">
-                    <label for="user-whatsapp" class="form-label">WhatsApp Number</label>
+                    <label for="user-whatsapp" class="form-label">WhatsApp Number (optional)</label>
                     <input type="tel" class="form-control" id="user-whatsapp" placeholder="+86 123 4567 8900">
                 </div>
             </div>
 
-            <!-- 验证码图片区域 -->
-            <div class="row g-3 mt-3">
-                <div class="col-md-6">
+            <!-- 验证码 -->
+            <div class="row g-3 mt-4">
+                <div class="col-md-7 col-lg-6">
                     <label class="form-label">Verification Code <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="verification-input" 
                                placeholder="Enter 4-digit code" maxlength="4" required>
-                        <div class="input-group-text p-0 border-0" style="width:120px; height:42px; background:#f8f9fa; overflow:hidden;">
-                            <canvas id="verification-canvas" width="120" height="42"></canvas>
+                        <div class="input-group-text p-0 border-0" style="width:130px; height:44px; background:#f8f9fa; overflow:hidden;">
+                            <canvas id="verification-canvas" width="130" height="44"></canvas>
                         </div>
                     </div>
                     <div class="mt-2">
                         <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-verification">
                             Refresh Code
                         </button>
-                        <small class="text-muted ms-2">Please enter the code shown in the image</small>
+                        <small class="text-muted ms-3">Enter the code shown above</small>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-3">
+            <div class="mt-4">
                 <small class="text-muted">
-                    We will use this information only to respond to your inquiry.
+                    Your information will only be used to respond to this inquiry.
                 </small>
             </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- Important Notice（根据模式动态提示） -->
+    <!-- Important Notice -->
     <div class="alert alert-warning p-4 mb-5">
         <h5 class="alert-heading">Important Notice</h5>
         <p class="mb-2">
@@ -115,9 +115,9 @@
         </p>
         <p class="mb-0">
             {% if settings.mode == 'official' %}
-            Please fill in your contact information, enter the verification code and use "Send Email Inquiry" for fastest response.
+            Please fill in your contact information, verify the code, and click "Send Email Inquiry".
             {% else %}
-            In catalog mode, please use "Screenshot" or "Export as CSV" to save your selection, then contact us manually via WhatsApp or other methods.
+            Use "Screenshot" or "Export as CSV" to save your selection, then contact us manually.
             {% endif %}
         </p>
     </div>
@@ -136,7 +136,7 @@
         </a>
     </div>
 
-    <!-- Toast 容器 -->
+    <!-- Toast Container -->
     <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
         <div id="toast-container"></div>
     </div>
@@ -156,7 +156,7 @@ let generatedCode = '';
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
     toast.role = 'alert';
     toast.innerHTML = `
         <div class="d-flex">
@@ -165,21 +165,14 @@ function showToast(message, type = 'success') {
         </div>
     `;
     container.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
-    bsToast.show();
+    new bootstrap.Toast(toast, { delay: 5000 }).show();
     toast.addEventListener('hidden.bs.toast', () => toast.remove());
 }
 
 // ==================== Cart Functions ====================
 function getCart() {
     const data = localStorage.getItem(CART_KEY);
-    if (!data) return [];
-    try {
-        return JSON.parse(data);
-    } catch (e) {
-        console.error('Failed to parse cart data:', e);
-        return [];
-    }
+    return data ? JSON.parse(data) : [];
 }
 
 function saveCart(items) {
@@ -208,8 +201,7 @@ function renderCart() {
         div.className = 'list-group-item d-flex align-items-center py-3';
         div.innerHTML = `
             <img src="${item.image || '/static/img/placeholder.jpg'}" 
-                 alt="${item.name}" 
-                 class="me-4 rounded" 
+                 alt="${item.name}" class="me-4 rounded" 
                  style="width:80px;height:80px;object-fit:cover;">
             <div class="flex-grow-1">
                 <h5 class="mb-1">${item.name}</h5>
@@ -230,41 +222,73 @@ function removeItem(index) {
     renderCart();
 }
 
-// ==================== Verification Code (only for official mode) ====================
+// ==================== Verification Code ====================
 function generateVerificationCode() {
-    generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-    
+    generatedCode = '';
+    for (let i = 0; i < 4; i++) {
+        generatedCode += Math.floor(Math.random() * 10);
+    }
+
     const canvas = document.getElementById('verification-canvas');
-    if (!canvas) return; // catalog 模式下无 canvas
+    if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#f8f9fa';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Interference lines, text, noise dots... (保持原逻辑)
-    // ... (省略原生成验证码的完整代码，保持不变)
-}
 
-// Refresh button (only if exists)
-document.getElementById('refresh-verification')?.addEventListener('click', generateVerificationCode);
+    const w = canvas.width, h = canvas.height;
+
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, w, h);
+
+    // 干扰线
+    for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * w, Math.random() * h);
+        ctx.lineTo(Math.random() * w, Math.random() * h);
+        ctx.strokeStyle = `hsl(${Math.random()*360},80%,60%)`;
+        ctx.lineWidth = 1 + Math.random() * 2;
+        ctx.stroke();
+    }
+
+    // 文字
+    ctx.font = 'bold 32px Arial';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < 4; i++) {
+        const x = 20 + i * 28;
+        const y = h / 2 + (Math.random() - 0.5) * 12;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((Math.random() - 0.5) * 0.5);
+        ctx.fillStyle = ['#222','#0066cc','#cc0000','#006600','#8B4513'][Math.floor(Math.random()*5)];
+        ctx.fillText(generatedCode[i], 0, 0);
+        ctx.restore();
+    }
+
+    // 噪点
+    for (let i = 0; i < 80; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h;
+        ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.7)`;
+        ctx.fillRect(x, y, 1.5, 1.5);
+    }
+}
 
 function validateVerificationCode() {
     const input = document.getElementById('verification-input')?.value.trim();
     return input === generatedCode;
 }
 
-// ==================== Send Email (only for official mode) ====================
-{% if settings.mode == 'official' %}
-document.getElementById('send-email-btn')?.addEventListener('click', async () => {
-    // 原发送逻辑保持不变...
-    // ... (完整原代码)
-});
-{% endif %}
+// ==================== Event Listeners ====================
+document.getElementById('refresh-verification')?.addEventListener('click', generateVerificationCode);
 
-// ==================== Other Buttons (Screenshot, CSV, Reset) ====================
+document.getElementById('reset-btn')?.addEventListener('click', () => {
+    if (confirm('Clear entire cart? This cannot be undone.')) {
+        localStorage.removeItem(CART_KEY);
+        renderCart();
+        showToast('Cart has been cleared.', 'info');
+    }
+});
+
 document.getElementById('screenshot-btn')?.addEventListener('click', () => {
     html2canvas(document.getElementById('cart-items'), {
         scale: 2,
@@ -278,23 +302,93 @@ document.getElementById('screenshot-btn')?.addEventListener('click', () => {
     });
 });
 
-document.getElementById('export-csv-btn')?.addEventListener('click', () => {
-    // 原 CSV 导出逻辑...
-});
+// ==================== Send Email Inquiry ====================
+{% if settings.mode == 'official' %}
+document.addEventListener('DOMContentLoaded', () => {
+    const sendBtn = document.getElementById('send-email-btn');
+    if (!sendBtn) return;
 
-document.getElementById('reset-btn')?.addEventListener('click', () => {
-    if (confirm('Clear entire cart? This cannot be undone.')) {
-        localStorage.removeItem(CART_KEY);
-        renderCart();
-        showToast('Cart has been cleared.', 'info');
-    }
+    sendBtn.addEventListener('click', async () => {
+        if (sendBtn.disabled) return;
+
+        const email = document.getElementById('user-email')?.value.trim();
+        const whatsapp = document.getElementById('user-whatsapp')?.value.trim() || '';
+        const codeInput = document.getElementById('verification-input')?.value.trim();
+
+        // 校验
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showToast('Please enter a valid email address', 'danger');
+            return;
+        }
+
+        if (!codeInput || !validateVerificationCode()) {
+            showToast('Verification code incorrect', 'danger');
+            generateVerificationCode();
+            document.getElementById('verification-input').value = '';
+            return;
+        }
+
+        const items = getCart();
+        if (items.length === 0) {
+            showToast('Your cart is empty', 'warning');
+            return;
+        }
+
+        // 防重复发送
+        const lastSend = localStorage.getItem(LAST_SEND_KEY);
+        const now = Date.now();
+        if (lastSend && now - parseInt(lastSend) < SEND_COOLDOWN) {
+            const remain = Math.ceil((SEND_COOLDOWN - (now - parseInt(lastSend))) / 60000);
+            showToast(`Please wait ${remain} minute(s) before sending again`, 'warning');
+            return;
+        }
+
+        // 发送
+        sendBtn.disabled = true;
+        sendBtn.querySelector('.spinner-border')?.classList.remove('d-none');
+        const originalText = sendBtn.textContent;
+        sendBtn.textContent = 'Sending...';
+
+        try {
+            const response = await fetch('/cart/send-inquiry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items, email, whatsapp, code: codeInput })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showToast('Inquiry sent successfully! We will contact you soon.', 'success');
+                localStorage.setItem(LAST_SEND_KEY, now.toString());
+                localStorage.removeItem(CART_KEY);
+                renderCart();
+
+                // 清空表单
+                document.getElementById('user-email').value = '';
+                document.getElementById('user-whatsapp').value = '';
+                document.getElementById('verification-input').value = '';
+                generateVerificationCode();
+            } else {
+                showToast(result.message || 'Failed to send. Please try again.', 'danger');
+            }
+        } catch (err) {
+            console.error('Send failed:', err);
+            showToast('Network error. Please check connection.', 'danger');
+        } finally {
+            sendBtn.disabled = false;
+            sendBtn.querySelector('.spinner-border')?.classList.add('d-none');
+            sendBtn.textContent = originalText;
+        }
+    });
 });
+{% endif %}
 
 // ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
     renderCart();
     {% if settings.mode == 'official' %}
-    generateVerificationCode(); // 只在 official 模式生成验证码
+    generateVerificationCode();
     {% endif %}
 });
 </script>

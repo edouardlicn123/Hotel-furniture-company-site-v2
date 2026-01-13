@@ -1,5 +1,5 @@
 # app/routes/admin/smtp.py
-# SMTP 配置管理 - 独立子蓝图（正式版：手动 smtplib 发送 + 兼容163/Gmail + 纯From地址）
+# SMTP 配置管理 - 更新版（使用统一的 app.utils.mail.send_email 函数进行测试发送）
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
@@ -9,9 +9,7 @@ from datetime import datetime
 import traceback
 import socket
 import time
-import base64
-import smtplib
-from email.mime.text import MIMEText
+from app.utils.mail import send_email  # 已新建的统一邮件发送函数
 
 smtp_bp = Blueprint('smtp', __name__, url_prefix='/smtp')
 
@@ -88,6 +86,7 @@ def test_send():
     mail_use_ssl = config.mail_use_ssl
     mail_username = config.mail_username
     mail_password = config.mail_password
+    sender_name = config.default_sender_name or '酒店家具官网'
 
     print(f"★ [SMTP TEST] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} 开始测试...")
     print(f"★ 配置：Server={mail_server}, Port={mail_port}")
@@ -104,38 +103,30 @@ def test_send():
     retries = 2
     for attempt in range(retries + 1):
         try:
-            if mail_use_ssl:
-                server = smtplib.SMTP_SSL(mail_server, mail_port, timeout=20)
-            else:
-                server = smtplib.SMTP(mail_server, mail_port, timeout=20)
-                if mail_use_tls:
-                    server.starttls()
-
-            # 手动 AUTH LOGIN + UTF-8 base64（兼容非ASCII授权码）
-            server.ehlo()
-            server.docmd("AUTH LOGIN")
-            server.docmd(base64.b64encode(mail_username.encode('utf-8')).decode('ascii'))
-            server.docmd(base64.b64encode(mail_password.encode('utf-8')).decode('ascii'))
-
-            print("★ 手动 SMTP 登录成功！")
-
-            # From 强制纯邮箱地址（兼容163严格规则）
-            msg = MIMEText(
-                "这是一封测试邮件，证明你的 SMTP 配置正确！\n\n"
-                f"发送时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-                "如果收到此邮件，说明配置成功。",
-                'plain', 'utf-8'
+            # 使用统一的 send_email 函数发送测试邮件
+            success, msg = send_email(
+                smtp_server=mail_server,
+                smtp_port=mail_port,
+                username=mail_username,
+                password=mail_password,
+                from_addr=mail_username,
+                to_addr=recipient,
+                subject=f"SMTP 测试邮件 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (尝试 {attempt + 1})",
+                body="这是一封测试邮件，证明你的 SMTP 配置正确！\n\n"
+                     f"发送时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                     "如果收到此邮件，说明配置成功。",
+                is_html=False,
+                use_ssl=mail_use_ssl,
+                use_tls=mail_use_tls,
+                sender_name=sender_name
             )
-            msg['From'] = mail_username
-            msg['To'] = recipient
-            msg['Subject'] = f"SMTP 测试邮件 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (尝试 {attempt + 1})"
 
-            server.send_message(msg)
-            server.quit()
-
-            print("★ [SMTP TEST] 发送成功！")
-            flash(f'测试邮件已成功发送至 {recipient}！请检查收件箱（或垃圾箱/促销邮件）。', 'success')
-            break
+            if success:
+                print("★ [SMTP TEST] 发送成功！")
+                flash(f'测试邮件已成功发送至 {recipient}！请检查收件箱（或垃圾箱/促销邮件）。', 'success')
+                break
+            else:
+                raise Exception(msg)
 
         except Exception as e:
             error_msg = str(e)
