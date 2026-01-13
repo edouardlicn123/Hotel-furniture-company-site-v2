@@ -1,8 +1,9 @@
 # app/__init__.py
-# Flask 应用工厂 - 项目核心入口
+# Flask 应用工厂 - 项目核心入口（更新版：添加全局时间戳上下文处理器，修复防缓存问题）
 
 import os
-from flask import Flask, jsonify, render_template, request
+from time import time  # 用于生成当前时间戳
+from flask import Flask, jsonify, render_template, request, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -85,6 +86,13 @@ def create_app():
     # 全局上下文处理器（注入 SEO、公司信息等变量到所有模板）
     app.context_processor(inject_seo_data)
 
+    # 新增：全局上下文处理器 - 注入当前时间戳（用于模板防缓存）
+    @app.context_processor
+    def inject_timestamp():
+        return dict(
+            current_timestamp = int(time())  # 当前 Unix 时间戳（秒级）
+        )
+
     # 错误处理器 - 使用英文模板
     @app.errorhandler(404)
     def page_not_found(e):
@@ -97,7 +105,7 @@ def create_app():
     @app.errorhandler(500)
     def internal_server_error(e):
         # 可选：生产环境记录日志
-        # current_app.logger.error(f"500 Internal Server Error: {str(e)}")
+        current_app.logger.error(f"500 Internal Server Error: {str(e)}")
         return render_template('errors/500.html'), 500
 
     @app.errorhandler(RequestEntityTooLarge)

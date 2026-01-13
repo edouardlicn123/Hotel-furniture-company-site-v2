@@ -1,0 +1,27 @@
+# code2ai_config.toml - 项目专属源码汇总配置
+
+[include]
+extensions = [".py", ".html", ".css", ".js", ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".sh", ".md"]
+
+[special_include]
+# 路径包含这些关键词的 .css 文件都要包含
+themes_css = true
+
+# admin 目录下所有 .html
+admin_templates = true
+
+# 特定文件名
+cart_html = "cart.html"
+contact_html = "contact.html"
+cart_js = "cart.js"
+smtp_py = "smtp.py"
+cart_py = "cart.py"
+
+[exclude]
+dirs = ["__pycache__", ".git", ".idea", ".vscode", "node_modules", "venv", ".venv", "instance", "migrations/versions", "code2ai"]
+files = [".gitignore", "site.db", "db.sqlite3"]
+extensions = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp", ".woff", ".woff2", ".ttf"]
+
+[output]
+default_dir = "code2ai"
+max_file_size_kb = 1000

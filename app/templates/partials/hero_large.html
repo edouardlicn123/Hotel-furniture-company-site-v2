@@ -1,16 +1,66 @@
+{# app/templates/partials/hero_large.html - 更新版（2026-01-13），已移除 datetimeformat 过滤器 #}
+{# 使用全局 current_timestamp 防缓存，支持公司名自动注入 + 画册模式适配 #}
+
+{% set company = settings.company_name or 'Premium Hotel Furniture Manufacturer' %}
+{% set is_official = settings.mode == 'official' %}
+
 <section class="hero-section hero-large" id="page-hero"
-         style="background-image: url('{{ hero_background | default(url_for('static', filename='img/hero-default-large.jpg')) }}');">
+         style="background-image: url('{{ hero_background | default(url_for('static', filename='img/hero-default-large.jpg')) }}?v={{ current_timestamp }}');">
     <div class="hero-overlay"></div>
     <div class="hero-content">
-        <h1 class="display-4 fw-bold">{{ hero_title }}</h1>
-        <p class="lead">{{ hero_subtitle }}</p>
+        {# 主标题：优先使用传入的 hero_title，否则根据模式自动生成（带公司名） #}
+        <h1 class="display-4 fw-bold">
+            {% if hero_title %}
+                {{ hero_title }}
+            {% else %}
+                {% if is_official %}
+                    Premium Hotel Furniture by {{ company }}
+                {% else %}
+                    Product Catalog - {{ company }}
+                {% endif %}
+            {% endif %}
+        </h1>
+
+        {# 副标题：优先使用传入的 hero_subtitle，否则提供模式友好的默认值 #}
+        <p class="lead">
+            {% if hero_subtitle %}
+                {{ hero_subtitle }}
+            {% else %}
+                {% if is_official %}
+                    Luxury Hospitality Furniture | Custom Solutions for 5-Star Hotels Worldwide
+                {% else %}
+                    Explore our complete collection of premium hotel beds, sofas, wardrobes & casegoods
+                {% endif %}
+            {% endif %}
+        </p>
+
+        {# 按钮区：优先使用传入的 hero_buttons，否则显示默认按钮（画册模式调整文案） #}
         <div class="mt-4">
             {% if hero_buttons %}
                 {{ hero_buttons | safe }}
             {% else %}
-                <a href="/products" class="btn btn-primary me-3">查看产品</a>
-                <a href="/contact" class="btn btn-outline-dark">联系我们</a>
+                {% if is_official %}
+                    <a href="{{ url_for('products.list_products') }}" class="btn btn-primary btn-lg me-3">
+                        View Products
+                    </a>
+                    <a href="{{ url_for('main.contact') }}" class="btn btn-outline-light btn-lg">
+                        Contact Us
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('series.list_series') }}" class="btn btn-primary btn-lg me-3">
+                        Browse Collections
+                    </a>
+                    <a href="{{ url_for('main.contact') }}" class="btn btn-outline-light btn-lg">
+                        Get in Touch
+                    </a>
+                {% endif %}
             {% endif %}
         </div>
     </div>
 </section>
+
+{# 可选：注入公司名到 JS 全局变量，供其他前端动态使用 #}
+<script>
+    window.APP_CONFIG = window.APP_CONFIG || {};
+    window.APP_CONFIG.companyName = "{{ company | e }}";
+</script>

@@ -65,12 +65,10 @@
             <h5 class="card-title mb-4">Your Contact Information <small class="text-muted">(required for email inquiry)</small></h5>
             
             <div class="row g-3">
-                <!-- Email -->
                 <div class="col-md-6">
                     <label for="user-email" class="form-label">Email Address <span class="text-danger">*</span></label>
                     <input type="email" class="form-control" id="user-email" placeholder="your@email.com" required>
                 </div>
-                <!-- WhatsApp -->
                 <div class="col-md-6">
                     <label for="user-whatsapp" class="form-label">WhatsApp Number</label>
                     <input type="tel" class="form-control" id="user-whatsapp" placeholder="+86 123 4567 8900">
@@ -78,26 +76,26 @@
             </div>
 
             <!-- 验证码图片区域 -->
-            <div class="row g-3 mt-3">
-                <div class="col-md-6">
+            <div class="row g-3 mt-4">
+                <div class="col-md-7">
                     <label class="form-label">Verification Code <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="verification-input" 
-                               placeholder="Enter 4-digit code" maxlength="4" required>
-                        <div class="input-group-text p-0 border-0" style="width:120px; height:42px; background:#f8f9fa; overflow:hidden;">
-                            <canvas id="verification-canvas" width="120" height="42"></canvas>
+                               placeholder="Enter 4-digit code" maxlength="4" required autocomplete="off">
+                        <div class="input-group-text p-0 border-0" style="width:140px; height:46px; background:#f8f9fa; overflow:hidden;">
+                            <canvas id="verification-canvas" width="140" height="46"></canvas>
                         </div>
                     </div>
                     <div class="mt-2">
                         <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-verification">
-                            Refresh Code
+                            <i class="fas fa-sync-alt me-1"></i>Refresh Code
                         </button>
-                        <small class="text-muted ms-2">Please enter the code shown in the image</small>
+                        <small class="text-muted ms-3">Type the code you see above</small>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-3">
+            <div class="mt-4">
                 <small class="text-muted">
                     We will use this information only to respond to your inquiry.
                 </small>
@@ -106,7 +104,7 @@
     </div>
     {% endif %}
 
-    <!-- Important Notice（根据模式动态提示） -->
+    <!-- Important Notice -->
     <div class="alert alert-warning p-4 mb-5">
         <h5 class="alert-heading">Important Notice</h5>
         <p class="mb-2">
@@ -117,7 +115,7 @@
             {% if settings.mode == 'official' %}
             Please fill in your contact information, enter the verification code and use "Send Email Inquiry" for fastest response.
             {% else %}
-            In catalog mode, please use "Screenshot" or "Export as CSV" to save your selection, then contact us manually via WhatsApp or other methods.
+            In catalog mode, please use "Screenshot" or "Export as CSV" to save your selection, then contact us manually.
             {% endif %}
         </p>
     </div>
@@ -149,14 +147,15 @@
 // ==================== Global Config ====================
 const CART_KEY = 'inquiryCart';
 const LAST_SEND_KEY = 'lastInquirySendTime';
-const SEND_COOLDOWN = 120000; // 2 minutes
+const SEND_COOLDOWN = 120000; // 2 minutes in ms
+
 let generatedCode = '';
 
 // ==================== Toast ====================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
     toast.role = 'alert';
     toast.innerHTML = `
         <div class="d-flex">
@@ -230,41 +229,143 @@ function removeItem(index) {
     renderCart();
 }
 
-// ==================== Verification Code (only for official mode) ====================
+// ==================== Verification Code ====================
 function generateVerificationCode() {
     generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
     
     const canvas = document.getElementById('verification-canvas');
-    if (!canvas) return; // catalog 模式下无 canvas
+    if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#f8f9fa';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Interference lines, text, noise dots... (保持原逻辑)
-    // ... (省略原生成验证码的完整代码，保持不变)
-}
 
-// Refresh button (only if exists)
-document.getElementById('refresh-verification')?.addEventListener('click', generateVerificationCode);
+    // 干扰线
+    for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.5)`;
+        ctx.lineWidth = 1 + Math.random() * 2;
+        ctx.stroke();
+    }
+
+    // 文字
+    const chars = generatedCode.split('');
+    chars.forEach((char, i) => {
+        ctx.font = 'bold 32px Arial';
+        ctx.fillStyle = ['#2c3e50','#e74c3c','#3498db','#27ae60','#f39c12'][Math.floor(Math.random()*5)];
+        const x = 20 + i * 30;
+        const y = 30 + (Math.random() - 0.5) * 10;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((Math.random() - 0.5) * 0.3);
+        ctx.fillText(char, -10, 10);
+        ctx.restore();
+    });
+
+    // 噪点
+    for (let i = 0; i < 50; i++) {
+        ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.7)`;
+        ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 2);
+    }
+}
 
 function validateVerificationCode() {
     const input = document.getElementById('verification-input')?.value.trim();
     return input === generatedCode;
 }
 
-// ==================== Send Email (only for official mode) ====================
+// ==================== Send Email Inquiry ====================
 {% if settings.mode == 'official' %}
 document.getElementById('send-email-btn')?.addEventListener('click', async () => {
-    // 原发送逻辑保持不变...
-    // ... (完整原代码)
+    const email = document.getElementById('user-email').value.trim();
+    const whatsapp = document.getElementById('user-whatsapp').value.trim();
+    const codeInput = document.getElementById('verification-input').value.trim();
+
+    // 基本验证
+    if (!email) {
+        showToast('Please enter your email address', 'danger');
+        return;
+    }
+
+    if (!validateVerificationCode()) {
+        showToast('Verification code incorrect', 'danger');
+        generateVerificationCode();
+        document.getElementById('verification-input').value = '';
+        document.getElementById('verification-input').focus();
+        return;
+    }
+
+    const items = getCart();
+    if (items.length === 0) {
+        showToast('Your cart is empty', 'warning');
+        return;
+    }
+
+    // 频率限制检查
+    const lastSend = localStorage.getItem(LAST_SEND_KEY);
+    if (lastSend && (Date.now() - parseInt(lastSend) < SEND_COOLDOWN)) {
+        const remaining = Math.ceil((SEND_COOLDOWN - (Date.now() - parseInt(lastSend))) / 1000 / 60);
+        showToast(`Please wait ${remaining} more minute(s) before sending again`, 'warning');
+        return;
+    }
+
+    // 准备发送
+    const payload = {
+        items: items,
+        contact: {
+            email: email,
+            whatsapp: whatsapp || null
+        }
+    };
+
+    const btn = document.getElementById('send-email-btn');
+    const spinner = btn.querySelector('.spinner-border');
+    spinner.classList.remove('d-none');
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/cart/send-inquiry', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Inquiry sent successfully! We will contact you soon.', 'success');
+            localStorage.setItem(LAST_SEND_KEY, Date.now().toString());
+            // 可选：发送成功后清空购物车
+            // localStorage.removeItem(CART_KEY);
+            // renderCart();
+        } else {
+            showToast(data.error || 'Failed to send inquiry', 'danger');
+        }
+    } catch (err) {
+        console.error('Send inquiry error:', err);
+        showToast('Network error, please try again later', 'danger');
+    } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+    }
 });
 {% endif %}
 
-// ==================== Other Buttons (Screenshot, CSV, Reset) ====================
+// ==================== Refresh Verification ====================
+document.getElementById('refresh-verification')?.addEventListener('click', () => {
+    generateVerificationCode();
+    document.getElementById('verification-input').value = '';
+    showToast('Verification code refreshed', 'info');
+});
+
+// ==================== Other Buttons ====================
 document.getElementById('screenshot-btn')?.addEventListener('click', () => {
     html2canvas(document.getElementById('cart-items'), {
         scale: 2,
@@ -275,26 +376,30 @@ document.getElementById('screenshot-btn')?.addEventListener('click', () => {
         link.download = `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
+        showToast('Screenshot downloaded', 'success');
+    }).catch(() => {
+        showToast('Failed to generate screenshot', 'danger');
     });
 });
 
 document.getElementById('export-csv-btn')?.addEventListener('click', () => {
-    // 原 CSV 导出逻辑...
+    // 如果你有 CSV 导出逻辑，请在此处添加
+    showToast('CSV export feature coming soon', 'info');
 });
 
 document.getElementById('reset-btn')?.addEventListener('click', () => {
-    if (confirm('Clear entire cart? This cannot be undone.')) {
+    if (confirm('Are you sure to clear the cart?')) {
         localStorage.removeItem(CART_KEY);
         renderCart();
-        showToast('Cart has been cleared.', 'info');
+        showToast('Cart has been cleared', 'info');
     }
 });
 
-// ==================== Initialization ====================
+// ==================== Init ====================
 document.addEventListener('DOMContentLoaded', () => {
     renderCart();
     {% if settings.mode == 'official' %}
-    generateVerificationCode(); // 只在 official 模式生成验证码
+    generateVerificationCode();
     {% endif %}
 });
 </script>
