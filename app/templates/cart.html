@@ -77,22 +77,22 @@
                 </div>
             </div>
 
-            <!-- 验证码图片区域 -->
-            <div class="row g-3 mt-3">
-                <div class="col-md-6">
+            <!-- 验证码区域 -->
+            <div class="row g-3 mt-4">
+                <div class="col-md-7">
                     <label class="form-label">Verification Code <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="verification-input" 
                                placeholder="Enter 4-digit code" maxlength="4" required>
-                        <div class="input-group-text p-0 border-0" style="width:120px; height:42px; background:#f8f9fa; overflow:hidden;">
-                            <canvas id="verification-canvas" width="120" height="42"></canvas>
+                        <div class="input-group-text p-0 border-0" style="width:140px; height:42px; background:#f8f9fa; overflow:hidden;">
+                            <canvas id="verification-canvas" width="140" height="42"></canvas>
                         </div>
                     </div>
                     <div class="mt-2">
                         <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-verification">
                             Refresh Code
                         </button>
-                        <small class="text-muted ms-2">Please enter the code shown in the image</small>
+                        <small class="text-muted ms-3">请输入图片中的验证码</small>
                     </div>
                 </div>
             </div>
@@ -230,41 +230,126 @@ function removeItem(index) {
     renderCart();
 }
 
-// ==================== Verification Code (only for official mode) ====================
+// ==================== Verification Code (仅 official 模式使用) ====================
 function generateVerificationCode() {
     generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
     
     const canvas = document.getElementById('verification-canvas');
-    if (!canvas) return; // catalog 模式下无 canvas
-    
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#f8f9fa';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Interference lines, text, noise dots... (保持原逻辑)
-    // ... (省略原生成验证码的完整代码，保持不变)
-}
 
-// Refresh button (only if exists)
-document.getElementById('refresh-verification')?.addEventListener('click', generateVerificationCode);
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // 清空 + 背景
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, w, h);
+
+    // 干扰线 (5~8条随机颜色)
+    for (let i = 0; i < Math.floor(Math.random() * 4) + 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * w, Math.random() * h);
+        ctx.lineTo(Math.random() * w, Math.random() * h);
+        ctx.strokeStyle = `hsl(${Math.random()*360}, 70%, 60%)`;
+        ctx.lineWidth = 1 + Math.random() * 2;
+        ctx.stroke();
+    }
+
+    // 绘制验证码数字
+    ctx.font = 'bold 32px Arial';
+    ctx.textBaseline = 'middle';
+    const chars = generatedCode.split('');
+    chars.forEach((char, i) => {
+        ctx.save();
+        ctx.translate(30 + i * 28, h/2);
+        ctx.rotate((Math.random() - 0.5) * 0.6); // 轻微旋转
+        ctx.fillStyle = `hsl(${Math.random()*360}, 80%, 40%)`;
+        ctx.fillText(char, -12 + Math.random()*24, Math.random()*12);
+        ctx.restore();
+    });
+
+    // 添加噪点
+    for (let i = 0; i < 50; i++) {
+        ctx.fillStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.6)`;
+        ctx.fillRect(Math.random()*w, Math.random()*h, 2, 2);
+    }
+
+    console.log('验证码已生成:', generatedCode); // 调试用，上线可删除
+}
 
 function validateVerificationCode() {
     const input = document.getElementById('verification-input')?.value.trim();
     return input === generatedCode;
 }
 
-// ==================== Send Email (only for official mode) ====================
+// ==================== Send Email (仅 official 模式) ====================
 {% if settings.mode == 'official' %}
 document.getElementById('send-email-btn')?.addEventListener('click', async () => {
-    // 原发送逻辑保持不变...
-    // ... (完整原代码)
+    const email = document.getElementById('user-email')?.value.trim();
+    const whatsapp = document.getElementById('user-whatsapp')?.value.trim();
+    const codeInput = document.getElementById('verification-input')?.value.trim();
+
+    if (!email) {
+        showToast('请输入邮箱地址', 'danger');
+        return;
+    }
+    if (!validateVerificationCode()) {
+        showToast('验证码错误，请重新输入', 'danger');
+        generateVerificationCode(); // 自动刷新
+        return;
+    }
+
+    const lastSend = localStorage.getItem(LAST_SEND_KEY);
+    if (lastSend && Date.now() - parseInt(lastSend) < SEND_COOLDOWN) {
+        const remain = Math.ceil((SEND_COOLDOWN - (Date.now() - parseInt(lastSend))) / 1000 / 60);
+        showToast(`请等待 ${remain} 分钟后再尝试发送`, 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('send-email-btn');
+    btn.disabled = true;
+    btn.querySelector('.spinner-border').classList.remove('d-none');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>发送中...';
+
+    try {
+        const items = getCart();
+        const response = await fetch('/cart/send-inquiry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                items: items,
+                email: email,
+                whatsapp: whatsapp
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast('We will reply you soon.', 'success');
+            localStorage.setItem(LAST_SEND_KEY, Date.now().toString());
+            // 可选：清空购物车
+            // localStorage.removeItem(CART_KEY);
+            // renderCart();
+        } else {
+            showToast(result.error || '发送失败，请稍后再试', 'danger');
+        }
+    } catch (err) {
+        showToast('网络错误，请检查网络后重试', 'danger');
+        console.error(err);
+    } finally {
+        btn.disabled = false;
+        btn.querySelector('.spinner-border').classList.add('d-none');
+        btn.innerHTML = 'Send Email Inquiry';
+        generateVerificationCode(); // 发送后刷新验证码
+    }
 });
 {% endif %}
 
-// ==================== Other Buttons (Screenshot, CSV, Reset) ====================
+// ==================== Other Buttons ====================
 document.getElementById('screenshot-btn')?.addEventListener('click', () => {
     html2canvas(document.getElementById('cart-items'), {
         scale: 2,
@@ -279,22 +364,52 @@ document.getElementById('screenshot-btn')?.addEventListener('click', () => {
 });
 
 document.getElementById('export-csv-btn')?.addEventListener('click', () => {
-    // 原 CSV 导出逻辑...
+    const items = getCart();
+    if (items.length === 0) {
+        showToast('购物车为空', 'warning');
+        return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "序号,产品名称,产品编号\n";
+    
+    items.forEach((item, index) => {
+        csvContent += `${index+1},"${item.name.replace(/"/g, '""')}","${item.code}"\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Inquiry_Cart_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 });
 
 document.getElementById('reset-btn')?.addEventListener('click', () => {
-    if (confirm('Clear entire cart? This cannot be undone.')) {
+    if (confirm('确定要清空购物车吗？此操作无法撤销。')) {
         localStorage.removeItem(CART_KEY);
         renderCart();
-        showToast('Cart has been cleared.', 'info');
+        showToast('购物车已清空', 'info');
     }
 });
 
 // ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
     renderCart();
+
+    // 只在 official 模式初始化验证码
     {% if settings.mode == 'official' %}
-    generateVerificationCode(); // 只在 official 模式生成验证码
+    const verificationCanvas = document.getElementById('verification-canvas');
+    if (verificationCanvas) {
+        generateVerificationCode(); // 页面加载时首次生成
+
+        // 绑定刷新按钮
+        document.getElementById('refresh-verification')?.addEventListener('click', () => {
+            generateVerificationCode();
+            document.getElementById('verification-input').value = '';
+        });
+    }
     {% endif %}
 });
 </script>
