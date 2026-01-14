@@ -8,10 +8,10 @@
         <a class="navbar-brand d-flex align-items-center" href="/">
             {% if settings.logo %}
                 <!-- 有 Logo 时：显示 Logo（加随机版本号防缓存） -->
-                <img src="{{ url_for('static', filename='uploads/company_logo/' ~ settings.logo) }}?v={{ range(1,1000000)|random }}"
+                <img src="{{ url_for('static', filename='uploads/logo/' ~ settings.logo) }}?v={{ range(1,1000000)|random }}"
                      alt="{{ settings.company_name or '酒店家具制造商' }}"
                      id="navbar-logo"
-                     style="height: 40px;">
+                     style="height: 60px;">
 
                 {# ============ 在 catalog 模式下，Logo 后显示 Catalogue ============ #}
                 {% if settings.mode == 'catalog' %}
