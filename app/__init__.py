@@ -1,5 +1,5 @@
 # app/__init__.py
-# Flask 应用工厂 - 项目核心入口（更新版：添加全局时间戳上下文处理器，修复防缓存问题）
+# Flask 应用工厂 - 项目核心入口（更新版：添加全局时间戳上下文处理器 + settings 注入）
 
 import os
 from time import time  # 用于生成当前时间戳
@@ -77,8 +77,7 @@ def create_app():
     from app.routes.cart import cart_bp
     from app.routes.contact import contact_bp
 
-
-    app.register_blueprint(contact_bp) 
+    app.register_blueprint(contact_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(products_bp, url_prefix='/products')
     app.register_blueprint(featured_bp, url_prefix='/featured')
@@ -89,11 +88,20 @@ def create_app():
     # 全局上下文处理器（注入 SEO、公司信息等变量到所有模板）
     app.context_processor(inject_seo_data)
 
+    # 新增：全局注入 settings 对象（修复 about 和 footer 显示问题）
+    @app.context_processor
+    def inject_settings():
+        from app.models import Settings
+        settings = Settings.query.first()
+        if not settings:
+            settings = Settings()  # 防止 None，提供空对象
+        return dict(settings=settings)
+
     # 新增：全局上下文处理器 - 注入当前时间戳（用于模板防缓存）
     @app.context_processor
     def inject_timestamp():
         return dict(
-            current_timestamp = int(time())  # 当前 Unix 时间戳（秒级）
+            current_timestamp=int(time())  # 当前 Unix 时间戳（秒级）
         )
 
     # 错误处理器 - 使用英文模板

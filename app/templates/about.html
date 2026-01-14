@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 
+{% block title %}About Us - {{ settings.company_name or 'Hotel Furniture' }}{% endblock %}
+
 {% block hero_section %}
     {% set hero_title = "About Us" %}
     {% set hero_subtitle = "Specializing in the design and manufacturing of luxury hotel furniture." %}
     {% set hero_background = url_for('static', filename='img/about-hero.jpg') %}
-
     {% include 'partials/hero_small.html' %}
 {% endblock %}
 
@@ -14,30 +15,32 @@
         <div class="col-lg-10">
 
             <!-- 基本情况 -->
-            {% if basic_info %}
+            {% if settings.basic_info %}
             <section class="mb-5 text-center">
                 <div class="lead">
-                    {{ basic_info | replace('\n', '<br>') | safe }}
+                    {{ settings.basic_info | replace('\n', '<br>') | safe }}
                 </div>
+            </section>
+            {% else %}
+            <section class="mb-5 text-center text-muted">
+                <h4>公司介绍暂未设置</h4>
+                <p>请在后台“网站设置”中填写“基本情况”。</p>
             </section>
             {% endif %}
 
             <!-- 企业优势 -->
-            {% if company_advantages %}
+            {% if settings.company_advantages %}
             <section class="mb-5">
                 <h3 class="section-title text-center mb-4">Our Strengths</h3>
                 <div class="lead">
-                    {{ company_advantages | replace('\n', '<br>') | safe }}
+                    {{ settings.company_advantages | replace('\n', '<br>') | safe }}
                 </div>
             </section>
-            {% endif %}
-
-            <!-- 如果后台尚未填写内容，显示提示 -->
-            {% if not basic_info and not company_advantages %}
-            <div class="text-center py-5">
-                <p class="text-muted h5">暂无关于我们内容</p>
-                <small class="text-muted">请在后台“网站设置”中填写“基本情况”和“企业优势”。</small>
-            </div>
+            {% else %}
+            <section class="mb-5 text-center text-muted">
+                <h4>企业优势暂未设置</h4>
+                <p>请在后台“网站设置”中填写“企业优势”。</p>
+            </section>
             {% endif %}
 
         </div>
