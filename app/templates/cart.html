@@ -10,7 +10,7 @@
 
 {% block content %}
 <div class="container my-5">
-    <!-- 1. 操作按钮区域 -->
+    <!-- 1. 操作按钮区域（保持不变） -->
     <div class="d-flex flex-wrap gap-3 mb-5 justify-content-center justify-content-md-start operation-btn-group">
         <!-- WhatsApp 快速联系（仅 official 模式） -->
         {% if settings.mode == 'official' and (settings.whatsapp1 or settings.whatsapp2) %}
@@ -61,7 +61,7 @@
         {% endif %}
     </div>
 
-    <!-- 2. 联系信息 + 验证码（仅 official 模式） -->
+    <!-- 2. 联系信息 + 验证码（四个输入框横向排列） -->
     {% if settings.mode == 'official' %}
     <div class="card shadow-sm border-0 mb-5">
         <div class="card-body p-4 p-md-5">
@@ -70,33 +70,42 @@
             </h5>
 
             <div class="row g-4">
-                <div class="col-md-6">
+                <!-- 姓名 -->
+                <div class="col-12 col-lg-3">
+                    <label for="user-name" class="form-label fw-medium">Name / 姓名 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-lg w-100 mw-300" id="user-name" 
+                           placeholder="Your Name / 您的姓名" required autocomplete="name">
+                </div>
+
+                <!-- 邮箱 -->
+                <div class="col-12 col-lg-3">
                     <label for="user-email" class="form-label fw-medium">Email Address <span class="text-danger">*</span></label>
-                    <input type="email" class="form-control form-control-lg" id="user-email" 
+                    <input type="email" class="form-control form-control-lg w-100 mw-400" id="user-email" 
                            placeholder="your@email.com" required autocomplete="email">
                 </div>
-                <div class="col-md-6">
+
+                <!-- WhatsApp -->
+                <div class="col-12 col-lg-3">
                     <label for="user-whatsapp" class="form-label fw-medium">WhatsApp Number</label>
-                    <input type="tel" class="form-control form-control-lg" id="user-whatsapp" 
+                    <input type="tel" class="form-control form-control-lg w-100 mw-300" id="user-whatsapp" 
                            placeholder="+86 123 4567 8900" autocomplete="tel">
                 </div>
-            </div>
 
-            <!-- 验证码 -->
-            <div class="mt-5">
-                <label class="form-label fw-medium">Verification Code <span class="text-danger">*</span></label>
-                <div class="input-group input-group-lg">
-                    <input type="text" class="form-control" id="verification-input" 
-                           placeholder="Enter 4-digit code" maxlength="4" required autocomplete="off">
-                    <span class="input-group-text p-0 border-0 bg-light" style="width:160px;">
-                        <canvas id="verification-canvas" width="160" height="52" class="rounded"></canvas>
-                    </span>
-                </div>
-                <div class="mt-3 d-flex align-items-center gap-3">
-                    <button type="button" class="btn btn-outline-secondary" id="refresh-verification">
-                        <i class="fas fa-sync-alt me-1"></i> Refresh Code
-                    </button>
-                    <small class="text-muted">Please type the code shown above</small>
+                <!-- 验证码 -->
+                <div class="col-12 col-lg-3">
+                    <label class="form-label fw-medium">Verification Code <span class="text-danger">*</span></label>
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control w-100 mw-180 text-center" id="verification-input" 
+                               placeholder="Enter 4-digit code" maxlength="4" required autocomplete="off">
+                        <span class="input-group-text p-0 border-0 bg-light" style="width:160px;">
+                            <canvas id="verification-canvas" width="160" height="52" class="rounded"></canvas>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-verification">
+                            <i class="fas fa-sync-alt me-1"></i> Refresh
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -109,7 +118,7 @@
     </div>
     {% endif %}
 
-    <!-- 3. 重要提醒 -->
+    <!-- 3. 重要提醒（保持原样） -->
     <div class="alert alert-warning border-warning shadow-sm mb-5" role="alert">
         <h5 class="alert-heading mb-3">Important Notice</h5>
         <p class="mb-2">
@@ -157,7 +166,7 @@ const SEND_COOLDOWN = 120 * 1000; // 2 分钟冷却（毫秒）
 
 let generatedCode = '';
 
-// ==================== 工具函数 ====================
+// ==================== 工具函数（保持不变） ====================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toastEl = document.createElement('div');
@@ -243,7 +252,6 @@ function generateVerificationCode() {
     ctx.fillStyle = '#f8f9fa';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 干扰线 + 噪点 + 随机旋转颜色文字
     for (let i = 0; i < 6; i++) {
         ctx.beginPath();
         ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
@@ -275,13 +283,20 @@ function validateVerificationCode() {
 // ==================== 发送邮件询价（仅 official 模式） ====================
 {% if settings.mode == 'official' %}
 document.getElementById('send-email-btn')?.addEventListener('click', async () => {
-    const email = document.getElementById('user-email').value.trim();
-    const whatsapp = document.getElementById('user-whatsapp').value.trim();
-    const codeInput = document.getElementById('verification-input').value.trim();
+    const name = document.getElementById('user-name')?.value.trim();
+    const email = document.getElementById('user-email')?.value.trim();
+    const whatsapp = document.getElementById('user-whatsapp')?.value.trim();
+    const codeInput = document.getElementById('verification-input')?.value.trim();
+
+    if (!name) {
+        showToast('Please enter your name', 'danger');
+        document.getElementById('user-name')?.focus();
+        return;
+    }
 
     if (!email) {
         showToast('Please enter your email address', 'danger');
-        document.getElementById('user-email').focus();
+        document.getElementById('user-email')?.focus();
         return;
     }
 
@@ -299,7 +314,6 @@ document.getElementById('send-email-btn')?.addEventListener('click', async () =>
         return;
     }
 
-    // 频率限制
     const lastSend = localStorage.getItem(LAST_SEND_KEY);
     if (lastSend && (Date.now() - parseInt(lastSend) < SEND_COOLDOWN)) {
         const remaining = Math.ceil((SEND_COOLDOWN - (Date.now() - parseInt(lastSend))) / 60000);
@@ -309,10 +323,10 @@ document.getElementById('send-email-btn')?.addEventListener('click', async () =>
 
     const payload = {
         items: items,
+        customer_name: name,
         customer_email: email,
         customer_whatsapp: whatsapp || null,
-        customer_name: '', // 可后续扩展表单
-        message: ''        // 可后续扩展留言框
+        message: ''
     };
 
     const btn = document.getElementById('send-email-btn');
@@ -333,9 +347,6 @@ document.getElementById('send-email-btn')?.addEventListener('click', async () =>
         if (result.success) {
             showToast(result.message || 'Inquiry sent successfully!', 'success');
             localStorage.setItem(LAST_SEND_KEY, Date.now().toString());
-            // 可选：清空购物车
-            // localStorage.removeItem(CART_KEY);
-            // renderCart();
         } else {
             showToast(result.message || 'Failed to send inquiry', 'danger');
         }
@@ -350,7 +361,7 @@ document.getElementById('send-email-btn')?.addEventListener('click', async () =>
 });
 {% endif %}
 
-// ==================== 事件绑定 ====================
+// ==================== 其他事件绑定（保持原样） ====================
 document.getElementById('refresh-verification')?.addEventListener('click', () => {
     generateVerificationCode();
     document.getElementById('verification-input').value = '';
