@@ -75,7 +75,10 @@ def create_app():
     from app.routes.admin import admin_bp
     from app.routes.series import series_bp
     from app.routes.cart import cart_bp
+    from app.routes.contact import contact_bp
 
+
+    app.register_blueprint(contact_bp) 
     app.register_blueprint(main_bp)
     app.register_blueprint(products_bp, url_prefix='/products')
     app.register_blueprint(featured_bp, url_prefix='/featured')

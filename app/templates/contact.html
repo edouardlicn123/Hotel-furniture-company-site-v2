@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
+{% block title %}Contact Us - {{ settings.company_name or 'Hotel Furniture' }}{% endblock %}
+
 {% block hero_section %}
     {% set hero_title = "Contact Us" %}
     {% set hero_subtitle = "Inquire for custom quotes, project collaboration, or factory visit appointments." %}
-
     {% include 'partials/hero_small.html' %}
 {% endblock %}
 
@@ -16,9 +17,9 @@
             <div class="lead">
                 <!-- 电话 -->
                 {% set phones = [] %}
-                {% if phone1 %}{{ phones.append(phone1) or '' }}{% endif %}
-                {% if phone2 %}{{ phones.append(phone2) or '' }}{% endif %}
-                {% if phone3 %}{{ phones.append(phone3) or '' }}{% endif %}
+                {% if settings.phone1 %}{{ phones.append(settings.phone1) or '' }}{% endif %}
+                {% if settings.phone2 %}{{ phones.append(settings.phone2) or '' }}{% endif %}
+                {% if settings.phone3 %}{{ phones.append(settings.phone3) or '' }}{% endif %}
                 {% if phones %}
                 <p class="mb-2">
                     <strong>Phone:</strong><br>
@@ -26,11 +27,11 @@
                 </p>
                 {% endif %}
 
-                <!-- 电邮 -->
+                <!-- 邮箱 -->
                 {% set emails = [] %}
-                {% if email1 %}{{ emails.append(email1) or '' }}{% endif %}
-                {% if email2 %}{{ emails.append(email2) or '' }}{% endif %}
-                {% if email3 %}{{ emails.append(email3) or '' }}{% endif %}
+                {% if settings.email1 %}{{ emails.append(settings.email1) or '' }}{% endif %}
+                {% if settings.email2 %}{{ emails.append(settings.email2) or '' }}{% endif %}
+                {% if settings.email3 %}{{ emails.append(settings.email3) or '' }}{% endif %}
                 {% if emails %}
                 <p class="mb-2">
                     <strong>Email:</strong><br>
@@ -40,8 +41,8 @@
 
                 <!-- WhatsApp -->
                 {% set whatsapps = [] %}
-                {% if whatsapp1 %}{{ whatsapps.append(whatsapp1) or '' }}{% endif %}
-                {% if whatsapp2 %}{{ whatsapps.append(whatsapp2) or '' }}{% endif %}
+                {% if settings.whatsapp1 %}{{ whatsapps.append(settings.whatsapp1) or '' }}{% endif %}
+                {% if settings.whatsapp2 %}{{ whatsapps.append(settings.whatsapp2) or '' }}{% endif %}
                 {% if whatsapps %}
                 <p class="mb-2">
                     <strong>WhatsApp:</strong><br>
@@ -51,8 +52,8 @@
 
                 <!-- WeChat -->
                 {% set wechats = [] %}
-                {% if wechat1 %}{{ wechats.append(wechat1) or '' }}{% endif %}
-                {% if wechat2 %}{{ wechats.append(wechat2) or '' }}{% endif %}
+                {% if settings.wechat1 %}{{ wechats.append(settings.wechat1) or '' }}{% endif %}
+                {% if settings.wechat2 %}{{ wechats.append(settings.wechat2) or '' }}{% endif %}
                 {% if wechats %}
                 <p class="mb-2">
                     <strong>WeChat:</strong><br>
@@ -61,24 +62,24 @@
                 {% endif %}
 
                 <!-- 传真 -->
-                {% if fax %}
+                {% if settings.fax %}
                 <p class="mb-2">
                     <strong>Fax:</strong><br>
-                    {{ fax }}
+                    {{ settings.fax }}
                 </p>
                 {% endif %}
 
                 <!-- 地址 -->
-                {% if address %}
+                {% if settings.address %}
                 <p class="mb-2">
                     <strong>Address:</strong><br>
-                    {{ address | replace('\n', '<br>') | safe }}
+                    {{ settings.address | replace('\n', '<br>') | safe }}
                 </p>
                 {% endif %}
 
                 <!-- 无内容提示 -->
-                {% if not phones and not emails and not whatsapps and not wechats and not fax and not address %}
-                <p class="text-muted">No contact information available. Please fill in the "Website Settings" in the admin panel.</p>
+                {% if not phones and not emails and not whatsapps and not wechats and not settings.fax and not settings.address %}
+                <p class="text-muted">No contact information available. Please update in admin panel.</p>
                 {% endif %}
             </div>
         </div>
@@ -117,7 +118,7 @@
                 </div>
 
                 <!-- 验证码图片区域 -->
-                <div class="row g-3 mt-3">
+                <div class="row g-3 mt-4">
                     <div class="col-md-6">
                         <label class="form-label">Verification Code <span class="text-danger">*</span></label>
                         <div class="input-group">
@@ -136,8 +137,8 @@
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <button type="submit" id="send-contact-btn" class="btn btn-primary btn-lg w-50">
+                <div class="mt-4 text-center">
+                    <button type="submit" id="send-contact-btn" class="btn btn-primary btn-lg px-5">
                         <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
                         Send Message
                     </button>
@@ -154,15 +155,15 @@
 
 <script>
 // ==================== Global Config ====================
-const LAST_SEND_KEY = 'lastContactSendTime'; // 独立限制键
-const SEND_COOLDOWN = 120000; // 2分钟
+const LAST_SEND_KEY = 'lastContactSendTime';
+const SEND_COOLDOWN = 120000; // 2 minutes in ms
 let generatedCode = '';
 
 // ==================== Toast ====================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
     toast.role = 'alert';
     toast.innerHTML = `
         <div class="d-flex">
@@ -188,6 +189,7 @@ function generateVerificationCode() {
     ctx.fillStyle = '#f8f9fa';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Interference lines
     for (let i = 0; i < 6; i++) {
         ctx.beginPath();
         ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
@@ -197,9 +199,9 @@ function generateVerificationCode() {
         ctx.stroke();
     }
     
+    // Text
     ctx.font = 'bold 28px Arial';
     ctx.textBaseline = 'middle';
-    
     for (let i = 0; i < generatedCode.length; i++) {
         const x = 15 + i * 26;
         const y = 21 + (Math.random() * 8 - 4);
@@ -213,6 +215,7 @@ function generateVerificationCode() {
         ctx.restore();
     }
     
+    // Noise dots
     for (let i = 0; i < 40; i++) {
         const x = Math.random() * canvas.width;
         const y = Math.random() * canvas.height;
@@ -221,7 +224,11 @@ function generateVerificationCode() {
     }
 }
 
-document.getElementById('refresh-verification')?.addEventListener('click', generateVerificationCode);
+document.getElementById('refresh-verification')?.addEventListener('click', () => {
+    generateVerificationCode();
+    document.getElementById('verification-input').value = '';
+    showToast('Verification code refreshed', 'info');
+});
 
 function validateVerificationCode() {
     const input = document.getElementById('verification-input')?.value.trim();
@@ -232,20 +239,23 @@ function validateVerificationCode() {
 document.getElementById('contact-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // 频率限制
+    // Frequency limit check
     const lastSendTime = localStorage.getItem(LAST_SEND_KEY);
     if (lastSendTime) {
         const timeDiff = Date.now() - parseInt(lastSendTime);
         if (timeDiff < SEND_COOLDOWN) {
-            const remaining = SEND_COOLDOWN - timeDiff;
-            const minutes = Math.floor(remaining / 60000);
-            const seconds = Math.floor((remaining % 60000) / 1000);
-            showToast(`Please wait before sending another message. You can send again in ${minutes} minute${minutes !== 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}.`, 'danger');
+            const remainingMs = SEND_COOLDOWN - timeDiff;
+            const minutes = Math.floor(remainingMs / 60000);
+            const seconds = Math.floor((remainingMs % 60000) / 1000);
+            const timeStr = minutes > 0 
+                ? `${minutes} minute${minutes > 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}`
+                : `${seconds} second${seconds !== 1 ? 's' : ''}`;
+            showToast(`Please wait ${timeStr} before sending another message.`, 'danger');
             return;
         }
     }
 
-    // 表单校验
+    // Form validation
     const name = document.getElementById('contact-name')?.value.trim();
     const email = document.getElementById('contact-email')?.value.trim();
     const subject = document.getElementById('contact-subject')?.value.trim();
@@ -257,14 +267,16 @@ document.getElementById('contact-form')?.addEventListener('submit', async (e) =>
     }
 
     if (!validateVerificationCode()) {
-        showToast('The verification code is incorrect. Please check the image and try again.', 'danger');
+        showToast('The verification code is incorrect. Please check the image.', 'danger');
+        generateVerificationCode();
+        document.getElementById('verification-input').value = '';
         return;
     }
 
     const payload = {
         name: name,
         email: email,
-        whatsapp: document.getElementById('contact-whatsapp')?.value.trim() || 'Not provided',
+        whatsapp: document.getElementById('contact-whatsapp')?.value.trim() || '',
         subject: subject,
         message: message
     };
@@ -273,7 +285,7 @@ document.getElementById('contact-form')?.addEventListener('submit', async (e) =>
     const spinner = btn.querySelector('.spinner-border');
     btn.disabled = true;
     spinner?.classList.remove('d-none');
-    btn.lastChild.textContent = ' Sending...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Sending...';
 
     try {
         const response = await fetch('/contact/send', {
@@ -284,25 +296,26 @@ document.getElementById('contact-form')?.addEventListener('submit', async (e) =>
 
         const result = await response.json();
 
-        if (response.ok) {
+        if (response.ok && result.success) {
             showToast(result.message || 'Message sent successfully! We will contact you soon.', 'success');
             localStorage.setItem(LAST_SEND_KEY, Date.now().toString());
             generateVerificationCode();
             document.getElementById('verification-input').value = '';
             document.getElementById('contact-form').reset();
         } else {
-            showToast(result.error || 'Failed to send message. Please try again later.', 'danger');
+            showToast(result.message || 'Failed to send message. Please try again.', 'danger');
         }
     } catch (err) {
+        console.error('Contact form error:', err);
         showToast('Network error. Please check your connection and try again.', 'danger');
     } finally {
         btn.disabled = false;
         spinner?.classList.add('d-none');
-        btn.lastChild.textContent = 'Send Message';
+        btn.innerHTML = 'Send Message';
     }
 });
 
-// 初始化验证码
+// Initialize verification code on page load
 document.addEventListener('DOMContentLoaded', generateVerificationCode);
 </script>
 {% endblock %}
