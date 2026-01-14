@@ -1,129 +1,84 @@
 # app/routes/cart.py
-# 购物车询价路由 - 完整版（使用统一邮件发送工具 send_email）
-# 2026-01-13 更新：迁移到 app/utils/mail.py，统一错误处理
+# 购物车询价路由 - 服务层完整适配版（2026-01-15）
+# 更新内容：
+# - 修复：调用正确的 InquiryService.send_inquiry() 方法（移除不存在的 send_inquiry_from_cart）
+# - 路由层保持极简：仅接收数据、简单校验、调用 service、返回 JSON
+# - 所有业务（冷却、附件、配置、正文、发送、日志）完全由 InquiryService 处理
+# - 与最新 inquiry_service.py 完美兼容（send_inquiry + send_contact）
 
 from flask import Blueprint, request, jsonify, current_app
-from app.models import Settings, SmtpConfig
-from app.utils.mail import send_email
-from datetime import datetime
+from app.services.inquiry_service import InquiryService
 
 cart_bp = Blueprint('cart', __name__, url_prefix='/cart')
 
 @cart_bp.route('/send-inquiry', methods=['POST'])
 def send_inquiry():
     """
-    处理购物车询价请求并发送邮件
-    - 前端提交 JSON 数据（items + 可选客户信息）
-    - 使用统一 send_email 函数发送
-    - 返回 JSON 响应给前端（用于 toast 提示）
+    处理购物车询价请求（薄路由层）
+    - 前端提交 JSON: {
+        "items": [{"name": "...", "code": "...", "quantity": 1, "image": "xxx.jpg"}, ...],
+        "customer_name": "...",
+        "customer_email": "...",
+        "customer_phone": "...",
+        "customer_company": "...",  # 可选
+        "message": "..."
+      }
     """
     try:
-        data = request.get_json()
-        if not data or not data.get('items'):
+        data = request.get_json(force=True)  # force=True 兼容 Content-Type 异常
+
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid request data'
+            }), 400
+
+        items = data.get('items', [])
+        if not items:
             return jsonify({
                 'success': False,
                 'message': 'No items in cart'
             }), 400
 
-        # 获取网站设置（收件人邮箱、公司名称等）
-        settings = Settings.query.first()
-        if not settings:
-            current_app.logger.error("Site settings not found")
+        customer_info = {
+            'name': data.get('customer_name', '').strip(),
+            'email': data.get('customer_email', '').strip(),
+            'phone': data.get('customer_phone', '').strip(),
+            'company': data.get('customer_company', '').strip(),
+            'message': data.get('message', '').strip()
+        }
+
+        # 可选简单必填校验（详细校验已在 service）
+        if not customer_info['name'] or not customer_info['email']:
             return jsonify({
                 'success': False,
-                'message': 'Site settings not configured'
-            }), 500
+                'message': 'Name and Email are required.'
+            }), 400
 
-        recipient = settings.email1
-        if not recipient:
-            current_app.logger.error("No recipient email configured in settings")
-            return jsonify({
-                'success': False,
-                'message': 'No recipient email configured'
-            }), 500
-
-        # 获取 SMTP 配置
-        smtp = SmtpConfig.query.first()
-        if not smtp:
-            current_app.logger.error("SMTP configuration not found")
-            return jsonify({
-                'success': False,
-                'message': 'SMTP configuration not found'
-            }), 500
-
-        if not smtp.mail_username or not smtp.mail_password:
-            current_app.logger.error("SMTP credentials incomplete")
-            return jsonify({
-                'success': False,
-                'message': 'SMTP credentials not configured'
-            }), 500
-
-        # 构造邮件主题和正文（正文用中文，面向运营团队）
-        items = data['items']
-        customer_email = data.get('customer_email', '未提供')
-        customer_name = data.get('customer_name', '未提供')
-        customer_phone = data.get('customer_phone', '未提供')
-        customer_message = data.get('message', '').strip()
-
-        subject = f"新的产品询价 - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-
-        body = f"""尊敬的销售团队，
-
-客户提交了以下产品询价：
-
-"""
-        for idx, item in enumerate(items, 1):
-            body += f"{idx}. {item.get('name', '未命名产品')} (编号: {item.get('code', 'N/A')})\n"
-            if item.get('quantity'):
-                body += f"   数量：{item.get('quantity')}\n"
-            body += "\n"
-
-        body += f"""客户联系方式：
-- 姓名：{customer_name}
-- 邮箱：{customer_email}
-- 电话：{customer_phone}
-
-客户留言：
-{customer_message if customer_message else '无'}
-
-发送时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-请尽快跟进，谢谢！
-"""
-
-        # 发送邮件（使用统一工具函数）
-        success, msg = send_email(
-            smtp_server=smtp.mail_server,
-            smtp_port=smtp.mail_port,
-            username=smtp.mail_username,
-            password=smtp.mail_password,
-            from_addr=smtp.mail_username,
-            to_addr=recipient,
-            subject=subject,
-            body=body,
-            is_html=False,
-            use_ssl=smtp.mail_use_ssl,
-            use_tls=smtp.mail_use_tls,
-            sender_name=settings.company_name or "Hotel Furniture Website"
+        # 调用服务层（正确方法）
+        success, message = InquiryService.send_inquiry(
+            items=items,
+            customer_info=customer_info
         )
 
         if success:
-            current_app.logger.info(f"Inquiry email sent successfully to {recipient}")
             return jsonify({
                 'success': True,
-                'message': 'Inquiry sent successfully! We will reply soon.'
+                'message': 'Inquiry sent successfully! We will contact you soon.'
             })
 
         else:
-            current_app.logger.error(f"Inquiry email failed: {msg}")
+            current_app.logger.warning(f"Inquiry failed: {message}")
+            # 冷却错误返回 429，其他返回 500
+            status_code = 429 if "wait" in message.lower() else 500
             return jsonify({
                 'success': False,
-                'message': 'Failed to send inquiry. Please try again later or contact us directly.'
-            }), 500
+                'message': message or 'Failed to send inquiry. Please try again later.'
+            }), status_code
 
     except Exception as e:
-        current_app.logger.exception("Unexpected error in cart inquiry")
+        current_app.logger.exception("Unexpected error in cart/send-inquiry")
         return jsonify({
             'success': False,
-            'message': 'Server error occurred. Please try again later.'
+            'message': 'Server error. Please try again later.'
         }), 500
