@@ -14,12 +14,16 @@ admin_templates = true
 
 # 特定文件名（新增 contact 相关）
 cart_html       = "cart.html"
-contact_html    = "contact.html"          # 新增：联系页面模板
+contact_html    = "contact.html"          
 cart_js         = "cart.js"
 smtp_py         = "smtp.py"
 cart_py         = "cart.py"
-contact_py      = "contact.py"            # 新增：联系页面路由
-mail_py         = "mail.py"               # 新增：统一邮件工具（多次优化）
+contact_py      = "contact.py"            
+mail_py         = "mail.py"
+init_schema_py  = "init_schema.py"
+requirements_txt= "requirements.txt"
+
+               
 
 [exclude]
 dirs = [
@@ -33,8 +37,7 @@ dirs = [
     "instance",
     "migrations/versions",
     "code2ai",
-    "static/uploads",       # 上传图片目录
-    "static2",              # GitHub 缓存目录（可选排除）
+    "static/uploads"       # 上传图片目录
 ]
 
 files = [
