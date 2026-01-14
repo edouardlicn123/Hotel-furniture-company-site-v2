@@ -1,74 +1,88 @@
 {% extends "base.html" %}
 
-{% block title %}{{ product.name }} - {{ settings.company_name or '酒店家具制造商' }}{% endblock %}
+{% block title %}{{ product.name }} - {{ settings.company_name or 'Premium Hotel Furniture Manufacturer' }}{% endblock %}
 
 {% block hero_section %}
     {% set hero_title = product.name %}
-    {% set hero_subtitle = product.category.name if product.category else "高端酒店家具定制" %}
+    {% set hero_subtitle = product.category.name if product.category else "Premium Hotel Furniture Solution" %}
     {% set hero_background = url_for('static', filename='uploads/products/' + product.image) if product.image else url_for('static', filename='img/hero-default-small.jpg') %}
-
     {% include 'partials/hero_small.html' %}
 {% endblock %}
 
 {% block content %}
-<div class="container my-5">
+<div class="container my-5 pt-4">
     <div class="row g-5">
-        <!-- 主图区域 -->
+        <!-- 左侧：图片 + 画廊 + 描述 -->
         <div class="col-lg-8">
             <!-- 主图 -->
-            {% if product.image %}
-            <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}" 
-                 class="img-fluid rounded shadow-lg mb-5" 
-                 alt="{{ product.name }}" 
-                 style="max-height: 600px; object-fit: cover; width: 100%;">
-            {% else %}
-            <div class="bg-light border rounded d-flex align-items-center justify-content-center mb-5" style="height: 600px;">
-                <p class="text-muted h4">No main image available</p>
+            <div class="mb-5">
+                {% if product.image %}
+                <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}"
+                     class="img-fluid rounded-3 shadow-lg"
+                     alt="{{ product.name }} - Main Product View"
+                     loading="lazy"
+                     style="max-height: 680px; object-fit: cover; width: 100%;"
+                     onerror="this.src='https://via.placeholder.com/1200x800?text=Main+Image+Not+Found'; this.onerror=null;">
+                {% else %}
+                <div class="bg-light border rounded-3 d-flex align-items-center justify-content-center shadow-lg"
+                     style="height: 680px;">
+                    <div class="text-center">
+                        <i class="bi bi-image display-1 text-muted mb-3 d-block"></i>
+                        <p class="h4 text-muted mb-1">No Main Image Available</p>
+                        <small class="text-muted">Please contact us for more details</small>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
 
-            <!-- 详情画廊（多图展示） -->
+            <!-- 产品画廊 -->
             {% if product.photos %}
-            <h3 class="mb-4">Product Gallery</h3>
-            <div class="row g-4">
+            <h3 class="mb-4 fw-semibold">Product Gallery</h3>
+            <div class="row g-3">
                 {% for photo in product.photos.split(',') %}
-                <div class="col-md-6">
-                    <img src="{{ url_for('static', filename='uploads/products/' + photo.strip()) }}" 
-                         class="img-fluid rounded shadow-sm" 
-                         alt="{{ product.name }} - {{ loop.index }} detail view"
-                         onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                <div class="col-6 col-md-4">
+                    <div class="gallery-item overflow-hidden rounded-3 shadow-sm">
+                        <img src="{{ url_for('static', filename='uploads/products/' + photo.strip()) }}"
+                             class="img-fluid w-100 gallery-img"
+                             alt="{{ product.name }} - Gallery Image {{ loop.index }}"
+                             loading="lazy"
+                             onerror="this.src='{{ url_for('static', filename='img/placeholder-400x300.jpg') }}'; this.onerror=null;">
+                    </div>
                 </div>
                 {% endfor %}
             </div>
-            {% else %}
-            <p class="text-muted">No additional photos available.</p>
             {% endif %}
 
             <!-- 产品描述 -->
-            <h3 class="mt-5 mb-4">Description</h3>
-            <p class="lead">{{ product.description or 'No description available.' }}</p>
+            {% if product.description %}
+            <div class="mt-5">
+                <h3 class="mb-4 fw-semibold">Description</h3>
+                <div class="lead text-secondary lh-lg">
+                    {{ product.description | safe }}
+                </div>
+            </div>
+            {% endif %}
         </div>
 
-        <!-- 规格侧边栏 -->
+        <!-- 右侧：规格 + 操作按钮（sticky） -->
         <div class="col-lg-4">
-            <div class="card shadow sticky-top" style="top: 100px;">
-                <div class="card-body">
-                    <h4 class="card-title mb-4">Product Specifications</h4>
-                    <ul class="list-group list-group-flush">
-                        <!-- 产品编号 -->
-                        <li class="list-group-item d-flex justify-content-between">
+            <div class="card shadow-lg border-0 rounded-3 sticky-top" style="top: 100px;">
+                <div class="card-body p-4">
+                    <h4 class="card-title fw-bold mb-4">{{ product.name }}</h4>
+
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item px-0 d-flex justify-content-between">
                             <strong>Product Code</strong>
-                            <span class="font-monospace">{{ product.product_code }}</span>
+                            <span class="font-monospace text-end">{{ product.product_code }}</span>
                         </li>
 
-                        <!-- Dimensions -->
-                        <li class="list-group-item d-flex justify-content-between">
-                            <strong>Dimensions</strong>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Dimensions (mm)</strong>
                             <span class="text-end">
                                 {% if product.length and product.width and product.height %}
-                                    {{ product.length }} × {{ product.width }} × {{ product.height }} mm<br>
-                                    <small class="text-muted">
-                                        ({{ (product.length / 25.4)|round(1) }} × {{ (product.width / 25.4)|round(1) }} × {{ (product.height / 25.4)|round(1) }} inches)
+                                    {{ product.length }} × {{ product.width }} × {{ product.height }}
+                                    <small class="d-block text-muted mt-1">
+                                        ≈ {{ (product.length/25.4)|round(1) }} × {{ (product.width/25.4)|round(1) }} × {{ (product.height/25.4)|round(1) }} inches
                                     </small>
                                 {% else %}
                                     <em>N/A</em>
@@ -76,56 +90,63 @@
                             </span>
                         </li>
 
-                        <!-- Seat Height -->
-                        <li class="list-group-item d-flex justify-content-between">
+                        <li class="list-group-item px-0 d-flex justify-content-between">
                             <strong>Seat Height</strong>
                             <span class="text-end">
                                 {% if product.seat_height %}
-                                    {{ product.seat_height }} mm<br>
-                                    <small class="text-muted">({{ (product.seat_height / 25.4)|round(1) }} inches)</small>
+                                    {{ product.seat_height }} mm
+                                    <small class="d-block text-muted mt-1">
+                                        ≈ {{ (product.seat_height/25.4)|round(1) }} inches
+                                    </small>
                                 {% else %}
                                     <em>N/A</em>
                                 {% endif %}
                             </span>
                         </li>
 
-                        <li class="list-group-item d-flex justify-content-between">
+                        <li class="list-group-item px-0 d-flex justify-content-between">
                             <strong>Base Material</strong>
-                            <span>{{ product.base_material or 'N/A' }}</span>
+                            <span class="text-end">{{ product.base_material or 'N/A' }}</span>
                         </li>
 
-                        <li class="list-group-item d-flex justify-content-between">
+                        <li class="list-group-item px-0 d-flex justify-content-between">
                             <strong>Surface Material</strong>
-                            <span>{{ product.surface_material or 'N/A' }}</span>
+                            <span class="text-end">{{ product.surface_material or 'N/A' }}</span>
                         </li>
 
-                        <li class="list-group-item d-flex justify-content-between">
-                            <strong>For Space</strong>
-                            <span>{{ product.applicable_space or 'All Areas' }}</span>
+                        {% if product.applicable_space %}
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Applicable Space</strong>
+                            <span class="text-end">{{ product.applicable_space }}</span>
                         </li>
+                        {% endif %}
 
-                        <li class="list-group-item d-flex justify-content-between">
-                            <strong>Featured Series</strong>
-                            <span>{{ product.featured_series or 'Standard' }}</span>
+                        {% if product.featured_series %}
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Featured In</strong>
+                            <span class="text-end">{{ product.featured_series }}</span>
                         </li>
+                        {% endif %}
                     </ul>
 
-                    <!-- Inquire Now 按钮：仅在 official 模式显示 -->
-                    {% if settings.mode == 'official' %}
-                    <div class="mt-5">
-                        <a href="{{ url_for('main.contact') }}" class="btn btn-primary btn-lg w-100">Inquire Now</a>
-                    </div>
-                    {% endif %}
+                    <!-- 操作按钮区 -->
+                    <div class="d-grid gap-3">
+                        <!-- Inquire Now（仅 official 模式） -->
+                        {% if settings.mode == 'official' %}
+                        <a href="{{ url_for('contact.contact_page') }}"
+                           class="btn btn-primary btn-lg rounded-pill">
+                            <i class="bi bi-envelope me-2"></i> Inquire Now
+                        </a>
+                        {% endif %}
 
-                    <!-- Add to Cart 按钮（无论模式都显示，保持原样） -->
-                    <div class="mt-3">
+                        <!-- Add to Cart -->
                         <button id="add-to-cart"
-                                class="btn btn-primary btn-lg w-100"
+                                class="btn btn-outline-primary btn-lg rounded-pill"
                                 data-product-id="{{ product.id }}"
                                 data-product-code="{{ product.product_code }}"
-                                data-product-name="{{ product.name }}"
+                                data-product-name="{{ product.name | e }}"
                                 data-product-image="{{ url_for('static', filename='uploads/products/' + product.image) if product.image else '' }}">
-                            Add to Cart
+                            <i class="bi bi-cart-plus me-2"></i> Add to Cart
                         </button>
                     </div>
                 </div>
@@ -133,4 +154,26 @@
         </div>
     </div>
 </div>
+
+<!-- 轻量交互（建议移到 custom.js） -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 画廊图片 hover 放大
+    document.querySelectorAll('.gallery-img').forEach(img => {
+        img.addEventListener('mouseenter', () => {
+            img.style.transform = 'scale(1.08)';
+            img.style.transition = 'transform 0.4s ease';
+        });
+        img.addEventListener('mouseleave', () => {
+            img.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+
+<style>
+.gallery-item:hover .gallery-img {
+    transition: transform 0.4s ease;
+}
+</style>
 {% endblock %}

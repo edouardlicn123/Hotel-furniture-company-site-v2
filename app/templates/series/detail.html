@@ -1,33 +1,47 @@
 {% extends "base.html" %}
 
+{% block title %}{{ series.name }} - {{ settings.company_name or 'Premium Hotel Furniture Series' }}{% endblock %}
+
 {% block hero_section %}
     {% set hero_title = series.name %}
     {% set hero_subtitle = series.applicable_space.replace(',', ', ') if series.applicable_space else "Premium Hotel Furniture Series" %}
-    {% set hero_background = url_for('static', filename='uploads/series/' + series.photos.split(',')[0].strip()) if series.photos else url_for('static', filename='img/hero-default-small.jpg') %}
+    
+    {% set first_photo = series.photos.split(',')[0].strip() if series.photos else None %}
+    {% set hero_background = url_for('static', filename='uploads/series/' + first_photo) if first_photo else url_for('static', filename='img/hero-default-small.jpg') %}
+    
     {% include 'partials/hero_small.html' %}
 {% endblock %}
 
 {% block content %}
-<div class="container my-5">
+<div class="container my-5 pt-4">
     <!-- 系列描述 -->
     {% if series.description %}
     <div class="row mb-5">
         <div class="col-lg-10 mx-auto text-center">
-            <p class="lead">{{ series.description }}</p>
+            <div class="lead text-secondary lh-lg">
+                {{ series.description | safe }}
+            </div>
         </div>
     </div>
     {% endif %}
 
     <!-- 系列图片画廊 -->
     {% if series.photos %}
-    <div class="row g-4 mb-5">
-        {% for photo in series.photos.split(',') %}
-        <div class="col-md-6 col-lg-4">
-            <img src="{{ url_for('static', filename='uploads/series/' + photo.strip()) }}"
-                 class="img-fluid rounded shadow-sm"
-                 alt="{{ series.name }} - Gallery {{ loop.index }}">
+    <div class="mb-5">
+        <h3 class="section-title text-center mb-4">Series Gallery</h3>
+        <div class="row g-4">
+            {% for photo in series.photos.split(',') %}
+            <div class="col-md-6 col-lg-4">
+                <div class="gallery-item overflow-hidden rounded-3 shadow-sm">
+                    <img src="{{ url_for('static', filename='uploads/series/' + photo.strip()) }}"
+                         class="img-fluid w-100 gallery-img"
+                         alt="{{ series.name }} - Gallery Image {{ loop.index }}"
+                         loading="lazy"
+                         onerror="this.src='https://via.placeholder.com/800x600?text={{ series.name|urlencode }}'; this.onerror=null;">
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
     {% endif %}
 
@@ -38,23 +52,28 @@
         {% if products %}
         <div class="product-grid">
             {% for product in products %}
-            <a href="{{ url_for('products.product_detail', product_id=product.id) }}" class="text-decoration-none">
-                <div class="product-card d-flex flex-column">
+            <a href="{{ url_for('products.product_detail', product_id=product.id) }}"
+               class="text-decoration-none product-card-link"
+               aria-label="View details of {{ product.name }}">
+                <div class="product-card d-flex flex-column h-100">
                     <div class="product-card-img-wrapper">
                         {% if product.image %}
-                            <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}"
-                                 class="product-card-img-complete"
-                                 alt="{{ product.name }}">
+                        <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}"
+                             class="product-card-img-complete"
+                             alt="{{ product.name }} - Main Product Image"
+                             loading="lazy"
+                             onerror="this.src='https://via.placeholder.com/800x600?text={{ product.name|urlencode }}'; this.onerror=null;">
                         {% else %}
-                            <img src="https://via.placeholder.com/800x600?text=No+Image"
-                                 class="product-card-img-complete"
-                                 alt="No Image">
+                        <img src="https://via.placeholder.com/800x600?text=No+Image"
+                             class="product-card-img-complete"
+                             alt="No image available for {{ product.name }}"
+                             loading="lazy">
                         {% endif %}
                     </div>
                     
-                    <div class="product-card-body mt-auto">
+                    <div class="product-card-body mt-auto p-3">
                         <h3 class="product-card-title mb-2">{{ product.name }}</h3>
-                        <p class="product-card-brand mb-0">
+                        <p class="product-card-brand text-muted mb-0 font-monospace">
                             {{ product.product_code }}
                         </p>
                     </div>
@@ -63,10 +82,28 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="text-center py-5">
-            <p class="text-muted h5">No products assigned to this series yet.</p>
+        <div class="text-center py-5 my-5">
+            <i class="bi bi-boxes display-1 text-muted mb-3 d-block"></i>
+            <h4 class="text-muted mb-3">No Products in This Series Yet</h4>
+            <p class="text-muted">
+                Products assigned to this series will appear here.<br>
+                <small>You can manage product-series associations in the admin panel.</small>
+            </p>
         </div>
         {% endif %}
     </div>
 </div>
+
+<!-- 可选轻量交互：画廊 hover 微放大 + 产品卡片 hover 上浮 -->
+<style>
+    .gallery-item:hover .gallery-img {
+        transform: scale(1.06);
+        transition: transform 0.4s ease;
+    }
+    .product-card-link:hover .product-card {
+        transform: translateY(-8px);
+        transition: all 0.3s ease;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+    }
+</style>
 {% endblock %}
