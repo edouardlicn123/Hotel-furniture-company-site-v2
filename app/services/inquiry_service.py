@@ -1,176 +1,276 @@
 # app/services/inquiry_service.py
-# 询价与联系核心服务层 - 统一完整版（2026-01-15）
+# Inquiry & Contact Core Service Layer - Professional English Version (2026-01-15)
 # 更新内容：
-# - 新增 send_contact 方法（纯联系留言，无购物车/附件）
-# - 完全共享冷却、配置校验、日志、发送逻辑（最大复用）
-# - 询价与联系正文更专业（区分场景，包含 IP、网站模式）
-# - 修复：添加 import logging
-# - 附件准备独立方法（仅询价使用）
-# - 未来升级路径保留（Flask-Mail + HTML 模板）
-# - 所有客户消息提交（询价/联系）统一服务化，后续扩展极易
+# - 统一使用 timezone.utc 避免 naive/aware datetime 冲突（修复冷却解析警告）
+# - 保持 attachments 支持（contact 传空列表，inquiry 正常准备）
+# - 所有用户提示全英文，专业礼貌
+# - 日志更详细，便于调试
 
 import os
 import logging
-from datetime import datetime, timedelta
+import mimetypes
+from datetime import datetime, timedelta, timezone
+from typing import List, Dict, Tuple, Optional
 from flask import current_app, session, request
 from app.models import Settings, SmtpConfig
-from app.utils.mail import send_email  # 当前低层发送（支持附件 + 重试）
+from app.utils.mail import send_email
 
 logger = logging.getLogger(__name__)
 
-# 冷却配置（询价与联系共享，防止刷）
+# Constants
 COOLDOWN_SECONDS = 120
+MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024      # 5MB per file
+MAX_TOTAL_ATTACHMENTS_SIZE = 10 * 1024 * 1024  # 10MB total
 LAST_INQUIRY_KEY = 'last_inquiry_time'
 
 
 class InquiryService:
     @staticmethod
-    def _check_cooldown() -> tuple[bool, str | None]:
-        """统一后端冷却检查"""
+    def _check_cooldown() -> Tuple[bool, Optional[str]]:
+        """Check cooldown (shared for inquiry & contact)"""
         last_time_str = session.get(LAST_INQUIRY_KEY)
         if last_time_str:
             try:
+                # 统一处理为 UTC 时区，避免 naive/aware 冲突
                 last_time = datetime.fromisoformat(last_time_str)
-                if datetime.utcnow() - last_time < timedelta(seconds=COOLDOWN_SECONDS):
-                    remaining = int(COOLDOWN_SECONDS - (datetime.utcnow() - last_time).total_seconds())
-                    mins = (remaining // 60) + 1 if remaining % 60 else remaining // 60
-                    return False, f"Please wait about {mins} minute(s) before sending another message (server protection)."
-            except Exception:
-                pass
+                if last_time.tzinfo is None:
+                    last_time = last_time.replace(tzinfo=timezone.utc)
+                now = datetime.now(timezone.utc)
+                if now - last_time < timedelta(seconds=COOLDOWN_SECONDS):
+                    remaining_sec = int(COOLDOWN_SECONDS - (now - last_time).total_seconds())
+                    mins = (remaining_sec // 60) + 1 if remaining_sec % 60 else remaining_sec // 60
+                    return False, f"Please wait approximately {mins} minute(s) before sending another message (server protection)."
+            except Exception as e:
+                logger.warning(f"Cooldown parsing error: {e}")
         return True, None
 
     @staticmethod
     def _update_cooldown():
-        """成功发送后更新冷却"""
-        session[LAST_INQUIRY_KEY] = datetime.utcnow().isoformat()
+        """Update cooldown timestamp (UTC)"""
+        session[LAST_INQUIRY_KEY] = datetime.now(timezone.utc).isoformat()
         session.modified = True
 
     @staticmethod
-    def _get_common_config() -> tuple[Settings | None, SmtpConfig | None, str | None]:
-        """统一获取并校验配置"""
+    def _get_common_config() -> Tuple[Optional[Settings], Optional[SmtpConfig], Optional[str]]:
+        """Get and validate common configuration"""
         settings = Settings.query.first()
         if not settings or not settings.email1:
-            logger.error("Settings 或收件人邮箱未配置")
-            return None, None, "Server configuration error (contact admin)"
+            logger.error("Settings or recipient email not configured")
+            return None, None, "Server configuration error: missing recipient email"
 
         smtp = SmtpConfig.query.first()
-        if not smtp or not smtp.mail_username or not smtp.mail_password:
-            logger.error("SMTP 配置不完整")
-            return None, None, "SMTP not configured"
+        if not smtp or not all([smtp.mail_server, smtp.mail_port, smtp.mail_username, smtp.mail_password]):
+            logger.error("SMTP configuration incomplete")
+            return None, None, "SMTP configuration incomplete"
 
         return settings, smtp, None
 
     @staticmethod
-    def _prepare_attachments(items: list[dict]) -> list[dict]:
-        """准备产品主图附件（仅询价使用）"""
+    def _validate_input(customer_info: Dict, is_inquiry: bool = True) -> Tuple[bool, Optional[str]]:
+        """Basic input validation"""
+        required = ['name', 'email', 'message']
+        if is_inquiry:
+            required.append('phone')
+
+        for field in required:
+            if not customer_info.get(field) or not str(customer_info[field]).strip():
+                return False, f"Please provide your {field.capitalize()}"
+
+        email = customer_info.get('email', '').strip()
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            return False, "Please enter a valid email address"
+
+        return True, None
+
+    @staticmethod
+    def _prepare_attachments(items: List[Dict]) -> Tuple[List[Dict], str]:
+        """Prepare product main images as attachments"""
         attachments = []
         upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'products')
+        total_size = 0
+        attach_count = 0
+        skipped = []
 
         for item in items:
             image_filename = item.get('image')
             if not image_filename:
                 continue
-            file_path = os.path.join(upload_folder, image_filename.strip())
-            if os.path.exists(file_path):
-                try:
-                    with open(file_path, 'rb') as f:
-                        attachments.append({
-                            'filename': image_filename,
-                            'data': f.read(),
-                            'content_type': 'image/jpeg'
-                        })
-                except Exception as e:
-                    logger.warning(f"附件读取失败 {image_filename}: {e}")
-            else:
-                logger.warning(f"附件文件不存在: {file_path}")
 
-        return attachments
+            file_path = os.path.join(upload_folder, image_filename.strip())
+            if not os.path.exists(file_path):
+                skipped.append(image_filename)
+                continue
+
+            try:
+                file_size = os.path.getsize(file_path)
+                if file_size > MAX_ATTACHMENT_SIZE:
+                    skipped.append(f"{image_filename} (file too large)")
+                    continue
+
+                if total_size + file_size > MAX_TOTAL_ATTACHMENTS_SIZE:
+                    skipped.append(f"{image_filename} (total size limit exceeded)")
+                    continue
+
+                with open(file_path, 'rb') as f:
+                    data = f.read()
+
+                content_type, _ = mimetypes.guess_type(file_path)
+                if not content_type:
+                    content_type = 'application/octet-stream'
+
+                attachments.append({
+                    'filename': image_filename,
+                    'data': data,
+                    'content_type': content_type
+                })
+
+                total_size += file_size
+                attach_count += 1
+
+            except Exception as e:
+                logger.warning(f"Failed to read attachment {image_filename}: {e}")
+                skipped.append(image_filename)
+
+        desc = f"Product main images ({attach_count} attached"
+        if skipped:
+            desc += f", {len(skipped)} skipped due to size/error)"
+        else:
+            desc += ")"
+
+        return attachments, desc
 
     @staticmethod
-    def _build_inquiry_body(items: list[dict], customer_info: dict, settings) -> str:
-        """构建询价邮件正文"""
-        send_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        attachment_count = sum(1 for i in items if i.get('image'))
+    def _build_inquiry_body_html(items: List[Dict], customer_info: Dict, settings, attach_desc: str) -> str:
+        """HTML formatted inquiry email body (English)"""
+        send_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
 
-        body = f"""尊敬的销售团队，
+        html = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; }}
+                h2 {{ color: #2c5282; }}
+                table {{ border-collapse: collapse; width: 100%; margin: 20px 0; }}
+                th, td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
+                th {{ background: #2c5282; color: white; }}
+                tr:nth-child(even) {{ background: #f8f9fa; }}
+                .section {{ margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <h2>New Inquiry - {len(items)} Product{'s' if len(items) != 1 else ''}</h2>
+            
+            <div class="section">
+                <h3>Requested Products</h3>
+                <table>
+                    <tr><th>#</th><th>Product Name</th><th>Code</th><th>Quantity</th></tr>
+        """
 
-有新的客户询价提交（共 {len(items)} 款产品）：
-
-"""
         for idx, item in enumerate(items, 1):
-            name = item.get('name', '未命名产品')
+            name = item.get('name', 'Unnamed Product')
             code = item.get('code', 'N/A')
             qty = item.get('quantity', 1)
-            body += f"{idx}. {name} (编号: {code})\n"
-            if qty > 1:
-                body += f"   数量: {qty}\n"
-            body += "\n"
+            html += f"<tr><td>{idx}</td><td>{name}</td><td>{code}</td><td>{qty}</td></tr>"
 
-        body += f"""客户联系信息：
-- 姓名：{customer_info.get('name', '未提供')}
-- 邮箱：{customer_info.get('email', '未提供')}
-- 电话：{customer_info.get('phone', '未提供')}
-- 公司：{customer_info.get('company', '未提供')}
+        html += """
+                </table>
+            </div>
 
-客户留言：
-{customer_info.get('message') or '无'}
+            <div class="section">
+                <strong>Customer Information:</strong><br>
+                Name: {customer_info.get('name', 'Not provided')}<br>
+                Email: {customer_info.get('email', 'Not provided')}<br>
+                Phone/WhatsApp: {customer_info.get('phone', 'Not provided')}<br>
+                Company: {customer_info.get('company', 'Not provided')}
+            </div>
 
-发送时间：{send_time}
-来源IP：{request.remote_addr}
-网站模式：{getattr(settings, 'mode', 'official').title()}
-附件：产品主图（共 {attachment_count} 张）
+            <div class="section">
+                <strong>Customer Message:</strong><br>
+                {customer_info.get('message', 'None') or 'None'}
+            </div>
 
-请尽快联系客户跟进，谢谢！
-"""
-        return body
+            <div class="section">
+                <strong>Additional Information:</strong><br>
+                Sent at: {send_time}<br>
+                IP Address: {request.remote_addr}<br>
+                Website Mode: {getattr(settings, 'mode', 'official').title()}<br>
+                {attach_desc}
+            </div>
 
-    @staticmethod
-    def _build_contact_body(customer_info: dict, settings) -> str:
-        """构建纯联系邮件正文"""
-        send_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            <p>Thank you for your inquiry. Our team will contact you soon.</p>
+        </body>
+        </html>
+        """.format(**locals())  # 使用 locals() 填充变量
 
-        body = f"""尊敬的销售团队，
-
-收到新的网站联系留言：
-
-----------------------------------------
-客户姓名:   {customer_info.get('name', '未提供')}
-邮箱地址:   {customer_info.get('email', '未提供')}
-WhatsApp/电话: {customer_info.get('whatsapp') or '未提供'}
-主题:       {customer_info.get('subject', 'General Inquiry')}
-----------------------------------------
-留言内容:
-{customer_info.get('message', '无')}
-----------------------------------------
-提交时间:   {send_time}
-来源IP:     {request.remote_addr}
-网站模式：  {getattr(settings, 'mode', 'official').title()}
-----------------------------------------
-请尽快回复客户，谢谢！
-"""
-        return body
+        return html
 
     @staticmethod
-    def send_inquiry(items: list[dict], customer_info: dict) -> tuple[bool, str]:
-        """发送购物车询价"""
-        # 冷却 + 配置
-        allowed, msg = InquiryService._check_cooldown()
+    def _build_contact_body_html(customer_info: Dict, settings) -> str:
+        """HTML formatted contact message email body (English)"""
+        send_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+
+        html = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; }}
+                h2 {{ color: #2c5282; }}
+                .section {{ margin: 20px 0; padding: 15px; background: #f8f9fa; border-left: 4px solid #4299e1; }}
+            </style>
+        </head>
+        <body>
+            <h2>New Contact Message</h2>
+            
+            <div class="section">
+                <strong>Customer Information:</strong><br>
+                Name: {customer_info.get('name', 'Not provided')}<br>
+                Email: {customer_info.get('email', 'Not provided')}<br>
+                WhatsApp/Phone: {customer_info.get('whatsapp', 'Not provided')}<br>
+                Subject: {customer_info.get('subject', 'General Inquiry')}
+            </div>
+
+            <div class="section">
+                <strong>Message Content:</strong><br>
+                {customer_info.get('message', 'None') or 'None'}
+            </div>
+
+            <div class="section">
+                <strong>Submission Details:</strong><br>
+                Time: {send_time}<br>
+                IP Address: {request.remote_addr}<br>
+                Website Mode: {getattr(settings, 'mode', 'official').title()}
+            </div>
+
+            <p>Thank you for reaching out. Our team will get back to you as soon as possible.</p>
+        </body>
+        </html>
+        """
+        return html
+
+    @staticmethod
+    def send_inquiry(items: List[Dict], customer_info: Dict) -> Tuple[bool, str]:
+        """Send cart inquiry email with attachments (English notifications)"""
+        # 1. Cooldown & Validation
+        allowed, cooldown_msg = InquiryService._check_cooldown()
         if not allowed:
-            return False, msg
+            return False, cooldown_msg
 
-        settings, smtp, err = InquiryService._get_common_config()
-        if err:
+        valid, err = InquiryService._validate_input(customer_info, is_inquiry=True)
+        if not valid:
             return False, err
 
+        settings, smtp, config_err = InquiryService._get_common_config()
+        if config_err:
+            return False, config_err
+
+        # 2. Prepare content
+        attachments, attach_desc = InquiryService._prepare_attachments(items)
+        subject = f"New Inquiry - {len(items)} Product{'s' if len(items) != 1 else ''} - {datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+        body = InquiryService._build_inquiry_body_html(items, customer_info, settings, attach_desc)
         recipient = settings.email1
         sender_name = settings.company_name or "Hotel Furniture Website"
 
-        # 附件 + 正文
-        attachments = InquiryService._prepare_attachments(items)
-        subject = f"新的询价 - {len(items)} 款产品 - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-        body = InquiryService._build_inquiry_body(items, customer_info, settings)
-
-        # 发送
+        # 3. Send
         success, msg = send_email(
             smtp_server=smtp.mail_server,
             smtp_port=smtp.mail_port,
@@ -180,43 +280,44 @@ WhatsApp/电话: {customer_info.get('whatsapp') or '未提供'}
             to_addr=recipient,
             subject=subject,
             body=body,
-            is_html=False,
+            is_html=True,
             use_ssl=smtp.mail_use_ssl,
             use_tls=smtp.mail_use_tls,
-            sender_name=sender_name
+            sender_name=sender_name,
+            attachments=attachments
         )
 
         if success:
             InquiryService._update_cooldown()
-            logger.info(f"询价邮件发送成功 → {recipient} | 产品数: {len(items)} | IP: {request.remote_addr}")
-            return True, "Inquiry sent successfully!"
+            logger.info(f"Inquiry email sent successfully → {recipient} | Products: {len(items)} | IP: {request.remote_addr}")
+            return True, "Your inquiry has been sent successfully! We will get back to you soon."
 
-        logger.error(f"询价邮件发送失败: {msg}")
-        return False, "Failed to send email. Please try again later or contact us directly."
+        logger.error(f"Inquiry email failed: {msg}")
+        return False, "Failed to send your inquiry. Please try again later or contact us directly via email or WhatsApp."
 
     @staticmethod
-    def send_contact(customer_info: dict) -> tuple[bool, str]:
-        """发送纯联系留言"""
-        # 冷却 + 配置（完全复用）
-        allowed, msg = InquiryService._check_cooldown()
+    def send_contact(customer_info: Dict) -> Tuple[bool, str]:
+        """Send pure contact message (English notifications)"""
+        # 1. Cooldown & Validation
+        allowed, cooldown_msg = InquiryService._check_cooldown()
         if not allowed:
-            return False, msg
+            return False, cooldown_msg
 
-        settings, smtp, err = InquiryService._get_common_config()
-        if err:
+        valid, err = InquiryService._validate_input(customer_info, is_inquiry=False)
+        if not valid:
             return False, err
 
+        settings, smtp, config_err = InquiryService._get_common_config()
+        if config_err:
+            return False, config_err
+
+        # 2. Prepare content
+        subject = f"Website Contact - {customer_info.get('subject', 'General Inquiry')} - {customer_info.get('name', 'Customer')}"
+        body = InquiryService._build_contact_body_html(customer_info, settings)
         recipient = settings.email1
         sender_name = settings.company_name or "Hotel Furniture Website"
 
-        # 无附件
-        attachments = []
-
-        # 正文
-        subject = f"网站新留言 - {customer_info.get('subject', 'General Inquiry')} - {customer_info.get('name', 'Customer')}"
-        body = InquiryService._build_contact_body(customer_info, settings)
-
-        # 发送（复用同一工具）
+        # 3. Send（传空 attachments）
         success, msg = send_email(
             smtp_server=smtp.mail_server,
             smtp_port=smtp.mail_port,
@@ -226,16 +327,17 @@ WhatsApp/电话: {customer_info.get('whatsapp') or '未提供'}
             to_addr=recipient,
             subject=subject,
             body=body,
-            is_html=False,
+            is_html=True,
             use_ssl=smtp.mail_use_ssl,
             use_tls=smtp.mail_use_tls,
-            sender_name=sender_name
+            sender_name=sender_name,
+
         )
 
         if success:
             InquiryService._update_cooldown()
-            logger.info(f"联系留言发送成功 → {recipient} | From: {customer_info.get('name')} <{customer_info.get('email')}>")
-            return True, "Message sent successfully!"
+            logger.info(f"Contact message sent successfully → {recipient} | From: {customer_info.get('name')} <{customer_info.get('email')}>")
+            return True, "Your message has been sent successfully! Thank you for contacting us."
 
-        logger.error(f"联系留言发送失败: {msg}")
-        return False, "Failed to send message. Please try again later or contact us directly."
+        logger.error(f"Contact message failed: {msg}")
+        return False, "Failed to send your message. Please try again later or reach us directly via email or WhatsApp."

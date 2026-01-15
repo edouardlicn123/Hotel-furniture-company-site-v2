@@ -1,321 +1,316 @@
 {% extends "base.html" %}
 
-{% block title %}Contact Us - {{ settings.company_name or 'Hotel Furniture' }}{% endblock %}
+{% block title %}Contact Us - {{ settings.company_name or 'Hotel Furniture Manufacturer' }}{% endblock %}
 
 {% block hero_section %}
     {% set hero_title = "Contact Us" %}
-    {% set hero_subtitle = "Inquire for custom quotes, project collaboration, or factory visit appointments." %}
+    {% set hero_subtitle = "Get in touch for custom quotes, project collaboration, or factory visit arrangements." %}
     {% include 'partials/hero_small.html' %}
 {% endblock %}
+
 
 {% block content %}
 <div class="container my-5">
     <div class="row g-5 justify-content-center">
-        <!-- 联系信息（左侧） -->
-        <div class="col-lg-6">
-            <h3 class="mb-4">Contact Information</h3>
-            <div class="lead">
-                <!-- 电话 -->
-                {% set phones = [] %}
-                {% if settings.phone1 %}{{ phones.append(settings.phone1) or '' }}{% endif %}
-                {% if settings.phone2 %}{{ phones.append(settings.phone2) or '' }}{% endif %}
-                {% if settings.phone3 %}{{ phones.append(settings.phone3) or '' }}{% endif %}
-                {% if phones %}
-                <p class="mb-2">
-                    <strong>Phone:</strong><br>
-                    {{ phones | join('<br>') | safe }}
-                </p>
-                {% endif %}
+        <!-- Left: Contact Information -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <h3 class="card-title mb-4">Contact Information</h3>
 
-                <!-- 邮箱 -->
-                {% set emails = [] %}
-                {% if settings.email1 %}{{ emails.append(settings.email1) or '' }}{% endif %}
-                {% if settings.email2 %}{{ emails.append(settings.email2) or '' }}{% endif %}
-                {% if settings.email3 %}{{ emails.append(settings.email3) or '' }}{% endif %}
-                {% if emails %}
-                <p class="mb-2">
-                    <strong>Email:</strong><br>
-                    {{ emails | join('<br>') | safe }}
-                </p>
-                {% endif %}
+                    {% set phones = [settings.phone1, settings.phone2, settings.phone3] | select | list %}
+                    {% if phones %}
+                    <p class="mb-3">
+                        <i class="bi bi-telephone-fill me-2 text-primary"></i>
+                        <strong>Phone:</strong><br>
+                        {{ phones | join('<br>') | safe }}
+                    </p>
+                    {% endif %}
 
-                <!-- WhatsApp -->
-                {% set whatsapps = [] %}
-                {% if settings.whatsapp1 %}{{ whatsapps.append(settings.whatsapp1) or '' }}{% endif %}
-                {% if settings.whatsapp2 %}{{ whatsapps.append(settings.whatsapp2) or '' }}{% endif %}
-                {% if whatsapps %}
-                <p class="mb-2">
-                    <strong>WhatsApp:</strong><br>
-                    {{ whatsapps | join('<br>') | safe }}
-                </p>
-                {% endif %}
+                    {% set emails = [settings.email1, settings.email2, settings.email3] | select | list %}
+                    {% if emails %}
+                    <p class="mb-3">
+                        <i class="bi bi-envelope-fill me-2 text-primary"></i>
+                        <strong>Email:</strong><br>
+                        {{ emails | join('<br>') | safe }}
+                    </p>
+                    {% endif %}
 
-                <!-- WeChat -->
-                {% set wechats = [] %}
-                {% if settings.wechat1 %}{{ wechats.append(settings.wechat1) or '' }}{% endif %}
-                {% if settings.wechat2 %}{{ wechats.append(settings.wechat2) or '' }}{% endif %}
-                {% if wechats %}
-                <p class="mb-2">
-                    <strong>WeChat:</strong><br>
-                    {{ wechats | join('<br>') | safe }}
-                </p>
-                {% endif %}
+                    {% set whatsapps = [settings.whatsapp1, settings.whatsapp2] | select | list %}
+                    {% if whatsapps %}
+                    <p class="mb-3">
+                        <i class="bi bi-whatsapp me-2 text-success"></i>
+                        <strong>WhatsApp:</strong><br>
+                        {{ whatsapps | join('<br>') | safe }}
+                    </p>
+                    {% endif %}
 
-                <!-- 传真 -->
-                {% if settings.fax %}
-                <p class="mb-2">
-                    <strong>Fax:</strong><br>
-                    {{ settings.fax }}
-                </p>
-                {% endif %}
+                    {% set wechats = [settings.wechat1, settings.wechat2] | select | list %}
+                    {% if wechats %}
+                    <p class="mb-3">
+                        <i class="bi bi-wechat me-2 text-success"></i>
+                        <strong>WeChat:</strong><br>
+                        {{ wechats | join('<br>') | safe }}
+                    </p>
+                    {% endif %}
 
-                <!-- 地址 -->
-                {% if settings.address %}
-                <p class="mb-2">
-                    <strong>Address:</strong><br>
-                    {{ settings.address | replace('\n', '<br>') | safe }}
-                </p>
-                {% endif %}
+                    {% if settings.fax %}
+                    <p class="mb-3">
+                        <i class="bi bi-printer-fill me-2 text-muted"></i>
+                        <strong>Fax:</strong><br>
+                        {{ settings.fax }}
+                    </p>
+                    {% endif %}
 
-                <!-- 无内容提示 -->
-                {% if not phones and not emails and not whatsapps and not wechats and not settings.fax and not settings.address %}
-                <p class="text-muted">No contact information available. Please update in admin panel.</p>
-                {% endif %}
+                    {% if settings.address %}
+                    <p class="mb-3">
+                        <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
+                        <strong>Address:</strong><br>
+                        {{ settings.address | replace('\n', '<br>') | safe }}
+                    </p>
+                    {% endif %}
+
+                    {% if not (phones or emails or whatsapps or wechats or settings.fax or settings.address) %}
+                    <p class="text-muted fst-italic">Contact details will be updated soon.<br>Please use the form on the right.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        <!-- 留言表单（右侧） -->
-        <div class="col-lg-6">
-            <h3 class="mb-4">Send Message</h3>
-            <p class="text-muted mb-4">Please fill in the form below and we will get back to you as soon as possible.</p>
+        <!-- Right: Message Form -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-lg-5">
+                    <h3 class="card-title mb-4">Send Message</h3>
+                    <p class="text-muted mb-4">Please fill out the form below. We aim to respond within 24 business hours.</p>
 
-            <form id="contact-form">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="contact-name" class="form-label">Your Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="contact-name" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="contact-email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" id="contact-email" required>
-                    </div>
-                </div>
-
-                <div class="row g-3 mt-3">
-                    <div class="col-md-6">
-                        <label for="contact-whatsapp" class="form-label">WhatsApp Number</label>
-                        <input type="tel" class="form-control" id="contact-whatsapp" placeholder="+86 123 4567 8900">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="contact-subject" class="form-label">Subject <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="contact-subject" required>
-                    </div>
-                </div>
-
-                <div class="mt-3">
-                    <label for="contact-message" class="form-label">Message <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="contact-message" rows="6" required></textarea>
-                </div>
-
-                <!-- 验证码图片区域 -->
-                <div class="row g-3 mt-4">
-                    <div class="col-md-6">
-                        <label class="form-label">Verification Code <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="verification-input" 
-                                   placeholder="Enter 4-digit code" maxlength="4" required>
-                            <div class="input-group-text p-0" style="width:120px; height:42px; background:#f8f9fa; overflow:hidden;">
-                                <canvas id="verification-canvas" width="120" height="42"></canvas>
+                    <form id="contact-form" novalidate>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="contact-name" class="form-label">Your Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="contact-name" required placeholder="John Doe">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="contact-email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="contact-email" required placeholder="your@email.com">
                             </div>
                         </div>
-                        <div class="mt-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-verification">
-                                Refresh Code
-                            </button>
-                            <small class="text-muted ms-2">Please enter the code shown in the image</small>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label for="contact-whatsapp" class="form-label">WhatsApp / Phone</label>
+                                <input type="tel" class="form-control" id="contact-whatsapp" placeholder="+86 123 4567 8900">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="contact-subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="contact-subject" required placeholder="Inquiry about custom hotel furniture">
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="mt-4 text-center">
-                    <button type="submit" id="send-contact-btn" class="btn btn-primary btn-lg px-5">
-                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
-                        Send Message
-                    </button>
+                        <div class="mt-3">
+                            <label for="contact-message" class="form-label">Message <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="contact-message" rows="6" required 
+                                      placeholder="Please describe your project needs, quantity, specifications, or any questions..."></textarea>
+                        </div>
+
+                        <!-- Verification Code -->
+                        <div class="mt-4">
+                            <label class="form-label">Verification Code <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="verification-input" 
+                                       placeholder="Enter 4-digit code" maxlength="4" required>
+                                <span class="input-group-text p-0" style="width:140px; overflow:hidden;">
+                                    <canvas id="verification-canvas" width="140" height="44"></canvas>
+                                </span>
+                            </div>
+                            <div class="mt-2 d-flex align-items-center gap-3">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-verification">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Refresh
+                                </button>
+                                <small class="text-muted">Type the code shown in the image</small>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 text-center">
+                            <button type="submit" id="send-contact-btn" class="btn btn-primary btn-lg px-5 py-3">
+                                <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
+                                Send Message
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
-
-    <!-- Toast 容器 -->
-    <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
-        <div id="toast-container"></div>
     </div>
 </div>
 
-<script>
-// ==================== Global Config ====================
-const LAST_SEND_KEY = 'lastContactSendTime';
-const SEND_COOLDOWN = 120000; // 2 minutes in ms
-let generatedCode = '';
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;"></div>
 
-// ==================== Toast ====================
+<script>
+// ==================== Config ====================
+const COOLDOWN_KEY = 'lastContactSendTime';
+const COOLDOWN_MS = 120 * 1000; // 120 seconds
+let verificationCode = '';
+
+// ==================== Toast Helper ====================
 function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type} border-0`;
-    toast.role = 'alert';
-    toast.innerHTML = `
+    const container = document.querySelector('.toast-container');
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center text-white bg-${type} border-0 shadow`;
+    toastEl.innerHTML = `
         <div class="d-flex">
             <div class="toast-body">${message}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     `;
-    container.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+    container.appendChild(toastEl);
+
+    const bsToast = new bootstrap.Toast(toastEl, { delay: 6000 });
     bsToast.show();
-    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
-// ==================== Verification Code ====================
+// ==================== Verification Code Generator ====================
 function generateVerificationCode() {
-    generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
+    verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
     
     const canvas = document.getElementById('verification-canvas');
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
     ctx.fillStyle = '#f8f9fa';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Interference lines
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
         ctx.beginPath();
-        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
-        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
-        ctx.strokeStyle = `rgba(0,0,0,${Math.random()*0.3 + 0.1})`;
-        ctx.lineWidth = 1.5;
+        ctx.moveTo(Math.random()*canvas.width, Math.random()*canvas.height);
+        ctx.lineTo(Math.random()*canvas.width, Math.random()*canvas.height);
+        ctx.strokeStyle = `rgba(0,0,0,${0.15 + Math.random()*0.25})`;
+        ctx.lineWidth = 1.3;
         ctx.stroke();
     }
     
-    // Text
-    ctx.font = 'bold 28px Arial';
+    // Text with distortion
+    ctx.font = 'bold 32px Arial';
     ctx.textBaseline = 'middle';
-    for (let i = 0; i < generatedCode.length; i++) {
-        const x = 15 + i * 26;
-        const y = 21 + (Math.random() * 8 - 4);
-        const rotation = (Math.random() * 30 - 15) * Math.PI / 180;
+    for (let i = 0; i < verificationCode.length; i++) {
+        const x = 18 + i * 30;
+        const y = 22 + (Math.random()*10 - 5);
+        const rot = (Math.random()*40 - 20) * Math.PI / 180;
         
         ctx.save();
         ctx.translate(x, y);
-        ctx.rotate(rotation);
-        ctx.fillStyle = ['#2c3e50', '#34495e', '#7f8c8d', '#95a5a6'][Math.floor(Math.random()*4)];
-        ctx.fillText(generatedCode[i], -10, 0);
+        ctx.rotate(rot);
+        ctx.fillStyle = ['#1a3c5e','#2c5282','#34495e','#5a7d9c'][Math.floor(Math.random()*4)];
+        ctx.fillText(verificationCode[i], -12, 0);
         ctx.restore();
     }
     
     // Noise dots
-    for (let i = 0; i < 40; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        ctx.fillStyle = `rgba(0,0,0,${Math.random()*0.4})`;
-        ctx.fillRect(x, y, 1.5, 1.5);
+    for (let i = 0; i < 50; i++) {
+        ctx.fillStyle = `rgba(0,0,0,${Math.random()*0.35})`;
+        ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.8, 1.8);
     }
 }
 
+// ==================== Event Listeners ====================
 document.getElementById('refresh-verification')?.addEventListener('click', () => {
     generateVerificationCode();
     document.getElementById('verification-input').value = '';
     showToast('Verification code refreshed', 'info');
 });
 
-function validateVerificationCode() {
+function validateVerification() {
     const input = document.getElementById('verification-input')?.value.trim();
-    return input === generatedCode;
+    if (input !== verificationCode) {
+        showToast('Incorrect verification code. Please try again.', 'danger');
+        generateVerificationCode();
+        document.getElementById('verification-input').value = '';
+        return false;
+    }
+    return true;
 }
 
 // ==================== Form Submission ====================
-document.getElementById('contact-form')?.addEventListener('submit', async (e) => {
+document.getElementById('contact-form')?.addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // Frequency limit check
-    const lastSendTime = localStorage.getItem(LAST_SEND_KEY);
-    if (lastSendTime) {
-        const timeDiff = Date.now() - parseInt(lastSendTime);
-        if (timeDiff < SEND_COOLDOWN) {
-            const remainingMs = SEND_COOLDOWN - timeDiff;
-            const minutes = Math.floor(remainingMs / 60000);
-            const seconds = Math.floor((remainingMs % 60000) / 1000);
-            const timeStr = minutes > 0 
-                ? `${minutes} minute${minutes > 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}`
-                : `${seconds} second${seconds !== 1 ? 's' : ''}`;
-            showToast(`Please wait ${timeStr} before sending another message.`, 'danger');
+    // Cooldown check (frontend)
+    const lastSend = localStorage.getItem(COOLDOWN_KEY);
+    if (lastSend) {
+        const diff = Date.now() - parseInt(lastSend);
+        if (diff < COOLDOWN_MS) {
+            const remain = COOLDOWN_MS - diff;
+            const m = Math.floor(remain / 60000);
+            const s = Math.floor((remain % 60000) / 1000);
+            const timeText = m > 0 ? `${m}m ${s}s` : `${s}s`;
+            showToast(`Please wait ${timeText} before sending again.`, 'warning');
             return;
         }
     }
 
-    // Form validation
-    const name = document.getElementById('contact-name')?.value.trim();
-    const email = document.getElementById('contact-email')?.value.trim();
-    const subject = document.getElementById('contact-subject')?.value.trim();
-    const message = document.getElementById('contact-message')?.value.trim();
-
-    if (!name || !email || !subject || !message) {
-        showToast('Please fill in all required fields.', 'danger');
+    // Basic frontend validation
+    if (!this.checkValidity()) {
+        showToast('Please complete all required fields.', 'danger');
+        this.reportValidity();
         return;
     }
 
-    if (!validateVerificationCode()) {
-        showToast('The verification code is incorrect. Please check the image.', 'danger');
-        generateVerificationCode();
-        document.getElementById('verification-input').value = '';
-        return;
-    }
+    // Verify captcha
+    if (!validateVerification()) return;
 
+    // Collect data
     const payload = {
-        name: name,
-        email: email,
-        whatsapp: document.getElementById('contact-whatsapp')?.value.trim() || '',
-        subject: subject,
-        message: message
+        name: document.getElementById('contact-name').value.trim(),
+        email: document.getElementById('contact-email').value.trim(),
+        whatsapp: document.getElementById('contact-whatsapp').value.trim() || '',
+        subject: document.getElementById('contact-subject').value.trim(),
+        message: document.getElementById('contact-message').value.trim()
     };
 
+    // UI feedback
     const btn = document.getElementById('send-contact-btn');
     const spinner = btn.querySelector('.spinner-border');
     btn.disabled = true;
-    spinner?.classList.remove('d-none');
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Sending...';
+    spinner.classList.remove('d-none');
+    btn.textContent = 'Sending...';
 
     try {
-        const response = await fetch('/contact/send', {
+        const res = await fetch('/contact/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        const result = await response.json();
+        const data = await res.json();
 
-        if (response.ok && result.success) {
-            showToast(result.message || 'Message sent successfully! We will contact you soon.', 'success');
-            localStorage.setItem(LAST_SEND_KEY, Date.now().toString());
+        if (res.ok && data.success) {
+            showToast(data.message || 'Your message has been sent successfully! We will reply soon.', 'success');
+            localStorage.setItem(COOLDOWN_KEY, Date.now().toString());
             generateVerificationCode();
             document.getElementById('verification-input').value = '';
-            document.getElementById('contact-form').reset();
+            this.reset();
         } else {
-            showToast(result.message || 'Failed to send message. Please try again.', 'danger');
+            showToast(data.message || 'Failed to send message. Please try again.', 'danger');
         }
     } catch (err) {
         console.error('Contact form error:', err);
         showToast('Network error. Please check your connection and try again.', 'danger');
     } finally {
         btn.disabled = false;
-        spinner?.classList.add('d-none');
-        btn.innerHTML = 'Send Message';
+        spinner.classList.add('d-none');
+        btn.textContent = 'Send Message';
     }
 });
 
-// Initialize verification code on page load
-document.addEventListener('DOMContentLoaded', generateVerificationCode);
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    generateVerificationCode();
+});
 </script>
 {% endblock %}

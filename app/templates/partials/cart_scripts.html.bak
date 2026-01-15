@@ -1,0 +1,148 @@
+{# app/templates/partials/cart_scripts.html #}
+
+<!-- html2canvas 用于截图 -->
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<script>
+// ==================== 配置常量 ====================
+const CART_KEY = 'inquiryCart';
+const LAST_SEND_KEY = 'lastInquirySendTime';
+const SEND_COOLDOWN = 120 * 1000; // 2 分钟冷却（毫秒）
+
+window.generatedCode = ''; // 强制全局挂载
+
+// ==================== Toast ====================
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center text-white bg-${type} border-0 shadow`;
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body fw-medium">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    container.appendChild(toastEl);
+    const bsToast = new bootstrap.Toast(toastEl, { delay: 5000, autohide: true });
+    bsToast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+// ==================== 购物车相关函数（保持原有） ====================
+// ... (你的原有 getCart, saveCart, renderCart, removeItem 函数保持不變) ...
+
+// ==================== 验证码生成与验证 ====================
+function generateVerificationCode() {
+    window.generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
+    console.log("New verification code generated:", window.generatedCode);
+
+    const canvas = document.getElementById('verification-canvas');
+    if (!canvas) {
+        console.warn("Canvas not found yet. Will retry in 100ms...");
+        return false; // 未找到畫布，返回 false 以便重試
+    }
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 干扰线
+    for (let i = 0; i < 7; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.strokeStyle = `rgba(0,0,0,${0.15 + Math.random()*0.25})`;
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+    }
+
+    // 文字（带扭曲）
+    ctx.font = 'bold 32px Arial';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < window.generatedCode.length; i++) {
+        const x = 18 + i * 30;
+        const y = 26 + (Math.random()*10 - 5);
+        const rot = (Math.random()*40 - 20) * Math.PI / 180;
+        
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.fillStyle = ['#1a3c5e','#2c5282','#34495e','#5a7d9c'][Math.floor(Math.random()*4)];
+        ctx.fillText(window.generatedCode[i], -12, 0);
+        ctx.restore();
+    }
+
+    // 噪点
+    for (let i = 0; i < 50; i++) {
+        ctx.fillStyle = `rgba(0,0,0,${Math.random()*0.35})`;
+        ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.8, 1.8);
+    }
+
+    return true;
+}
+
+function validateVerificationCode() {
+    const input = document.getElementById('verification-input')?.value.trim();
+    const expected = window.generatedCode || '';
+
+    console.log("Validation - Input:", input, "Expected:", expected);
+
+    if (input !== expected) {
+        showToast('Incorrect verification code. Please check the image.', 'danger');
+        generateVerificationCode();
+        const inputEl = document.getElementById('verification-input');
+        if (inputEl) {
+            inputEl.value = '';
+            inputEl.focus();
+        }
+        return false;
+    }
+    return true;
+}
+
+// ==================== 事件绑定 ====================
+document.getElementById('refresh-verification')?.addEventListener('click', () => {
+    generateVerificationCode();
+    const input = document.getElementById('verification-input');
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
+    showToast('Verification code refreshed', 'info');
+});
+
+// ... 你的原有发送邮件询价、截图、导出 CSV、重置等事件绑定保持不變 ...
+
+// ==================== 初始化 ====================
+document.addEventListener('DOMContentLoaded', () => {
+    renderCart();
+
+    // MutationObserver 監聽畫布出現（最可靠）
+    const observer = new MutationObserver((mutations, obs) => {
+        if (document.getElementById('verification-canvas')) {
+            console.log("Canvas detected via observer! Generating initial code...");
+            generateVerificationCode();
+            obs.disconnect(); // 找到後停止監聽
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // 備用：持續重試直到畫布出現（最多 10 次，每次 300ms）
+    let retryCount = 0;
+    const retryInterval = setInterval(() => {
+        retryCount++;
+        if (generateVerificationCode()) { // 如果生成成功，停止重試
+            console.log("Code generated successfully after", retryCount, "retries");
+            clearInterval(retryInterval);
+        }
+        if (retryCount >= 10) {
+            console.error("Failed to find canvas after 10 retries. Check HTML structure.");
+            clearInterval(retryInterval);
+        }
+    }, 300);
+});
+</script>
