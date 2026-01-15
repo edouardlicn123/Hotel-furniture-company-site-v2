@@ -1,7 +1,5 @@
 {% extends "base.html" %}
 
-{% block title %}{{ product.name }} - {{ settings.company_name or 'Premium Hotel Furniture Manufacturer' }}{% endblock %}
-
 {% block hero_section %}
     {% set hero_title = product.name %}
     {% set hero_subtitle = product.category.name if product.category else "Premium Hotel Furniture Solution" %}
@@ -9,12 +7,14 @@
     {% include 'partials/hero_small.html' %}
 {% endblock %}
 
+{% block title %}{{ product.name }} - {{ settings.company_name or 'Premium Hotel Furniture Manufacturer' }}{% endblock %}
+
 {% block content %}
 <div class="container my-5 pt-4">
     <div class="row g-5">
-        <!-- 左侧：图片 + 画廊 + 描述 -->
+        <!-- Left: Images + Gallery + Description -->
         <div class="col-lg-8">
-            <!-- 主图 -->
+            <!-- Main Image -->
             <div class="mb-5">
                 {% if product.image %}
                 <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}"
@@ -35,7 +35,7 @@
                 {% endif %}
             </div>
 
-            <!-- 产品画廊 -->
+            <!-- Product Gallery -->
             {% if product.photos %}
             <h3 class="mb-4 fw-semibold">Product Gallery</h3>
             <div class="row g-3">
@@ -53,7 +53,7 @@
             </div>
             {% endif %}
 
-            <!-- 产品描述 -->
+            <!-- Product Description -->
             {% if product.description %}
             <div class="mt-5">
                 <h3 class="mb-4 fw-semibold">Description</h3>
@@ -64,7 +64,7 @@
             {% endif %}
         </div>
 
-        <!-- 右侧：规格 + 操作按钮（sticky） -->
+        <!-- Right: Specifications + Action Buttons (sticky) -->
         <div class="col-lg-4">
             <div class="card shadow-lg border-0 rounded-3 sticky-top" style="top: 100px;">
                 <div class="card-body p-4">
@@ -129,9 +129,9 @@
                         {% endif %}
                     </ul>
 
-                    <!-- 操作按钮区 -->
+                    <!-- Action Buttons -->
                     <div class="d-grid gap-3">
-                        <!-- Inquire Now（仅 official 模式） -->
+                        <!-- Inquire Now (only in official mode) -->
                         {% if settings.mode == 'official' %}
                         <a href="{{ url_for('contact.contact_page') }}"
                            class="btn btn-primary btn-lg rounded-pill">
@@ -139,9 +139,9 @@
                         </a>
                         {% endif %}
 
-                        <!-- Add to Cart -->
+                        <!-- Add to Cart (fixed + Toast notification) -->
                         <button id="add-to-cart"
-                                class="btn btn-outline-primary btn-lg rounded-pill"
+                                class="btn btn-primary btn-lg rounded-pill"
                                 data-product-id="{{ product.id }}"
                                 data-product-code="{{ product.product_code }}"
                                 data-product-name="{{ product.name | e }}"
@@ -155,10 +155,49 @@
     </div>
 </div>
 
-<!-- 轻量交互（建议移到 custom.js） -->
+<!-- Toast Container (Bootstrap 5) -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    <div id="cart-toast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">Cart Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>
+
+<!-- Lightweight Interaction JS (Add to Cart + Toast) -->
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // 画廊图片 hover 放大
+    const addBtn = document.getElementById('add-to-cart');
+    const toastEl = document.getElementById('cart-toast');
+    const toastBody = toastEl.querySelector('.toast-body');
+    const toast = new bootstrap.Toast(toastEl);  // Bootstrap 5 Toast instance
+
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            const product = {
+                product_code: addBtn.dataset.productCode,
+                name: addBtn.dataset.productName || 'Unnamed Product',
+                quantity: 1,
+                image: addBtn.dataset.productImage || ''
+            };
+
+            addToCart(product);  // Call addToCart function from cart.js
+
+            // Update display (if navigation cart count exists, call it additionally)
+            // updateCartDisplay(); // If navigation has cart count, call this
+
+            // Show success Toast
+            toastBody.textContent = `Added to cart: ${product.name} × 1`;
+            toastEl.classList.remove('bg-danger');
+            toastEl.classList.add('bg-success', 'text-white');
+            toast.show();
+        });
+    }
+
+    // Gallery hover zoom (original retained)
     document.querySelectorAll('.gallery-img').forEach(img => {
         img.addEventListener('mouseenter', () => {
             img.style.transform = 'scale(1.08)';

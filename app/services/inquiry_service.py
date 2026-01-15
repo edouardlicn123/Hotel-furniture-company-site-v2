@@ -1,10 +1,11 @@
 # app/services/inquiry_service.py
-# Inquiry & Contact Core Service Layer - Professional English Version (2026-01-15)
-# 更新内容：
-# - 统一使用 timezone.utc 避免 naive/aware datetime 冲突（修复冷却解析警告）
-# - 保持 attachments 支持（contact 传空列表，inquiry 正常准备）
-# - 所有用户提示全英文，专业礼貌
-# - 日志更详细，便于调试
+# Inquiry & Contact Core Service Layer - Professional English Version (2026-01-16)
+# 更新內容：
+# - 統一使用 timezone.utc 避免 naive/aware datetime 衝突
+# - 自動區分純聯絡表單與帶商品詢價（主旨與標題不同）
+# - 保持 attachments 支持（聯絡表單傳空列表時不附加）
+# - 所有用戶提示全英文，專業禮貌
+# - 日誌更詳細，便於除錯
 
 import os
 import logging
@@ -31,7 +32,6 @@ class InquiryService:
         last_time_str = session.get(LAST_INQUIRY_KEY)
         if last_time_str:
             try:
-                # 统一处理为 UTC 时区，避免 naive/aware 冲突
                 last_time = datetime.fromisoformat(last_time_str)
                 if last_time.tzinfo is None:
                     last_time = last_time.replace(tzinfo=timezone.utc)
@@ -68,9 +68,9 @@ class InquiryService:
     @staticmethod
     def _validate_input(customer_info: Dict, is_inquiry: bool = True) -> Tuple[bool, Optional[str]]:
         """Basic input validation"""
-        required = ['name', 'email', 'message']
+        required = ['name', 'email']
         if is_inquiry:
-            required.append('phone')
+            required.append('phone')  # 購物車詢價要求電話/WhatsApp
 
         for field in required:
             if not customer_info.get(field) or not str(customer_info[field]).strip():
@@ -84,7 +84,7 @@ class InquiryService:
 
     @staticmethod
     def _prepare_attachments(items: List[Dict]) -> Tuple[List[Dict], str]:
-        """Prepare product main images as attachments"""
+        """Prepare product main images as attachments (only when items exist)"""
         attachments = []
         upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'products')
         total_size = 0
@@ -141,8 +141,10 @@ class InquiryService:
 
     @staticmethod
     def _build_inquiry_body_html(items: List[Dict], customer_info: Dict, settings, attach_desc: str) -> str:
-        """HTML formatted inquiry email body (English)"""
+        """HTML formatted email body (English)"""
         send_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        is_contact_only = len(items) == 0
+        title = "New Contact Message" if is_contact_only else f"New Inquiry - {len(items)} Product{'s' if len(items) != 1 else ''}"
 
         html = f"""
         <html>
@@ -158,104 +160,67 @@ class InquiryService:
             </style>
         </head>
         <body>
-            <h2>New Inquiry - {len(items)} Product{'s' if len(items) != 1 else ''}</h2>
+            <h2>{title}</h2>
             
             <div class="section">
+        """
+
+        if not is_contact_only:
+            html += """
                 <h3>Requested Products</h3>
                 <table>
                     <tr><th>#</th><th>Product Name</th><th>Code</th><th>Quantity</th></tr>
-        """
+            """
+            for idx, item in enumerate(items, 1):
+                name = item.get('name', 'Unnamed Product')
+                code = item.get('product_code', 'N/A')
+                qty = item.get('quantity', 1)
+                html += f"<tr><td>{idx}</td><td>{name}</td><td>{code}</td><td>{qty}</td></tr>"
 
-        for idx, item in enumerate(items, 1):
-            name = item.get('name', 'Unnamed Product')
-            code = item.get('code', 'N/A')
-            qty = item.get('quantity', 1)
-            html += f"<tr><td>{idx}</td><td>{name}</td><td>{code}</td><td>{qty}</td></tr>"
+            html += "</table></div><div class=\"section\">"
 
-        html += """
-                </table>
-            </div>
-
-            <div class="section">
+        html += f"""
                 <strong>Customer Information:</strong><br>
                 Name: {customer_info.get('name', 'Not provided')}<br>
                 Email: {customer_info.get('email', 'Not provided')}<br>
-                Phone/WhatsApp: {customer_info.get('phone', 'Not provided')}<br>
-                Company: {customer_info.get('company', 'Not provided')}
+                Phone/WhatsApp: {customer_info.get('phone', customer_info.get('whatsapp', 'Not provided'))}
             </div>
 
             <div class="section">
-                <strong>Customer Message:</strong><br>
-                {customer_info.get('message', 'None') or 'None'}
+                <strong>Message:</strong><br>
+                {customer_info.get('message', 'No message provided').replace('\n', '<br>')}
             </div>
 
             <div class="section">
                 <strong>Additional Information:</strong><br>
+                Subject: {customer_info.get('subject', 'General Inquiry')}<br>
                 Sent at: {send_time}<br>
                 IP Address: {request.remote_addr}<br>
                 Website Mode: {getattr(settings, 'mode', 'official').title()}<br>
-                {attach_desc}
+                {attach_desc if not is_contact_only else 'No attachments (contact form)'}
             </div>
 
-            <p>Thank you for your inquiry. Our team will contact you soon.</p>
-        </body>
-        </html>
-        """.format(**locals())  # 使用 locals() 填充变量
-
-        return html
-
-    @staticmethod
-    def _build_contact_body_html(customer_info: Dict, settings) -> str:
-        """HTML formatted contact message email body (English)"""
-        send_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-
-        html = f"""
-        <html>
-        <head>
-            <style>
-                body {{ font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; }}
-                h2 {{ color: #2c5282; }}
-                .section {{ margin: 20px 0; padding: 15px; background: #f8f9fa; border-left: 4px solid #4299e1; }}
-            </style>
-        </head>
-        <body>
-            <h2>New Contact Message</h2>
-            
-            <div class="section">
-                <strong>Customer Information:</strong><br>
-                Name: {customer_info.get('name', 'Not provided')}<br>
-                Email: {customer_info.get('email', 'Not provided')}<br>
-                WhatsApp/Phone: {customer_info.get('whatsapp', 'Not provided')}<br>
-                Subject: {customer_info.get('subject', 'General Inquiry')}
-            </div>
-
-            <div class="section">
-                <strong>Message Content:</strong><br>
-                {customer_info.get('message', 'None') or 'None'}
-            </div>
-
-            <div class="section">
-                <strong>Submission Details:</strong><br>
-                Time: {send_time}<br>
-                IP Address: {request.remote_addr}<br>
-                Website Mode: {getattr(settings, 'mode', 'official').title()}
-            </div>
-
-            <p>Thank you for reaching out. Our team will get back to you as soon as possible.</p>
+            <p>Thank you for your message. Our team will contact you soon.</p>
         </body>
         </html>
         """
+
         return html
 
     @staticmethod
     def send_inquiry(items: List[Dict], customer_info: Dict) -> Tuple[bool, str]:
-        """Send cart inquiry email with attachments (English notifications)"""
-        # 1. Cooldown & Validation
+        """
+        Send inquiry or contact email
+        - items: empty list [] for pure contact form
+        - Automatically handles subject/title difference
+        """
+        # 1. Cooldown & Basic Validation
         allowed, cooldown_msg = InquiryService._check_cooldown()
         if not allowed:
             return False, cooldown_msg
 
-        valid, err = InquiryService._validate_input(customer_info, is_inquiry=True)
+        is_inquiry = len(items) > 0
+        valid, err = InquiryService._validate_input(customer_info, is_inquiry=is_inquiry)
         if not valid:
             return False, err
 
@@ -265,12 +230,17 @@ class InquiryService:
 
         # 2. Prepare content
         attachments, attach_desc = InquiryService._prepare_attachments(items)
-        subject = f"New Inquiry - {len(items)} Product{'s' if len(items) != 1 else ''} - {datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+
+        if len(items) == 0:
+            subject = f"New Contact Message - {customer_info.get('subject', 'General Inquiry')}"
+        else:
+            subject = f"New Inquiry - {len(items)} Product{'s' if len(items) != 1 else ''} - {datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+
         body = InquiryService._build_inquiry_body_html(items, customer_info, settings, attach_desc)
         recipient = settings.email1
         sender_name = settings.company_name or "Hotel Furniture Website"
 
-        # 3. Send
+        # 3. Send email
         success, msg = send_email(
             smtp_server=smtp.mail_server,
             smtp_port=smtp.mail_port,
@@ -289,55 +259,8 @@ class InquiryService:
 
         if success:
             InquiryService._update_cooldown()
-            logger.info(f"Inquiry email sent successfully → {recipient} | Products: {len(items)} | IP: {request.remote_addr}")
-            return True, "Your inquiry has been sent successfully! We will get back to you soon."
+            logger.info(f"Email sent successfully → {recipient} | Type: {'Inquiry' if is_inquiry else 'Contact'} | Items: {len(items)} | IP: {request.remote_addr}")
+            return True, "Your message has been sent successfully! We will get back to you soon."
 
-        logger.error(f"Inquiry email failed: {msg}")
-        return False, "Failed to send your inquiry. Please try again later or contact us directly via email or WhatsApp."
-
-    @staticmethod
-    def send_contact(customer_info: Dict) -> Tuple[bool, str]:
-        """Send pure contact message (English notifications)"""
-        # 1. Cooldown & Validation
-        allowed, cooldown_msg = InquiryService._check_cooldown()
-        if not allowed:
-            return False, cooldown_msg
-
-        valid, err = InquiryService._validate_input(customer_info, is_inquiry=False)
-        if not valid:
-            return False, err
-
-        settings, smtp, config_err = InquiryService._get_common_config()
-        if config_err:
-            return False, config_err
-
-        # 2. Prepare content
-        subject = f"Website Contact - {customer_info.get('subject', 'General Inquiry')} - {customer_info.get('name', 'Customer')}"
-        body = InquiryService._build_contact_body_html(customer_info, settings)
-        recipient = settings.email1
-        sender_name = settings.company_name or "Hotel Furniture Website"
-
-        # 3. Send（传空 attachments）
-        success, msg = send_email(
-            smtp_server=smtp.mail_server,
-            smtp_port=smtp.mail_port,
-            username=smtp.mail_username,
-            password=smtp.mail_password,
-            from_addr=smtp.mail_username,
-            to_addr=recipient,
-            subject=subject,
-            body=body,
-            is_html=True,
-            use_ssl=smtp.mail_use_ssl,
-            use_tls=smtp.mail_use_tls,
-            sender_name=sender_name,
-
-        )
-
-        if success:
-            InquiryService._update_cooldown()
-            logger.info(f"Contact message sent successfully → {recipient} | From: {customer_info.get('name')} <{customer_info.get('email')}>")
-            return True, "Your message has been sent successfully! Thank you for contacting us."
-
-        logger.error(f"Contact message failed: {msg}")
-        return False, "Failed to send your message. Please try again later or reach us directly via email or WhatsApp."
+        logger.error(f"Email failed: {msg}")
+        return False, "Failed to send your message. Please try again later or contact us directly via email or WhatsApp."
