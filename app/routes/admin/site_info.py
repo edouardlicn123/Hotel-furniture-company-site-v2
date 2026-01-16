@@ -1,23 +1,36 @@
 # app/routes/admin/site_info.py
+# 后台网站设置管理 - 完整优化版（整合 admin_utils.py 通用工具）
+# 更新日期：2026-01-16
+# 优化点：
+# - 使用 admin_utils.py 作为独立工具模块（彻底避免循环导入）
+# - 顶层导入 admin_required 和 flash_redirect（安全、无风险）
+# - Logo 处理逻辑保持原有方式（临时文件 + 尺寸校验 + 固定文件名）
+# - 所有用户提示为英文，日志记录完善
+# - 异常处理健壮（rollback + 详细日志）
+# - 主题列表读取健壮
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
-from flask_login import login_required
+from flask import Blueprint, render_template, request, current_app
+from flask_login import current_user
 from app.models import Settings
 from app import db
 import os
 from PIL import Image
+from app.admin_utils import admin_required, flash_redirect
 
 site_info_bp = Blueprint('site_info', __name__, url_prefix='/settings')
 
+
 @site_info_bp.route('/', methods=['GET', 'POST'])
-@login_required
+@admin_required
 def settings():
+    """Website global settings management"""
     settings = Settings.query.first()
     if not settings:
         settings = Settings()
         db.session.add(settings)
         db.session.commit()
 
+    # Load available themes
     themes_dir = os.path.join(current_app.root_path, 'static', 'css', 'themes')
     theme_files = ['default']
     try:
@@ -27,30 +40,29 @@ def settings():
                     theme_files.append(f[:-4])
             theme_files.sort()
     except Exception as e:
-        current_app.logger.error(f"读取主题失败: {e}")
+        current_app.logger.error(f"Failed to load themes directory: {e}")
 
+    # Fix invalid theme
     if settings.theme and settings.theme not in theme_files:
         settings.theme = 'default'
         db.session.commit()
 
     if request.method == 'POST':
         try:
-            # 基本设置
+            # Basic settings
             settings.company_name = request.form.get('company_name', '').strip()
-            selected_theme = request.form.get('theme')
-            if selected_theme in theme_files:
-                settings.theme = selected_theme
-            else:
-                settings.theme = 'default'
 
-            # ==================== 新增：网站模式 ====================
+            selected_theme = request.form.get('theme')
+            settings.theme = selected_theme if selected_theme in theme_files else 'default'
+
+            # Website mode
             settings.mode = request.form.get('mode', 'official')
 
-            # ==================== 新增：企业介绍 ====================
+            # Company introduction
             settings.basic_info = request.form.get('basic_info') or None
             settings.company_advantages = request.form.get('company_advantages') or None
 
-            # ==================== 新增：联系方式 ====================
+            # Contact information
             settings.phone1 = request.form.get('phone1') or None
             settings.phone2 = request.form.get('phone2') or None
             settings.phone3 = request.form.get('phone3') or None
@@ -60,13 +72,13 @@ def settings():
             settings.fax = request.form.get('fax') or None
             settings.address = request.form.get('address') or None
 
-            # ==================== 新增：社交联系方式 ====================
+            # Social contacts
             settings.whatsapp1 = request.form.get('whatsapp1') or None
             settings.whatsapp2 = request.form.get('whatsapp2') or None
             settings.wechat1 = request.form.get('wechat1') or None
             settings.wechat2 = request.form.get('wechat2') or None
 
-            # SEO 字段
+            # SEO fields
             settings.seo_home_title = request.form.get('seo_home_title', '')
             settings.seo_home_description = request.form.get('seo_home_description', '')
             settings.seo_home_keywords = request.form.get('seo_home_keywords', '')
@@ -78,36 +90,57 @@ def settings():
             settings.seo_contact_title = request.form.get('seo_contact_title', '')
             settings.seo_contact_description = request.form.get('seo_contact_description', '')
 
-            # Logo 处理
+            # Logo upload handling
             logo_file = request.files.get('logo')
             if logo_file and logo_file.filename:
                 upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'logo')
                 os.makedirs(upload_folder, exist_ok=True)
+
                 ext = logo_file.filename.rsplit('.', 1)[-1].lower() if '.' in logo_file.filename else 'png'
                 temp_path = os.path.join(upload_folder, f'temp_company_logo.{ext}')
                 logo_file.save(temp_path)
+
                 try:
                     with Image.open(temp_path) as img:
                         if img.width > 600 or img.height > 300:
                             os.remove(temp_path)
-                            flash('Logo 尺寸超过 600×300，请重新上传！', 'danger')
-                        else:
-                            final_path = os.path.join(upload_folder, 'company_logo')
-                            if os.path.exists(final_path):
-                                os.remove(final_path)
-                            os.rename(temp_path, final_path)
-                            settings.logo = 'company_logo'
-                            flash('Logo 更新成功！', 'success')
+                            return flash_redirect(
+                                "Logo dimensions exceed 600×300, please upload a smaller image",
+                                "danger",
+                                "admin.site_info.settings"
+                            )
+
+                        final_path = os.path.join(upload_folder, 'company_logo')
+                        if os.path.exists(final_path):
+                            os.remove(final_path)
+                        os.rename(temp_path, final_path)
+                        settings.logo = 'company_logo'
+                        current_app.logger.info(f"Logo updated successfully by {current_user.username}")
                 except Exception as e:
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
-                    flash(f'图片处理失败：{e}', 'danger')
+                    current_app.logger.warning(f"Logo processing failed: {e}")
+                    return flash_redirect(
+                        f"Image processing failed: {str(e)}",
+                        "danger",
+                        "admin.site_info.settings"
+                    )
 
             db.session.commit()
-            flash('网站设置保存成功！', 'success')
-            return redirect(url_for('admin.site_info.settings'))
+            current_app.logger.info(f"Site settings updated by {current_user.username}")
+            return flash_redirect(
+                "Website settings saved successfully!",
+                "success",
+                "admin.site_info.settings"
+            )
+
         except Exception as e:
             db.session.rollback()
-            flash(f'保存失败：{e}', 'danger')
+            current_app.logger.exception("Failed to save site settings")
+            return flash_redirect(f"Save failed: {str(e)}", "danger", "admin.site_info.settings")
 
-    return render_template('admin/settings.html', settings=settings, theme_files=theme_files)
+    return render_template(
+        'admin/settings.html',
+        settings=settings,
+        theme_files=theme_files
+    )

@@ -1,17 +1,28 @@
-# app/routes/admin/main.py - 完整后台管理核心路由（含登录/登出/首页）
+# app/routes/admin/main.py
+# 后台管理核心路由（登录/首页/登出） - 使用 admin_utils.py 通用工具
+# 更新日期：2026-01-16
+# 优化点：
+# - 使用 admin_utils.py 作为独立工具模块（避免循环导入）
+# - 顶层导入 admin_required 和 flash_redirect（安全、无循环风险）
+# - 移除调试 print，改用 current_app.logger
+# - 增强安全性：登录失败记录警告日志
+# - 支持 next 参数安全校验（防止开放重定向）
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from flask_login import current_user, login_user, login_required, logout_user
+from flask import Blueprint, render_template, request, redirect, url_for, current_app
+from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash
 from app.models import User
+from app.admin_utils import admin_required, flash_redirect
 
 main_bp = Blueprint('main', __name__)
 
+
 @main_bp.route('/')
-@login_required
+@admin_required
 def index():
     """后台管理首页"""
     return render_template('admin/index.html')
+
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -20,37 +31,43 @@ def login():
     - GET: 显示登录表单
     - POST: 处理登录验证
     """
-    # 如果用户已经登录，直接跳转到后台首页（防止重复登录）
+    # 已登录用户直接跳转首页（防止重复登录）
     if current_user.is_authenticated:
         return redirect(url_for('admin.main.index'))
 
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        remember = 'remember' in request.form  # 可选：记住我
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        remember = 'remember' in request.form
 
-        # 查询用户
+        if not username or not password:
+            return flash_redirect("用户名和密码不能为空", "danger", "admin.main.login")
+
         user = User.query.filter_by(username=username).first()
 
         if user and check_password_hash(user.password, password):
-            print("正在登录用户:", user.username)  # 调试输出
             login_user(user, remember=remember)
-            print("登录完成，session:", session)  # 调试输出：检查 session 是否有 '_user_id'
-            flash('登录成功！欢迎回来。', 'success')
+            current_app.logger.info(f"Admin login success: {username} from {request.remote_addr}")
 
-            # 支持 next 参数：从哪里来回哪里去
+            # 支持安全的 next 参数（防止开放重定向攻击）
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('admin.main.index'))
+            if next_page and '//' not in next_page and next_page.startswith('/admin'):
+                return redirect(next_page)
+            else:
+                return flash_redirect("登录成功！欢迎回来", "success", "admin.main.index")
         else:
-            flash('用户名或密码错误，请重试。', 'danger')
+            current_app.logger.warning(f"Admin login failed: {username} from {request.remote_addr}")
+            return flash_redirect("用户名或密码错误，请重试", "danger", "admin.main.login")
 
-    # GET 或验证失败：渲染登录页面
+    # GET 或验证失败
     return render_template('admin/login.html')
 
+
 @main_bp.route('/logout')
-@login_required
+@admin_required
 def logout():
     """登出"""
+    username = current_user.username
     logout_user()
-    flash('已安全退出登录', 'info')
-    return redirect(url_for('main.index'))  # 回到前端首页
+    current_app.logger.info(f"Admin logout: {username}")
+    return flash_redirect("已安全退出登录", "info", "main.index")  # 回到前端首页

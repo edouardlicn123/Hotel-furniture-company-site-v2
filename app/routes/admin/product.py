@@ -1,90 +1,71 @@
 # app/routes/admin/product.py
-# 后台产品管理蓝图 - 完整优化版（自动生成产品编号 + 安全图片上传 + 多图追加）
+# 后台产品管理蓝图 - 完整优化版（整合 admin_utils.py 通用工具）
+# 更新日期：2026-01-16
+# 优化点：
+# - 使用 admin_utils.py 作为独立工具模块（避免循环导入）
+# - 顶层导入 admin_required, flash_redirect, save_admin_upload, delete_admin_file, get_paginated_query
+# - 列表页使用通用分页助手
+# - 图片上传统一使用 save_admin_upload
+# - 所有用户提示为英文，日志记录完善
+# - 异常处理健壮（rollback + 详细日志）
 
-import os
-import uuid
-import random
-import string
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
-from flask_login import login_required
+from flask import Blueprint, render_template, request, current_app
+from flask_login import current_user
 from app.models import Product, Category
 from app import db
-from werkzeug.utils import secure_filename
+from app.admin_utils import (
+    admin_required,
+    flash_redirect,
+    save_admin_upload,
+    delete_admin_file,
+    get_paginated_query
+)
 
 product_bp = Blueprint('product', __name__, url_prefix='/products')
 
-# 支持的图片格式
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'}
+# 支持的图片格式（与 admin_utils.py 保持一致）
+ALLOWED_IMG_EXT = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'}
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def generate_product_code():
-    """生成唯一的产品编号：pc + 9位随机数字"""
-    while True:
-        code = 'pc' + ''.join(random.choices(string.digits, k=9))
-        if not Product.query.filter_by(product_code=code).first():
-            return code
-
-def get_upload_folder():
-    """获取并确保上传目录存在"""
-    folder = os.path.join(current_app.root_path, 'static', 'uploads', 'products')
-    os.makedirs(folder, exist_ok=True)
-    return folder
-
-def save_uploaded_file(file, prefix=''):
-    """
-    安全保存上传文件，返回相对路径文件名
-    使用 UUID 重命名，避免冲突和安全风险
-    """
-    if file and file.filename and allowed_file(file.filename):
-        ext = secure_filename(file.filename).rsplit('.', 1)[1].lower()
-        filename = f"{prefix}{uuid.uuid4().hex}.{ext}"
-        filepath = os.path.join(get_upload_folder(), filename)
-        file.save(filepath)
-        return filename
-    return None
-
-def delete_file(filename):
-    """安全删除静态文件"""
-    if not filename:
-        return
-    filepath = os.path.join(get_upload_folder(), filename.strip())
-    if os.path.exists(filepath):
-        try:
-            os.remove(filepath)
-        except OSError:
-            current_app.logger.warning(f"无法删除文件: {filepath}")
 
 @product_bp.route('/')
 @product_bp.route('/page/<int:page>')
-@login_required
+@admin_required
 def product_list(page=1):
-    pagination = Product.query.order_by(Product.created_at.desc()).paginate(
-        page=page, per_page=12, error_out=False)
-    return render_template('admin/product_list.html',
-                           products=pagination.items,
-                           pagination=pagination)
+    """产品列表页 - 使用通用分页"""
+    pagination = get_paginated_query(
+        Product,
+        page=page,
+        per_page=12,
+        order_by=Product.created_at.desc()
+    )
+    return render_template(
+        'admin/product_list.html',
+        products=pagination.items,
+        pagination=pagination
+    )
+
 
 @product_bp.route('/add', methods=['GET', 'POST'])
-@login_required
+@admin_required
 def product_add():
+    """新增产品"""
     categories = Category.query.all()
 
-    if request.method == 'POST':
+    if request.method == 'GET':
+        return render_template('admin/product_form.html', product=None, categories=categories)
+
+    try:
         name = request.form.get('name', '').strip()
         if not name:
-            flash('产品名称不能为空！', 'danger')
-            return render_template('admin/product_form.html', product=None, categories=categories)
+            return flash_redirect("Product name cannot be empty", "danger", "admin.product.product_add")
 
-        # 产品编号：优先使用用户输入，若为空则自动生成
+        # 产品编号：优先用户输入，否则自动生成
         product_code = request.form.get('product_code', '').strip()
-        if not product_code:
-            product_code = generate_product_code()
-        else:
+        if product_code:
             if Product.query.filter_by(product_code=product_code).first():
-                flash(f'产品编号 {product_code} 已存在，请修改或留空自动生成！', 'danger')
-                return render_template('admin/product_form.html', product=None, categories=categories)
+                return flash_redirect(f"Product code '{product_code}' already exists", "danger", "admin.product.product_add")
+        else:
+            product_code = generate_product_code()  # 保留原有生成逻辑
 
         # 其他字段
         description = request.form.get('description') or None
@@ -92,10 +73,10 @@ def product_add():
         if category_id == '':
             category_id = None
 
-        # 规格与材质
+        # 规格（安全转换）
         def get_int(value):
             try:
-                return int(value) if value.strip() else None
+                return int(value.strip()) if value and value.strip() else None
             except (ValueError, AttributeError):
                 return None
 
@@ -109,20 +90,32 @@ def product_add():
         featured_series = request.form.get('featured_series') or None
         applicable_space = request.form.get('applicable_space') or None
 
-        # 处理主图
+        # 主图上传
         image_filename = None
         main_image_file = request.files.get('image')
         if main_image_file and main_image_file.filename:
-            image_filename = save_uploaded_file(main_image_file, prefix=f"{product_code}_main_")
+            success, filename, error = save_admin_upload(
+                main_image_file,
+                prefix=f"{product_code}_main_",
+                allowed_extensions=ALLOWED_IMG_EXT
+            )
+            if success:
+                image_filename = filename
+            else:
+                current_app.logger.warning(f"Main image upload failed: {error}")
+                return flash_redirect(f"Main image upload failed: {error}", "danger", "admin.product.product_add")
 
-        # 处理多图（支持多个文件）
+        # 多图上传（追加，支持多张）
         photos = []
         extra_files = request.files.getlist('photos')
         for file in extra_files:
-            if file and file.filename:
-                photo_name = save_uploaded_file(file, prefix=f"{product_code}_")
-                if photo_name:
-                    photos.append(photo_name)
+            success, filename, error = save_admin_upload(
+                file,
+                prefix=f"{product_code}_",
+                allowed_extensions=ALLOWED_IMG_EXT
+            )
+            if success:
+                photos.append(filename)
 
         photos_str = ','.join(photos) if photos else None
 
@@ -145,27 +138,35 @@ def product_add():
         )
 
         db.session.add(product)
-        try:
-            db.session.commit()
-            flash(f'产品 "{name}" 添加成功！编号：{product_code}', 'success')
-            return redirect(url_for('admin.product.product_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'保存失败：{str(e)}', 'danger')
+        db.session.commit()
 
-    return render_template('admin/product_form.html', product=None, categories=categories)
+        current_app.logger.info(f"Product added: {name} (code: {product_code}) by {current_user.username}")
+        return flash_redirect(
+            f"Product '{name}' added successfully! Code: {product_code}",
+            "success",
+            "admin.product.product_list"
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.exception("Failed to add product")
+        return flash_redirect(f"Save failed: {str(e)}", "danger", "admin.product.product_add")
+
 
 @product_bp.route('/edit/<int:product_id>', methods=['GET', 'POST'])
-@login_required
+@admin_required
 def product_edit(product_id):
+    """编辑产品"""
     product = Product.query.get_or_404(product_id)
     categories = Category.query.all()
 
-    if request.method == 'POST':
+    if request.method == 'GET':
+        return render_template('admin/product_form.html', product=product, categories=categories)
+
+    try:
         name = request.form.get('name', '').strip()
         if not name:
-            flash('产品名称不能为空！', 'danger')
-            return render_template('admin/product_form.html', product=product, categories=categories)
+            return flash_redirect("Product name cannot be empty", "danger", "admin.product.product_edit", product_id=product_id)
 
         product.name = name
         product.description = request.form.get('description') or None
@@ -176,7 +177,7 @@ def product_edit(product_id):
         # 更新规格
         def get_int(value):
             try:
-                return int(value) if value.strip() else None
+                return int(value.strip()) if value and value.strip() else None
             except (ValueError, AttributeError):
                 return None
 
@@ -193,53 +194,89 @@ def product_edit(product_id):
         # 替换主图
         main_image_file = request.files.get('image')
         if main_image_file and main_image_file.filename:
-            new_image = save_uploaded_file(main_image_file, prefix=f"{product.product_code}_main_")
-            if new_image:
-                delete_file(product.image)  # 删除旧主图
-                product.image = new_image
+            success, filename, error = save_admin_upload(
+                main_image_file,
+                prefix=f"{product.product_code}_main_",
+                allowed_extensions=ALLOWED_IMG_EXT
+            )
+            if success:
+                if product.image:
+                    delete_admin_file(product.image, subdir='products')
+                product.image = filename
+            else:
+                current_app.logger.warning(f"Main image replace failed: {error}")
 
         # 追加多图（不替换原有）
         extra_files = request.files.getlist('photos')
         new_photos = []
         for file in extra_files:
-            if file and file.filename:
-                photo_name = save_uploaded_file(file, prefix=f"{product.product_code}_")
-                if photo_name:
-                    new_photos.append(photo_name)
+            success, filename, error = save_admin_upload(
+                file,
+                prefix=f"{product.product_code}_",
+                allowed_extensions=ALLOWED_IMG_EXT
+            )
+            if success:
+                new_photos.append(filename)
 
         if new_photos:
             existing = product.photos.split(',') if product.photos else []
             product.photos = ','.join(existing + new_photos)
 
-        try:
-            db.session.commit()
-            flash(f'产品 "{name}" 更新成功！', 'success')
-            return redirect(url_for('admin.product.product_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'更新失败：{str(e)}', 'danger')
+        db.session.commit()
 
-    return render_template('admin/product_form.html', product=product, categories=categories)
+        current_app.logger.info(f"Product updated: {name} (code: {product.product_code}) by {current_user.username}")
+        return flash_redirect(
+            f"Product '{name}' updated successfully!",
+            "success",
+            "admin.product.product_list"
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.exception("Failed to update product")
+        return flash_redirect(f"Update failed: {str(e)}", "danger", "admin.product.product_edit", product_id=product_id)
+
 
 @product_bp.route('/delete/<int:product_id>', methods=['POST'])
-@login_required
+@admin_required
 def product_delete(product_id):
+    """删除产品（同时清理所有关联图片）"""
     product = Product.query.get_or_404(product_id)
     name = product.name
     product_code = product.product_code
 
-    # 删除所有关联图片
-    delete_file(product.image)
-    if product.photos:
-        for photo in product.photos.split(','):
-            delete_file(photo)
-
-    db.session.delete(product)
     try:
+        # 清理主图
+        if product.image:
+            delete_admin_file(product.image, subdir='products')
+
+        # 清理多图
+        if product.photos:
+            for photo in product.photos.split(','):
+                delete_admin_file(photo.strip(), subdir='products')
+
+        db.session.delete(product)
         db.session.commit()
-        flash(f'产品 "{name}"（编号：{product_code}）已彻底删除', 'success')
+
+        current_app.logger.info(f"Product deleted: {name} (code: {product_code}) by {current_user.username}")
+        return flash_redirect(
+            f"Product '{name}' (Code: {product_code}) has been permanently deleted",
+            "success",
+            "admin.product.product_list"
+        )
+
     except Exception as e:
         db.session.rollback()
-        flash(f'删除失败：{str(e)}', 'danger')
+        current_app.logger.exception("Failed to delete product")
+        return flash_redirect(f"Delete failed: {str(e)}", "danger", "admin.product.product_list")
 
-    return redirect(url_for('admin.product.product_list'))
+
+# 保留原有辅助函数（可考虑逐步迁移到 admin_utils.py）
+def generate_product_code():
+    """Generate unique product code: pc + 9 random digits"""
+    import random
+    import string
+    while True:
+        code = 'pc' + ''.join(random.choices(string.digits, k=9))
+        if not Product.query.filter_by(product_code=code).first():
+            return code

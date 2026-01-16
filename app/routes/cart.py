@@ -1,126 +1,141 @@
 # app/routes/cart.py
-# 购物车询价路由 - 极薄路由层（2026-01-15 最终强化版）
-# 职责：仅负责接收请求、基本校验、调用服务层、返回标准 JSON
-# 所有业务逻辑（邮件发送、冷却、格式化等）均已移至 inquiry_service.py
+# Shopping Cart Inquiry Routes - Ultra-thin Route Layer (Final Enhanced Version 2026-01-16)
+# Responsibilities: Only handle request reception, basic validation, call service layer, return standard JSON
+# All business logic (email sending, cooldown, formatting, etc.) has been moved to inquiry_service.py
 
-from flask import Blueprint, request, jsonify, current_app, render_template
+from flask import Blueprint, request, jsonify, render_template, current_app, session
+from flask_login import current_user
+from app.services.cart_service import CartService
 from app.services.inquiry_service import InquiryService
+from app.models import Settings
 
 cart_bp = Blueprint('cart', __name__, url_prefix='/cart')
+
 
 @cart_bp.route('/send-inquiry', methods=['POST'])
 def send_inquiry():
     """
-    处理在线购物车询价请求（薄路由层）
+    Handle shopping cart inquiry request (supports both session-based and manual submission modes)
     
-    预期请求格式（JSON）：
-    {
-        "items": [
-            {"product_code": "pc123456789", "name": "Deluxe King Bed", "quantity": 2},
-            ...
-        ],
-        "customer_info": {
-            "name": "张先生",
-            "email": "zhang@example.com",
-            "phone": "+8613812345678",
-            "company": "XX酒店设计公司",      // 可选
-            "message": "需要尽快报价，项目位于上海"  // 可选
-        }
-    }
-    
-    返回格式：
-    成功： { "success": true, "message": "..." }
-    失败： { "success": false, "message": "具体原因" }
+    Priority:
+    1. For authenticated users with session cart → Force use session data (more secure)
+    2. Otherwise use items submitted from frontend (supports offline/anonymous inquiries)
     """
     try:
-        # 强制解析 JSON，兼容 Content-Type 缺失或异常情况
-        data = request.get_json(force=True)
+        data = request.get_json(force=True) or {}
+        
+        # 1. Determine which items to use
+        use_session_cart = current_user.is_authenticated and CartService.get_cart()
+        
+        if use_session_cart:
+            # Authenticated users prioritize session cart (prevents frontend tampering)
+            items = CartService.get_cart()
+            current_app.logger.info(f"Using session cart to send inquiry, user: {current_user.username}")
+        else:
+            # Anonymous or offline mode, use frontend submitted data
+            items = data.get('items', [])
+            if not items:
+                return jsonify({
+                    'success': False,
+                    'message': 'No products available for inquiry (items is empty)'
+                }), 400
 
-        if not data:
+        # 2. Basic validation of items structure
+        if not isinstance(items, list) or len(items) == 0:
             return jsonify({
                 'success': False,
-                'message': '请求体中未包含有效的 JSON 数据'
+                'message': 'Inquiry list cannot be empty'
             }), 400
 
-        # 1. 校验 items
-        items = data.get('items')
-        if not items or not isinstance(items, list) or len(items) == 0:
+        # 3. Get customer information (must be provided by frontend)
+        customer_info = data.get('customer_info', {})
+        if not isinstance(customer_info, dict):
             return jsonify({
                 'success': False,
-                'message': 'items 字段必须是非空数组'
+                'message': 'customer_info must be an object'
             }), 400
 
-        # 2. 校验 customer_info
-        customer_info = data.get('customer_info')
-        if not customer_info or not isinstance(customer_info, dict):
-            return jsonify({
-                'success': False,
-                'message': 'customer_info 必须是一个对象'
-            }), 400
-
-        # 最基本必填字段校验（更细致的校验放在 service 层）
-        required_fields = ['name', 'email']
-        missing = [f for f in required_fields if not customer_info.get(f)]
+        required = ['name', 'email']
+        missing = [f for f in required if not customer_info.get(f)]
         if missing:
             return jsonify({
                 'success': False,
-                'message': f"customer_info 缺少必填字段：{', '.join(missing)}"
+                'message': f'Please fill in required fields: {", ".join(missing)}'
             }), 400
 
-        # 3. 调用服务层执行核心逻辑（邮件发送、冷却检查等）
+        # Set default values for optional fields
+        customer_info.setdefault('phone', '')
+        customer_info.setdefault('company', '')
+        customer_info.setdefault('message', '')
+
+        # 4. Call core service layer
         success, message = InquiryService.send_inquiry(
             items=items,
-            customer_info=customer_info
+            customer_info=customer_info,
+            from_session=use_session_cart  # Pass info to service layer for logging distinction
         )
 
         if success:
+            # Optional: Clear session cart after successful submission (depending on business needs)
+            # CartService.clear_cart()
             return jsonify({
                 'success': True,
-                'message': message or '询价已成功发送，我们将尽快与您联系！'
+                'message': message or 'Your inquiry has been successfully sent. We will reply within 24 hours!'
             })
 
         else:
-            # 根据消息内容智能判断状态码
-            if any(word in message.lower() for word in ['wait', 'cooldown', 'please wait', '冷却', '请稍后']):
-                status_code = 429
-            else:
-                status_code = 400 if 'invalid' in message.lower() or '缺少' in message else 500
-
-            current_app.logger.warning(f"询价失败: {message}")
+            status_code = 429 if 'cooldown' in message.lower() or 'wait' in message.lower() else 400
             return jsonify({
                 'success': False,
                 'message': message
             }), status_code
 
-    except ValueError as ve:
-        # JSON 解析失败
-        current_app.logger.warning(f"JSON 解析失败: {str(ve)}")
+    except ValueError:
         return jsonify({
             'success': False,
-            'message': '请求的 JSON 格式无效，请检查数据结构'
+            'message': 'Invalid request format, please check JSON data'
         }), 400
 
     except Exception as e:
-        current_app.logger.exception("处理询价请求时发生意外错误")
+        current_app.logger.exception("Unexpected error occurred in inquiry route")
         return jsonify({
             'success': False,
-            'message': '服务器内部错误，请稍后重试或联系管理员'
+            'message': 'System is busy, please try again later or contact support'
         }), 500
 
 
-# 在线询价车页面（GET）
 @cart_bp.route('/onlinecart')
 def online_cart():
-    """顯示在线询价车页面"""
-    from app.models import Settings
-    settings = Settings.query.first() or Settings()  # 防止 None
-    return render_template('cart/onlinecart.html', settings=settings)
+    """Display online inquiry cart page (shows content from session cart)"""
+    settings = Settings.query.first() or Settings()
+    cart_items = CartService.get_cart() if current_user.is_authenticated else []
+    
+    cart_summary = CartService.get_cart_summary()
+    
+    return render_template(
+        'cart/onlinecart.html',
+        settings=settings,
+        cart_items=cart_items,
+        cart_summary=cart_summary,
+        is_authenticated=current_user.is_authenticated
+    )
 
 
-# 离线选货清单页面（GET）
 @cart_bp.route('/offlinecart')
 def offline_cart():
-    """显示离线选货清单页面"""
-    return render_template('cart/offlinecart.html')
+    """Display offline product selection list page (for catalog/print mode)"""
+    settings = Settings.query.first() or Settings()
+    
+    return render_template(
+        'cart/offlinecart.html',
+        settings=settings,
+        # Optional: Add print optimization parameter in future
+        print_mode=request.args.get('print') == '1'
+    )
 
 
+# Optional: API endpoint - Get current cart summary (commonly used by frontend AJAX)
+@cart_bp.route('/summary', methods=['GET'])
+def cart_summary():
+    summary = CartService.get_cart_summary()
+    return jsonify(summary)

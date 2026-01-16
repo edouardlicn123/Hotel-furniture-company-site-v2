@@ -63,7 +63,7 @@ DEFAULT_CONFIG = {
     ],
     "output": {
         "default_dir": "code2ai",
-        "max_file_size_kb": 1000
+        "max_file_size_kb": 10240   # 修改為 10MB (10240KB)
     }
 }
 
@@ -162,6 +162,7 @@ def main() -> None:
 
     config = load_config(root)
 
+    # 允许命令行参数覆盖最大文件大小（单位：字节）
     if args.max_size is not None:
         config.setdefault("output", {})["max_file_size_kb"] = args.max_size // 1024
 
@@ -174,7 +175,8 @@ def main() -> None:
     print(f"输出文件：{output_path}\n")
 
     skipped = 0
-    max_size = (config.get("output", {}).get("max_file_size_kb", 1000)) * 1024
+    # 使用配置中的值，fallback 到 10MB (10240KB)
+    max_size = (config.get("output", {}).get("max_file_size_kb", 10240)) * 1024
 
     # 先收集文件信息，用于生成清单
     file_info_list = []
@@ -208,9 +210,9 @@ def main() -> None:
 """
         f.write(header)
 
-        # 写入文件清单（关键修复：使用 str(rel_path)）
+        # 写入文件清单
         for i, (rel_path, size) in enumerate(file_info_list, 1):
-            rel_path_str = str(rel_path)  # 将 Path 转换为字符串
+            rel_path_str = str(rel_path)
             f.write(f"{i:2d}. {rel_path_str:<60} ({size:,} 字节)\n")
 
         f.write(f"\n共 {len(file_info_list)} 个文件（已跳过 {skipped} 个超大/异常文件）\n\n")
