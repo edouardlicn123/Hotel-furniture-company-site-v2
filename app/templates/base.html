@@ -14,7 +14,17 @@
         {% include 'partials/extra_styles.html' %}
 
         {# 2. 项目核心样式 + 动态主题（从 settings.theme 加载） #}
-        {% include 'partials/style.html' %}
+        {# 關鍵改動：全部加上 ?v={{ current_timestamp }} 防瀏覽器快取 #}
+        <link rel="stylesheet" 
+              href="{{ url_for('static', filename='css/base.css') }}?v={{ current_timestamp }}">
+        
+        <link rel="stylesheet" 
+              href="{{ url_for('static', filename='css/custom.css') }}?v={{ current_timestamp }}">
+        
+        {# 動態主題 CSS - 這行是最關鍵的防快取點 #}
+        <link rel="stylesheet" 
+              href="{{ url_for('static', filename='css/themes/' ~ (settings.theme or 'default') ~ '.css') }}?v={{ current_timestamp }}" 
+              id="theme-link">
     {% endblock %}
     <!-- ========================================================= -->
 
