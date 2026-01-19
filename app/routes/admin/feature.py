@@ -38,7 +38,7 @@ def feature_list(page=1):
         order_by=FeatureSeries.created_at.desc()
     )
     return render_template(
-        'admin/feature_list.html',
+        'admin/series_list.html',
         series_list=pagination.items,
         pagination=pagination
     )
@@ -49,7 +49,7 @@ def feature_list(page=1):
 def feature_add():
     """新增专题系列"""
     if request.method == 'GET':
-        return render_template('admin/feature_form.html', series=None)
+        return render_template('admin/series_form.html', series=None)
 
     try:
         name = request.form.get('name', '').strip()
@@ -122,7 +122,7 @@ def feature_edit(series_id):
     series = FeatureSeries.query.get_or_404(series_id)
 
     if request.method == 'GET':
-        return render_template('admin/feature_form.html', series=series)
+        return render_template('admin/series_form.html', series=series)
 
     try:
         name = request.form.get('name', '').strip()

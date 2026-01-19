@@ -33,8 +33,8 @@ PIP_INDEX="https://pypi.tuna.tsinghua.edu.cn/simple"
 # 环境文件
 ENV_FILE=".env"
 
-# debug 模式开关（默认关闭，避免返回 HTML 错误页导致前端 JSON.parse 失败）
-FLASK_DEBUG="False"  # 改成 "True" 开启调试模式
+# debug 模式开关（强烈建议开发时改为 True）
+FLASK_DEBUG="True"  # 改成 True 後第一次連接失敗的機率會大幅降低
 
 echo
 echo "[信息] 检查 Python3 是否已安装..."
@@ -97,12 +97,10 @@ echo "[信息] 虚拟环境已激活（$(python --version)）"
 echo
 echo "[步骤 3/7] 检查并安装项目依赖..."
 
-# 核心依赖检查（以 flask 为例）
 if python -c "import flask" 2>/dev/null; then
     echo "[信息] Flask 已安装，检查 requirements.txt 是否变化..."
     
     if [ -f "requirements.txt" ]; then
-        # 用 md5 简单判断是否变化（可选，更精准）
         CURRENT_MD5=$(md5sum requirements.txt 2>/dev/null | cut -d' ' -f1)
         LAST_MD5=$(cat .requirements.md5 2>/dev/null || echo "")
         
@@ -113,7 +111,7 @@ if python -c "import flask" 2>/dev/null; then
             pip install --upgrade pip -i "$PIP_INDEX" --quiet
             pip install -r requirements.txt -i "$PIP_INDEX"
             if [ $? -eq 0 ]; then
-                md5sum requirements.txt > .requirements.md5  # 记录本次 md5
+                md5sum requirements.txt > .requirements.md5
                 echo -e "[${GREEN}成功${NC}] 依赖安装完成。"
             else
                 echo -e "${YELLOW}警告: 部分依赖安装失败，请手动检查。${NC}"
@@ -162,34 +160,65 @@ else
 fi
 
 # ===============================================
-# 步骤5：启动 Flask
+# 步骤5：启动 Flask（關鍵修改在此）
 # ===============================================
 echo
 echo -e "[步骤 5/7] 启动 Flask 项目..."
 echo -e "访问地址：${GREEN}http://127.0.0.1:5000${NC}"
-echo -e "Debug 模式：${YELLOW}$FLASK_DEBUG${NC}（建议生产环境关闭）"
+echo -e "Debug 模式：${YELLOW}$FLASK_DEBUG${NC}"
 echo "按 Ctrl+C 可停止服务器。"
 echo
 
-# 尝试自动打开浏览器
+# 先在背景啟動 Flask
+echo -e "${YELLOW}正在启动 Flask 服务器（后台运行）...${NC}"
+python app.py > flask.log 2>&1 &
+
+# 記錄進程 ID
+FLASK_PID=$!
+
+# 等待伺服器真正可以回應（最多等 15 秒）
+echo -e "等待服务器就绪（最多 15 秒）..."
+for i in {1..30}; do
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5000 2>/dev/null)
+    if [[ "$HTTP_CODE" =~ ^(200|30[0-9])$ ]]; then
+        echo -e "${GREEN}服务器已就绪！（HTTP $HTTP_CODE）${NC}"
+        break
+    fi
+    printf "."
+    sleep 0.5
+done
+echo ""  # 換行
+
+# 檢查 Flask 是否還在運行
+if ! ps -p $FLASK_PID > /dev/null; then
+    echo -e "${RED}警告：Flask 似乎启动失败，请查看 flask.log 获取错误信息${NC}"
+    cat flask.log | tail -n 20
+    deactivate
+    exit 1
+fi
+
+# 伺服器就緒後再開瀏覽器
+echo -e "${GREEN}尝试自动打开浏览器...${NC}"
 if command -v xdg-open >/dev/null 2>&1; then
     nohup xdg-open http://127.0.0.1:5000 >/dev/null 2>&1 &
 elif command -v open >/dev/null 2>&1; then
-    open http://127.0.0.1:5000
+    open http://127.0.0.1:5000 &
 elif command -v start >/dev/null 2>&1; then
-    start "" http://127.0.0.1:5000
+    start "" http://127.0.0.1:5000 &
 else
-    echo "[信息] 未找到浏览器打开命令，请手动访问 http://127.0.0.1:5000"
+    echo "[信息] 未找到浏览器自动打开命令，请手动访问 http://127.0.0.1:5000"
 fi
 
-# 正式启动
-echo -e "[${GREEN}启动中...${NC}]"
-FLASK_DEBUG=$FLASK_DEBUG python app.py
+# 把 Flask 进程拉回前台，讓使用者可以 Ctrl+C 正常關閉
+echo -e "${GREEN}服务器运行中...${NC}（在此窗口按 Ctrl+C 停止）"
+wait $FLASK_PID
 
 # 捕获退出状态
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
     echo -e "${RED}错误: Flask 运行异常，退出代码：$EXIT_CODE${NC}"
+    echo "最后 20 行日志："
+    tail -n 20 flask.log
 else
     echo -e "[${GREEN}信息${NC}] Flask 项目已正常停止。"
 fi
