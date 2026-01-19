@@ -1,13 +1,11 @@
 # app/routes/admin/site_info.py
 # 后台网站设置管理 - 完整优化版（整合 admin_utils.py 通用工具）
-# 更新日期：2026-01-16
+# 更新日期：2026-01-19
 # 优化点：
-# - 使用 admin_utils.py 作为独立工具模块（彻底避免循环导入）
-# - 顶层导入 admin_required 和 flash_redirect（安全、无风险）
-# - Logo 处理逻辑保持原有方式（临时文件 + 尺寸校验 + 固定文件名）
+# - Logo 上传改用「先读内存 → 再写磁盘」方式，彻底解决 Windows [WinError 32] 文件占用问题
+# - 使用 BytesIO + shutil.copyfileobj 确保上传文件流及时关闭
+# - 其他逻辑保持不变，异常处理更清晰
 # - 所有用户提示为英文，日志记录完善
-# - 异常处理健壮（rollback + 详细日志）
-# - 主题列表读取健壮
 
 from flask import Blueprint, render_template, request, current_app
 from flask_login import current_user
@@ -15,6 +13,8 @@ from app.models import Settings
 from app import db
 import os
 from PIL import Image
+from io import BytesIO
+import shutil
 from app.admin_utils import admin_required, flash_redirect
 
 site_info_bp = Blueprint('site_info', __name__, url_prefix='/settings')
@@ -90,36 +90,58 @@ def settings():
             settings.seo_contact_title = request.form.get('seo_contact_title', '')
             settings.seo_contact_description = request.form.get('seo_contact_description', '')
 
-            # Logo upload handling
+            # Logo upload handling - 使用内存缓冲方式（解决 Windows 文件占用问题）
             logo_file = request.files.get('logo')
             if logo_file and logo_file.filename:
                 upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'logo')
                 os.makedirs(upload_folder, exist_ok=True)
 
+                # 生成最终文件名（固定为 company_logo，自动带扩展名）
                 ext = logo_file.filename.rsplit('.', 1)[-1].lower() if '.' in logo_file.filename else 'png'
-                temp_path = os.path.join(upload_folder, f'temp_company_logo.{ext}')
-                logo_file.save(temp_path)
+                final_filename = f'company_logo.{ext}'
+                final_path = os.path.join(upload_folder, final_filename)
 
                 try:
-                    with Image.open(temp_path) as img:
+                    # 先把上传文件完全读到内存
+                    file_content = BytesIO()
+                    shutil.copyfileobj(logo_file.stream, file_content)
+                    file_content.seek(0)  # 重置指针到开头
+
+                    # 关闭原始上传流（非常重要！释放句柄）
+                    logo_file.stream.close()
+
+                    # 使用 PIL 检查尺寸
+                    with Image.open(file_content) as img:
                         if img.width > 600 or img.height > 300:
-                            os.remove(temp_path)
                             return flash_redirect(
                                 "Logo dimensions exceed 600×300, please upload a smaller image",
                                 "danger",
                                 "admin.site_info.settings"
                             )
 
-                        final_path = os.path.join(upload_folder, 'company_logo')
+                        # 重置指针，再次从内存写入磁盘
+                        file_content.seek(0)
+
+                        # 如果旧文件存在，先尝试删除（Windows 上更安全）
                         if os.path.exists(final_path):
-                            os.remove(final_path)
-                        os.rename(temp_path, final_path)
-                        settings.logo = 'company_logo'
-                        current_app.logger.info(f"Logo updated successfully by {current_user.username}")
+                            try:
+                                os.remove(final_path)
+                            except PermissionError:
+                                current_app.logger.warning("Old logo file locked, will overwrite directly")
+
+                        # 从内存写入最终文件
+                        with open(final_path, 'wb') as f:
+                            shutil.copyfileobj(file_content, f)
+
+                        # 保存到数据库（只存文件名，不带路径）
+                        settings.logo = final_filename
+                        current_app.logger.info(f"Logo updated successfully: {final_filename} by {current_user.username}")
+
+                    # 清理内存缓冲
+                    file_content.close()
+
                 except Exception as e:
-                    if os.path.exists(temp_path):
-                        os.remove(temp_path)
-                    current_app.logger.warning(f"Logo processing failed: {e}")
+                    current_app.logger.warning(f"Logo processing failed: {str(e)}")
                     return flash_redirect(
                         f"Image processing failed: {str(e)}",
                         "danger",
