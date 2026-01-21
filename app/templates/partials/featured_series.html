@@ -1,4 +1,7 @@
-{# app/templates/partials/featured_series.html - 首页专题系列展示区（优化版，已移除硬编码路径） #}
+{# app/templates/partials/featured_series.html - 首页专题系列展示区（优化版） #}
+{# 更新：标题下的描述改为显示 series.description 字段内容 #}
+{# 如果 description 为空，则显示默认提示 #}
+{# 图片使用 series.photos 的第一张作为主图 #}
 
 <section class="container featured-section my-5">
     <h2 class="section-title text-center mb-5">Featured Series</h2>
@@ -8,7 +11,7 @@
             {% for series in featured_series %}
             <a href="{{ url_for('series.detail', slug=series.slug) }}" class="text-decoration-none">
                 <div class="product-card d-flex flex-column h-100">
-                    <!-- 图片区域 -->
+                    <!-- 图片区域：使用 photos 的第一张图片作为主图 -->
                     <div class="product-card-img-wrapper">
                         {% set photo_list = series.photos.split(',') if series.photos else [] %}
                         {% set first_photo = photo_list[0].strip() if photo_list else None %}
@@ -30,10 +33,14 @@
                     <div class="product-card-body mt-auto text-center">
                         <h3 class="product-card-title mb-2">{{ series.name }}</h3>
                         <p class="product-card-brand mb-0 text-muted">
-                            {% if series.applicable_space %}
-                                {{ series.applicable_space.replace(',', ', ') }}
+                            {# ==================================================== #}
+                            {# 描述逻辑：优先显示 series.description 字段内容 #}
+                            {# 如果 description 为空，则显示默认提示 #}
+                            {# ==================================================== #}
+                            {% if series.description and series.description.strip() %}
+                                {{ series.description | truncate(80) }}
                             {% else %}
-                                Luxury Hotel Collection
+                                Discover our premium collection
                             {% endif %}
                         </p>
                     </div>
