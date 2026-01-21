@@ -1,14 +1,13 @@
 # init_schema.py
-# 完整数据库初始化脚本（2026-01-21 最终版 - 只使用本地图片）
+# 完整数据库初始化脚本（2026-01-21 最终更新版 - 只使用本地图片）
 # 更新内容：
-# - 彻底移除 GitHub 相关逻辑
-# - 图片文件名使用 UUID 风格（兼容本地 ImageService 规则）
-# - 预置系列增加多张示例图片
-# - 产品与系列关联使用 slug 匹配
-# - 增加更多调试打印
+# - 删除产品的 image 字段（已废弃，所有图片统一使用 photos 字段）
+# - 删除原有默认产品和系列数据
+# - 插入新的默认系列（Basic1）和 5 个产品（使用 photos 字段，第一张作为主图）
+# - 图片文件名已由后台上传生成，保持原样
+# - 增加调试打印，便于检查
 
 import os
-import uuid
 from datetime import datetime
 from app import create_app, db
 from app.models import (
@@ -79,7 +78,7 @@ with app.app_context():
         db.session.add(default_settings)
         print("默认网站设置创建成功（包含英文地址 & 社交联系方式）")
 
-    # 4. 默认分类
+    # 4. 默认分类（保持原有分类列表）
     if Category.query.count() == 0:
         categories_list = [
             "Beds", "Nightstands/Bedside Tables", "Sofas and Armchairs",
@@ -96,112 +95,116 @@ with app.app_context():
             db.session.add(Category(name=name))
         print(f"已创建 {len(categories_list)} 个默认分类")
 
-    # 5. 预置产品数据（图片文件名使用 UUID 风格，明确为本地路径）
-    if Product.query.count() == 0:
-        def fake_uuid(prefix=''):
-            """生成模拟的本地图片文件名（兼容本地上传规则）"""
-            return f"{prefix}{uuid.uuid4().hex[:8]}.jpg"
+    # 5. 预置新的专题系列（只插入 Basic1）
+    if FeatureSeries.query.count() == 0:
+        series_basic1 = FeatureSeries(
+            id=2,  # 保持你指定的 ID
+            name='Basic1',
+            slug='basic1',
+            description='basic for studio',
+            applicable_space='',
+            photos='series_basic1_6f61a4ba4e79662d.png',
+            seo_title='',
+            seo_description='',
+            seo_keywords='',
+            created_at=datetime.fromisoformat('2026-01-21 08:14:12.355711')
+        )
+        db.session.add(series_basic1)
+        print("已创建专题系列：Basic1")
 
+    # 6. 预置新的产品数据（5 个产品，使用 photos 字段，无 image 字段）
+    if Product.query.count() == 0:
         products_data = [
             {
-                "product_code": "pc897421976",
-                "name": "Deluxe King Bed",
-                "description": "Luxury king-size bed with premium upholstery and solid wood frame",
-                "image": fake_uuid("bed_main_"),
-                "photos": f"{fake_uuid('bed_')},{fake_uuid('bed_')},{fake_uuid('bed_')}",
-                "length": 2200, "width": 2000, "height": 1200, "seat_height": None,
-                "base_material": "Solid Wood", "surface_material": "Velvet",
-                "featured_series": "nordic-minimalism",
-                "applicable_space": "Guest Room,Suite",
-                "category_name": "Beds"
+                "id": 1,
+                "product_code": "pc362187539",
+                "name": "Bed",
+                "description": "Bed for room",
+                "photos": "pc362187539_0e94cd6bb83bd214.png",
+                "featured_series": "basic1",
+                "applicable_space": "room,studio",
+                "category_id": 1,
+                "created_at": datetime.fromisoformat('2026-01-21 08:15:36.208459')
             },
             {
-                "product_code": "pc284539245",
-                "name": "Modern Sofa Set",
-                "description": "Comfortable 3-seater sofa with high-density foam",
-                "image": fake_uuid("sofa_main_"),
-                "photos": f"{fake_uuid('sofa_')},{fake_uuid('sofa_')}",
-                "length": 2400, "width": 950, "height": 850, "seat_height": 450,
-                "base_material": "Fabric", "surface_material": "Linen",
-                "featured_series": "nordic-minimalism",
-                "applicable_space": "Lobby,Lounge",
-                "category_name": "Sofas and Armchairs"
+                "id": 2,
+                "product_code": "pc037754335",
+                "name": "Bed",
+                "description": "Bed for room",
+                "photos": "pc037754335_4590901c54c4a37c.png",
+                "featured_series": "basic2",
+                "applicable_space": "room,studio",
+                "category_id": 1,
+                "created_at": datetime.fromisoformat('2026-01-21 08:16:48.999012')
             },
             {
-                "product_code": "pc567890123",
-                "name": "Elegant Nightstand",
-                "description": "Minimalist bedside table with marble top",
-                "image": fake_uuid("nightstand_main_"),
-                "photos": f"{fake_uuid('night_')},{fake_uuid('night_')}",
-                "length": 600, "width": 450, "height": 550, "seat_height": None,
-                "base_material": "Solid Wood", "surface_material": "Marble",
-                "featured_series": "nordic-minimalism",
-                "applicable_space": "Guest Room,Suite",
-                "category_name": "Nightstands/Bedside Tables"
+                "id": 3,
+                "product_code": "pc360929806",
+                "name": "Nightstand",
+                "description": "Simple nightstand",
+                "photos": "pc360929806_b3292d8c3433e0a0.png",
+                "length": 550,
+                "width": 400,
+                "height": 600,
+                "base_material": "wood",
+                "featured_series": "basic1",
+                "applicable_space": "room,studio",
+                "category_id": 2,
+                "created_at": datetime.fromisoformat('2026-01-21 08:20:21.653064')
             },
             {
-                "product_code": "pc123456789",
-                "name": "Luxury Wardrobe",
-                "description": "Spacious wardrobe with sliding doors and LED lighting",
-                "image": fake_uuid("wardrobe_main_"),
-                "photos": f"{fake_uuid('wardrobe_')},{fake_uuid('wardrobe_')},{fake_uuid('wardrobe_')}",
-                "length": 2400, "width": 650, "height": 2400, "seat_height": None,
-                "base_material": "MDF", "surface_material": "Wood Veneer",
-                "featured_series": "nordic-minimalism",
-                "applicable_space": "Guest Room,Suite",
-                "category_name": "Wardrobes/Closets/Armoires"
+                "id": 4,
+                "product_code": "pc085902095",
+                "name": "Luggage rack",
+                "description": "Luggage rack,suggest for simple hotel use.",
+                "photos": "pc085902095_5dafa7e9730935f3.png",
+                "length": 1200,
+                "width": 400,
+                "height": 450,
+                "base_material": "metal,sponge",
+                "surface_material": "cloth",
+                "applicable_space": "room",
+                "category_id": 8,
+                "created_at": datetime.fromisoformat('2026-01-21 08:24:48.800293')
             },
             {
-                "product_code": "pc987654321",
-                "name": "Coffee Table Set",
-                "description": "Modern glass top coffee table with metal base",
-                "image": fake_uuid("coffee_main_"),
-                "photos": f"{fake_uuid('coffee_')},{fake_uuid('coffee_')}",
-                "length": 1200, "width": 700, "height": 450, "seat_height": None,
-                "base_material": "Stainless Steel", "surface_material": "Tempered Glass",
-                "featured_series": "nordic-minimalism",
-                "applicable_space": "Lobby,Lounge",
-                "category_name": "Coffee Tables/Tea Tables"
+                "id": 5,
+                "product_code": "pc719779063",
+                "name": "Coffee table",
+                "description": "Simple coffee table",
+                "photos": "pc719779063_3c73f5f12c3e9cd5.png",
+                "length": 800,
+                "width": 800,
+                "height": 450,
+                "base_material": "wood",
+                "featured_series": "basic1",
+                "applicable_space": "studio",
+                "category_id": 4,
+                "created_at": datetime.fromisoformat('2026-01-21 08:29:53.393556')
             }
         ]
 
         for data in products_data:
-            category = Category.query.filter_by(name=data["category_name"]).first()
-            if category:
-                product = Product(
-                    product_code=data["product_code"],
-                    name=data["name"],
-                    description=data.get("description"),
-                    image=data["image"],
-                    photos=data["photos"],
-                    length=data.get("length"),
-                    width=data.get("width"),
-                    height=data.get("height"),
-                    seat_height=data.get("seat_height"),
-                    base_material=data.get("base_material"),
-                    surface_material=data.get("surface_material"),
-                    featured_series=data.get("featured_series"),
-                    applicable_space=data.get("applicable_space"),
-                    category_id=category.id
-                )
-                db.session.add(product)
-        print("已注入 5 条预置产品数据（图片文件名使用本地 UUID 风格）")
-
-    # 6. 预置测试专题系列（多张图片 + SEO）
-    if FeatureSeries.query.count() == 0:
-        fake_series_uuid = lambda: f"series_{uuid.uuid4().hex[:8]}.jpg"
-        test_series = FeatureSeries(
-            name="Nordic Minimalism Collection",
-            slug="nordic-minimalism",
-            description="Clean lines, natural materials, and functional design for modern luxury hotels.",
-            applicable_space="Guest Room,Lobby,Suite",
-            photos=f"{fake_series_uuid()},{fake_series_uuid()},{fake_series_uuid()},{fake_series_uuid()}",
-            seo_title="Nordic Minimalism Hotel Furniture Series | {company_name}",
-            seo_description="Discover our Nordic Minimalism collection featuring clean Scandinavian design, natural wood tones, and timeless elegance.",
-            seo_keywords="nordic hotel furniture, minimalist hospitality, scandinavian design, luxury hotel furniture"
-        )
-        db.session.add(test_series)
-        print("已创建 1 个测试专题系列（slug: nordic-minimalism，4 张示例图片）")
+            product = Product(
+                id=data.get("id"),
+                product_code=data["product_code"],
+                name=data["name"],
+                description=data.get("description"),
+                # image 字段已删除，不再设置
+                photos=data["photos"],
+                length=data.get("length"),
+                width=data.get("width"),
+                height=data.get("height"),
+                seat_height=data.get("seat_height"),
+                base_material=data.get("base_material"),
+                surface_material=data.get("surface_material"),
+                featured_series=data.get("featured_series"),
+                applicable_space=data.get("applicable_space"),
+                category_id=data["category_id"],
+                created_at=data["created_at"]
+            )
+            db.session.add(product)
+        print("已注入 5 条新预置产品数据（使用 photos 字段，无 image 字段）")
 
     # 7. 默认 SMTP 配置
     if SmtpConfig.query.count() == 0:
@@ -221,9 +224,9 @@ with app.app_context():
 
     db.session.commit()
     print("\n" + "="*70)
-    print("数据库初始化完成！（所有图片路径已明确为本地 uploads/ 目录）")
+    print("数据库初始化完成！")
     print("管理员：admin / admin123")
-    print("预置数据：5 产品 + 1 专题系列 + 默认设置 + SMTP 配置")
-    print("图片文件名：使用 UUID 风格，模拟本地上传")
+    print("预置数据：5 产品 + 1 专题系列（Basic1） + 默认设置 + SMTP 配置")
+    print("图片文件名：使用后台上传生成的文件名")
     print("下一步：运行项目 → 登录后台 /admin → 检查产品/系列图片是否正常显示")
     print("="*70 + "\n")

@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}Products{% endblock %}
+
 {% block hero_section %}
     {% set hero_title = "Products" %}
     {% set hero_subtitle = "Explore our full range of premium hotel furniture." %}
@@ -33,10 +35,25 @@
                class="text-decoration-none product-card-link"
                aria-label="View details of {{ product.name }}">
                 <div class="product-card d-flex flex-column h-100">
-                    <!-- 图片区域 -->
+                    <!-- 图片区域：使用 photos 的第一个图片作为主图 -->
                     <div class="product-card-img-wrapper">
-                        {% if product.image %}
-                        <img src="{{ get_image_url('products', product.image) }}"
+                        {# ==================================================== #}
+                        {# 主图逻辑：使用 product.photos 的第一张图片作为卡片主图 #}
+                        {# 如果 photos 为空或第一张无效，则使用默认占位图 #}
+                        {# ==================================================== #}
+                        {% set product_main_image = '' %}
+                        {% if product.photos and product.photos.strip() %}
+                            {% set photos_list = product.photos.split(',') %}
+                            {% set first_photo = photos_list[0].strip() %}
+                            {# 过滤无效文件名（如 'None'、空字符串等） #}
+                            {% if first_photo and first_photo not in ['None', 'none', 'null', ''] %}
+                                {% set product_main_image = first_photo %}
+                            {% endif %}
+                        {% endif %}
+
+                        {# 显示图片 #}
+                        {% if product_main_image %}
+                        <img src="{{ get_image_url('products', product_main_image) }}"
                              class="product-card-img-complete"
                              alt="{{ product.name }} - Premium Hotel Furniture"
                              loading="lazy"
