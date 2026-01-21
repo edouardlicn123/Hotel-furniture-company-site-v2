@@ -1,0 +1,188 @@
+{% extends "admin/base.html" %}
+
+{% block title %}产品管理{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="h4 mb-0">产品管理</h3>
+            <a href="{{ url_for('admin.product.product_add') }}" class="btn btn-light btn-lg px-4">
+                <i class="bi bi-plus-lg me-2"></i>添加新产品
+            </a>
+        </div>
+
+        <div class="card-body p-5">
+            <!-- 這裡已經不需要再重複顯示閃現消息，因為 base.html 已處理 -->
+
+            {% if products %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="90">主图</th>
+                            <th width="140">产品编号</th>
+                            <th>产品名称</th>
+                            <th width="150">分类</th>
+                            <th width="180">精选系列</th>
+                            <!-- 已删除创建时间列 -->
+                            <th width="140">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>
+                                {# ==================================================== #}
+                                {# 主图显示逻辑：使用 product.photos 的第一张图片 #}
+                                {# 如果 photos 为空或第一张无效，则显示“无图”占位 #}
+                                {# ==================================================== #}
+                                {% set product_main_image = '' %}
+                                {% if product.photos and product.photos.strip() %}
+                                    {% set photos_list = product.photos.split(',') %}
+                                    {% set first_photo = photos_list[0].strip() %}
+                                    {# 过滤无效文件名（如 'None'、空字符串等） #}
+                                    {% if first_photo and first_photo not in ['None', 'none', 'null', ''] %}
+                                        {% set product_main_image = first_photo %}
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if product_main_image %}
+                                    <img src="{{ get_image_url('products', product_main_image) }}"
+                                         alt="{{ product.name }}"
+                                         class="rounded shadow-sm"
+                                         style="width: 70px; height: 70px; object-fit: cover;"
+                                         loading="lazy"
+                                         onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                                {% else %}
+                                    <div class="bg-secondary bg-opacity-10 rounded d-flex align-items-center justify-content-center"
+                                         style="width: 70px; height: 70px;">
+                                        <small class="text-muted">无图</small>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="font-monospace text-primary fw-bold">
+                                {{ product.product_code }}
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ product.name }}</div>
+                                {% if product.description %}
+                                    <small class="text-muted d-block text-truncate" style="max-width: 300px;">
+                                        {{ product.description[:80] }}{% if product.description|length > 80 %}...{% endif %}
+                                    </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {{ product.category.name if product.category else '未分类' }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ product.featured_series or '-' }}</small>
+                            </td>
+                            <!-- 已删除创建时间单元格 -->
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.product.product_edit', product_id=product.id) }}"
+                                       class="btn btn-outline-primary btn-sm" title="编辑">
+                                        <i class="bi bi-pencil-square"></i> 编辑
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal{{ product.id }}"
+                                            title="删除">
+                                        <i class="bi bi-trash"></i> 删除
+                                    </button>
+                                </div>
+
+                                <!-- 删除确认模态框 -->
+                                <div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-sm">
+                                        <div class="modal-content">
+                                            <div class="modal-header border-0">
+                                                <h5 class="modal-title text-danger">确认删除产品</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-center">
+                                                <p class="mb-2">确定要删除以下产品吗？</p>
+                                                <strong>{{ product.name }}</strong><br>
+                                                <small class="text-muted">编号：{{ product.product_code }}</small>
+                                                <p class="text-danger mt-3 small">
+                                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                                    此操作不可恢复，所有关联图片将被永久删除！
+                                                </p>
+                                            </div>
+                                            <div class="modal-footer border-0 justify-content-center">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                                                <form action="{{ url_for('admin.product.product_delete', product_id=product.id) }}"
+                                                      method="POST"
+                                                      style="display:inline;">
+                                                    <button type="submit" class="btn btn-danger btn-sm">确认删除</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页导航 -->
+            {% if pagination.pages > 1 %}
+            <nav aria-label="产品分页" class="mt-5">
+                <ul class="pagination pagination-lg justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.product.product_list', page=pagination.prev_num) }}" aria-label="上一页">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for p in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if p %}
+                            {% if p == pagination.page %}
+                            <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for('admin.product.product_list', page=p) }}">{{ p }}</a></li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.product.product_list', page=pagination.next_num) }}" aria-label="下一页">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-5">
+                    <i class="bi bi-box-seam text-muted" style="font-size: 6rem; opacity: 0.6;"></i>
+                </div>
+                <h4 class="text-muted mb-3">暂无产品</h4>
+                <p class="text-muted mb-4">当前没有任何产品记录，请点击右上角按钮添加您的第一个产品</p>
+                <a href="{{ url_for('admin.product.product_add') }}" class="btn btn-primary btn-lg px-5">
+                    <i class="bi bi-plus-lg me-2"></i>立即添加产品
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card-footer bg-light text-muted text-center py-3">
+            <small>共 {{ pagination.total }} 个产品 • 当前第 {{ pagination.page }} / {{ pagination.pages }} 页</small>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+    {% set hero_title = "Products" %}
+    {% set hero_subtitle = "Explore our full range of premium hotel furniture." %}
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container featured-section py-5">
+    <!-- 分类筛选 - 改为下拉菜单 -->
+    <div class="category-filter mb-5 text-center">
+        <div class="d-inline-block">
+            <select id="categorySelect" class="form-select form-select-lg w-auto mx-auto">
+                <option value="{{ url_for('products.list_products') }}" {% if not current_category_id %}selected{% endif %}>
+                    All Categories
+                </option>
+                {% for cat in categories %}
+                <option value="{{ url_for('products.list_products', category=cat.id) }}"
+                        {% if current_category_id == cat.id %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- 产品网格 -->
+    <div class="product-grid">
+        {% if products %}
+            {% for product in products %}
+            <a href="{{ url_for('products.product_detail', product_id=product.id) }}"
+               class="text-decoration-none product-card-link"
+               aria-label="View details of {{ product.name }}">
+                <div class="product-card d-flex flex-column h-100">
+                    <!-- 图片区域 -->
+                    <div class="product-card-img-wrapper">
+                        {% if product.image %}
+                        <img src="{{ get_image_url('products', product.image) }}"
+                             class="product-card-img-complete"
+                             alt="{{ product.name }} - Premium Hotel Furniture"
+                             loading="lazy"
+                             onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='img/placeholder.jpg') }}"
+                             class="product-card-img-complete"
+                             alt="No image available for {{ product.name }}"
+                             loading="lazy">
+                        {% endif %}
+                    </div>
+
+                    <!-- 文字信息区域 -->
+                    <div class="product-card-body mt-auto p-3">
+                        <h3 class="product-card-title mb-2">{{ product.name }}</h3>
+                        <p class="product-card-brand text-muted mb-0">
+                            {% if product.featured_series %}
+                                {{ product.featured_series }}
+                            {% elif product.category %}
+                                {{ product.category.name }}
+                            {% else %}
+                                Uncategorized
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5 my-5">
+                <i class="bi bi-box-seam display-1 text-muted mb-3 d-block"></i>
+                <h4 class="text-muted">No products found</h4>
+                <p class="text-muted">
+                    {% if current_category_id %}
+                        No products in this category yet.<br>
+                        <a href="{{ url_for('products.list_products') }}" class="text-primary">View all products</a>
+                    {% else %}
+                        Please check back later or contact us for more information.
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 分页控件 -->
+    {% if pagination and (pagination.has_prev or pagination.has_next) %}
+    <nav aria-label="Product pagination" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ pagination.prev_num }}{% if current_category_id %}&category={{ current_category_id }}{% endif %}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+            </li>
+
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ pagination.next_num }}{% if current_category_id %}&category={{ current_category_id }}{% endif %}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- 下拉菜单跳转逻辑 -->
+<script>
+document.getElementById('categorySelect').addEventListener('change', function() {
+    window.location.href = this.value;
+});
+</script>
+
+<!-- 保留原有 hover 样式 -->
+<style>
+    .product-card-link:hover .product-card {
+        transform: translateY(-8px);
+        transition: transform 0.3s ease;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+    }
+</style>
+{% endblock %}

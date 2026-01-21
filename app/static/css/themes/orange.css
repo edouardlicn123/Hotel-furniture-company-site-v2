@@ -1,0 +1,162 @@
+/* themes/orange-vibrant-light.css - 橙色活力风格主题（Hero背景调浅，明亮温暖版） */
+
+:root {
+    /* 主配色 - 活力橙为核心，更明亮轻快 */
+    --primary: #FF8000;              /* 主强调色：明亮鲜橙（比之前浅，活力更跳跃） */
+    --primary-dark: #FF6B00;          /* 稍深橙（按钮专用背景、hover） */
+    --primary-light: #FFEDD9;         /* 极浅橙粉（边框、细部） */
+    --accent: #FFA040;                /* 亮橙（辅助点缀） */
+    --accent2: #FFF5E8;               /* 浅橙白（次背景） */
+    --accent3: #FFD7B3;               /* 暖橙（页脚） */
+
+    /* 文字 - 高可读温暖感 */
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 全站温暖浅橙白调，更明亮不压抑 */
+    --bg-main: #FFFBF5;              /* 主背景：极浅暖橙白（更亮更轻快） */
+    --bg-secondary: #FFF5E8;         /* 次背景：浅橙白 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #FF8000;            /* 主菜单：明亮鲜橙实色 */
+    --footer-bg: #FF6B00;            /* 页脚：稍深橙大色块 */
+    --hero-overlay: linear-gradient(135deg, rgba(255, 128, 0, 0.75), rgba(255, 107, 0, 0.55)); /* 叠加层调浅，透亮感更强 */
+
+    /* 边框与分割 - 橙光轻柔 */
+    --border: #FFA040;
+    --divider: #FFE8D0;
+
+    /* 阴影 - 温暖橙光影（调柔和） */
+    --shadow: 0 12px 35px rgba(255, 128, 0, 0.10);
+    --shadow-md: 0 6px 18px rgba(255, 128, 0, 0.06);
+    --shadow-hover: 0 25px 55px rgba(255, 128, 0, 0.18);
+
+    /* 悬停与交互 - 橙高亮 */
+    --hover-bg: rgba(255, 255, 255, 0.4);
+    --hover-text: #FFFFFF;
+
+    /* 状态色 - 橙系协调 */
+    --success: #4CAF50;
+    --warning: #FFA040;
+    --error: #D32F2F;
+
+    /* 渐变 - 按钮专用橙渐变 */
+    --gradient-primary: linear-gradient(135deg, #FF8000, #FF6B00);
+    --gradient-navbar: linear-gradient(to right, #FF8000, #FFA540);
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #FFFBF5);
+}
+
+/* 主题特有强化 */
+body {
+    background: var(--bg-main) !important; /* 极浅暖橙白，更明亮舒适 */
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 5px solid #FF6B00;       /* 稍深橙底边，活力不沉重 */
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #FF6B00, #FF8000) !important;
+    box-shadow: var(--shadow-hover);
+}
+
+/* 主菜单文字 - 白字高对比 */
+.navbar-brand {
+    color: #FFFFFF !important;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #FFFFFF !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按钮：明亮橙渐变 */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #FF6B00, #E55A00) !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片 */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 28px;
+    border: none;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Hero 区 - 背景调浅，更明亮温暖 */
+.hero-section {
+    color: var(--text-inverse) !important;
+    background: #FF9500 !important; /* Hero主背景调为更浅的亮橙，阳光感更强，不压抑 */
+    position: relative;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important; /* 叠加层透明度降低，整体更透亮 */
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFFFFF !important;
+    text-shadow:
+        0 0 20px rgba(255, 128, 0, 0.7),
+        0 4px 12px rgba(0, 0, 0, 0.6);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* 页脚 */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #FF6B00, #E55A00);
+    color: #FFFFFF;
+    border-top: 5px solid #FFA040; /* 上边更亮橙条，温暖收尾 */
+}

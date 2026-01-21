@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+<section class="hero-section" style="background-image: url('{{ url_for('static', filename='uploads/products_hero.jpg') }}'); height: 22.5vh; min-height: 200px;">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1 class="display-5 fw-bold">Our Products</h1>
+        <p class="lead mb-0">Premium Hotel Furniture Collection</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="container featured-section">
+    <h2 class="section-title text-center">All Products</h2>
+    <div class="product-grid">
+        {% for product in products %}
+        <a href="{{ url_for('products.product_detail', product_id=product.id) }}" class="text-decoration-none">
+            <div class="product-card">
+                {% if product.image %}
+                <img src="{{ url_for('static', filename='uploads/' + product.image) }}" 
+                     class="product-card-img" 
+                     alt="{{ product.name }}">
+                {% else %}
+                <img src="https://via.placeholder.com/800x600?text=No+Image" 
+                     class="product-card-img" 
+                     alt="No Image">
+                {% endif %}
+                <div class="product-card-body">
+                    <h3 class="product-card-title">{{ product.name }}</h3>
+                    <p class="product-card-brand">
+                        {% if product.featured_series %}
+                            {{ product.featured_series }}
+                        {% else %}
+                            {{ product.category.name if product.category else 'Uncategorized' }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </a>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted">No products available yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

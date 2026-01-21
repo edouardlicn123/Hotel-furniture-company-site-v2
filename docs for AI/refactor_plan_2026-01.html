@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>项目后端重构计划 - Hotel Furniture Website (2026-01)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacOSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f8f9fa;
+        }
+        h1 {
+            color: #1a3c5e;
+            border-bottom: 3px solid #1a3c5e;
+            padding-bottom: 12px;
+            margin-bottom: 1.5em;
+            text-align: center;
+        }
+        h2 {
+            color: #2c5282;
+            margin-top: 2.5em;
+            border-left: 5px solid #4299e1;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #2b6cb0;
+            margin-top: 2em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.8em 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #2c5282;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f7fafc;
+        }
+        .priority-high   { background-color: #fed7d7; color: #9b2c2c; font-weight: bold; }
+        .priority-medium { background-color: #fefcbf; color: #744210; }
+        .priority-low    { background-color: #e6fffa; color: #0c4f4f; }
+        .phase {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+            margin: 2em 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-left: 5px solid #4299e1;
+        }
+        .phase h3 {
+            margin-top: 0;
+            color: #2b6cb0;
+        }
+        .note {
+            background: #ebf8ff;
+            border-left: 5px solid #4299e1;
+            padding: 16px 20px;
+            margin: 1.5em 0;
+            border-radius: 6px;
+        }
+        .emoji { font-size: 1.4em; margin-right: 8px; }
+    </style>
+</head>
+<body>
+
+<h1>项目后端 Python 代码重构计划<br><small>目标：降低耦合 • 提高可维护性 • 减少改动时的连锁反应</small></h1>
+
+<div class="phase">
+    <h3><span class="emoji">🔥</span> 阶段 1 - 基础架构瘦身与解耦（强烈推荐最先完成）</h3>
+    <p>预计耗时：3–8 天｜最高性价比阶段</p>
+
+    <ul>
+        <li>把 <code>app/__init__.py</code> 体积大幅缩小（目前最容易引发冲突的文件）</li>
+        <li>创建独立模块：
+            <ul>
+                <li><code>app/extensions.py</code> → 所有扩展实例（db/migrate/login/mail）</li>
+                <li><code>app/context_processors.py</code> → 所有全局模板变量注入</li>
+                <li><code>app/error_handlers.py</code> → 所有错误处理器</li>
+            </ul>
+        </li>
+        <li>建立 <code>app/services/</code> 层（最关键一步！）</li>
+    </ul>
+
+    <div class="note">
+        <strong>核心收益：</strong> 以后新增功能、修改上下文、调整错误页面基本不用再动工厂函数，大幅降低回归风险。
+    </div>
+</div>
+
+<div class="phase">
+    <h3><span class="emoji">🛠️</span> 阶段 2 - Admin 模块代码去重与抽象</h3>
+    <p>预计耗时：5–12 天</p>
+
+    <ul>
+        <li>抽取 Admin 通用 CRUD 基类 / Mixin（product 与 series 高度重复）</li>
+        <li>统一图片上传/删除/验证逻辑（建议放到 <code>services/image_service.py</code>）</li>
+        <li>考虑建立 <code>admin/base.py</code> 存放公共模板函数、装饰器、表单处理工具</li>
+    </ul>
+</div>
+
+<div class="phase">
+    <h3><span class="emoji">📬</span> 阶段 3 - 询价业务逻辑梳理与服务层落地</h3>
+    <p>预计耗时：4–10 天｜对业务价值影响最大</p>
+
+    <ul>
+        <li>新建 <code>services/inquiry_service.py</code>（核心询价流程编排）</li>
+        <li>新建 <code>services/cart_service.py</code>（购物车操作封装）</li>
+        <li>把 <code>mail.py</code> 升级为 <code>services/mail_service.py</code>（增加模板管理能力）</li>
+        <li>改造 <code>routes/contact.py</code> → 尽量只负责接收请求与调用 service</li>
+    </ul>
+
+    <div class="note">
+        <strong>强烈建议：</strong> 询价流程稳定之前，先把 service 层搭好，后续改任何转化逻辑都只动 service，不动路由。
+    </div>
+</div>
+
+<h2>当前文件重构优先级一览表</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>文件</th>
+            <th>耦合度</th>
+            <th>重构优先级</th>
+            <th>建议行动</th>
+            <th>预计收益</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>app/__init__.py</td>
+            <td>极高</td>
+            <td class="priority-high">★★★★★</td>
+            <td>立即拆分 extensions / context / error_handlers</td>
+            <td>最高</td>
+        </tr>
+        <tr>
+            <td>admin 各个路由文件</td>
+            <td>高</td>
+            <td class="priority-high">★★★★☆</td>
+            <td>抽取通用 CRUD 基类 + 图片服务</td>
+            <td>高</td>
+        </tr>
+        <tr>
+            <td>routes/contact.py + cart.py + mail.py</td>
+            <td>高</td>
+            <td class="priority-high">★★★★☆</td>
+            <td>建立 inquiry/cart/mail 三服务层</td>
+            <td>非常高（业务核心）</td>
+        </tr>
+        <tr>
+            <td>routes/main.py</td>
+            <td>中高</td>
+            <td class="priority-medium">★★★☆☆</td>
+            <td>拆分 seo / home / utils</td>
+            <td>中等</td>
+        </tr>
+        <tr>
+            <td>models.py</td>
+            <td>中</td>
+            <td class="priority-low">★★☆☆☆</td>
+            <td>暂时不动，后期模型多时再拆包</td>
+            <td>低～中</td>
+        </tr>
+        <tr>
+            <td>utils/*</td>
+            <td>低</td>
+            <td class="priority-low">★☆☆☆☆</td>
+            <td>可逐步迁移到 services 下</td>
+            <td>低</td>
+        </tr>
+    </tbody>
+</table>
+
+<div style="margin-top: 3em; text-align: center; color: #666; font-size: 0.95em;">
+    最后更新：2026年1月14日<br>
+    核心目标：让「小修改」真正变成「小修改」
+</div>
+
+</body>
+</html>

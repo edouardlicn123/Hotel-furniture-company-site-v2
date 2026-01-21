@@ -1,0 +1,168 @@
+/* themes/linkedin-professional.css - 领英（LinkedIn）专业蓝风格主题（干净现代版 + 标题醒目优化） */
+
+:root {
+    /* 主配色 - LinkedIn官方专业蓝为核心（2025最新主色#0A66C2） */
+    --primary: #0A66C2;               /* 主强调色：LinkedIn经典专业蓝（链接、强调） */
+    --primary-dark: #004182;           /* 深蓝（按钮专用背景、hover） */
+    --primary-light: #DCE6F1;          /* 极浅蓝灰（边框、细部） */
+    --accent: #0077B5;                 /* 经典蓝（辅助点缀） */
+    --accent2: #E9E5DF;                /* 浅灰蓝（次背景） */
+    --accent3: #313335;                /* 深灰（页脚文字） */
+
+    /* 文字 - 高可读专业感 */
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 全站干净白 + 轻微蓝灰调 */
+    --bg-main: #FFFFFF;               /* 主背景：纯白（LinkedIn经典干净界面） */
+    --bg-secondary: #F8FBFD;          /* 次背景：极浅蓝白 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #FFFFFF;             /* 主菜单：白色底（现代LinkedIn顶部导航） */
+    --footer-bg: #000000;             /* 页脚：黑色底（专业稳重） */
+    --hero-overlay: linear-gradient(135deg, rgba(10, 102, 194, 0.7), rgba(0, 65, 130, 0.5)); /* 蓝叠加活力 */
+
+    /* 边框与分割 - 蓝灰轻柔 */
+    --border: #0A66C2;
+    --divider: #CACCCE;
+
+    /* 阴影 - 现代扁平轻影 */
+    --shadow: 0 12px 35px rgba(10, 102, 194, 0.08);
+    --shadow-md: 0 6px 18px rgba(10, 102, 194, 0.05);
+    --shadow-hover: 0 25px 55px rgba(10, 102, 194, 0.12);
+
+    /* 悬停与交互 - 蓝高亮专业 */
+    --hover-bg: rgba(10, 102, 194, 0.1);
+    --hover-text: #0A66C2;
+
+    /* 状态色 - 品牌协调 */
+    --success: #44712E;                /* LinkedIn绿（成功/增长） */
+    --warning: #E7A33E;
+    --error: #B24020;
+
+    /* 渐变 - 按钮专用专业蓝渐变 */
+    --gradient-primary: linear-gradient(135deg, #0A66C2, #004182);
+    --gradient-navbar: linear-gradient(to right, #FFFFFF, #F8FBFD);
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #F8FBFD);
+}
+
+/* 主题特有强化 */
+body {
+    background: var(--bg-main) !important; /* 纯白底，干净专业如LinkedIn首页 */
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 1px solid #E0E0E0;       /* 浅灰底边，现代分隔 */
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #FFFFFF, #F0F5FA) !important;
+    box-shadow: var(--shadow-hover);
+    border-bottom-color: #0A66C2;
+}
+
+/* 关键优化：导航栏标题（.navbar-brand span）使用 LinkedIn 经典蓝 */
+.navbar-brand span {
+    color: #0A66C2 !important;          /* 强制使用 LinkedIn 蓝，确保在白色背景上清晰可见 */
+    font-weight: 800;
+    text-shadow: none;
+}
+
+/* 滚动后也保持标题颜色一致 */
+.navbar.scrolled .navbar-brand span {
+    color: #0A66C2 !important;
+}
+
+/* 主菜单文字 - 黑字 + 蓝品牌高光 */
+.nav-link {
+    color: #000000 !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #0A66C2 !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按钮：专业蓝渐变 */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #004182, #003366) !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片 */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 12px;                    /* LinkedIn更方正圆角 */
+    border: 1px solid #E0E0E0;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+    border-color: #0A66C2;
+}
+
+/* Hero 区 - 专业蓝叠加 */
+.hero-section {
+    color: var(--text-inverse) !important;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFFFFF !important;
+    text-shadow:
+        0 0 20px rgba(10, 102, 194, 0.7),
+        0 4px 12px rgba(0, 0, 0, 0.6);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* 页脚 */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #000000, #1A1A1A);
+    color: #FFFFFF;
+    border-top: 4px solid #0A66C2;  /* 上边蓝条，品牌收尾 */
+}

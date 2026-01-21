@@ -1,0 +1,52 @@
+{# app/templates/partials/hero_large.html - 最终优化版（2026-01-21） #}
+{# 修复：彻底使用 get_image_url() 处理背景图，确保走本地 static/uploads/hero/ 目录 #}
+{# 移除所有潜在的引号嵌套问题，背景图 URL 直接用 {{ }} 渲染 #}
+{# 支持防缓存（?v=时间戳）、公司名自动注入、画册模式隐藏按钮 #}
+
+{% set company = settings.company_name or 'Premium Hotel Furniture Manufacturer' %}
+{% set is_official = settings.mode == 'official' %}
+
+<section class="hero-section hero-large" id="page-hero"
+         style="background-image: url({{ hero_background if hero_background else get_image_url('hero', 'hero-default-large.jpg') }}?v={{ current_timestamp }});">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        {# 主标题：优先使用传入的 hero_title，否则根据模式自动生成（带公司名） #}
+        <h1 class="display-4 fw-bold">
+            {% if hero_title %}
+                {{ hero_title }}
+            {% else %}
+                {% if is_official %}
+                    Premium Hotel Furniture by {{ company }}
+                {% else %}
+                    Product Catalog - {{ company }}
+                {% endif %}
+            {% endif %}
+        </h1>
+
+        {# 副标题：优先使用传入的 hero_subtitle，否则提供模式友好的默认值 #}
+        <p class="lead">
+            {% if hero_subtitle %}
+                {{ hero_subtitle }}
+            {% else %}
+                {% if is_official %}
+                    Luxury Hospitality Furniture | Custom Solutions for 5-Star Hotels Worldwide
+                {% else %}
+                    Explore our complete collection of premium hotel beds, sofas, wardrobes & casegoods
+                {% endif %}
+            {% endif %}
+        </p>
+
+        {# 按钮区：仅当传入 hero_buttons 时才显示（画册模式不传入则完全隐藏） #}
+        {% if hero_buttons %}
+        <div class="mt-4">
+            {{ hero_buttons | safe }}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{# 可选：注入公司名到 JS 全局变量，供其他前端动态使用 #}
+<script>
+    window.APP_CONFIG = window.APP_CONFIG || {};
+    window.APP_CONFIG.companyName = "{{ company | e }}";
+</script>

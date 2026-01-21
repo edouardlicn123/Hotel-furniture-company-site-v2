@@ -1,0 +1,16 @@
+<!-- partials/admin_style.html - 后台专用 CSS 加载（固定风格，不受前端主题影响） -->
+
+<!-- Bootstrap 核心（后台所有页面必须） -->
+<link href="https://cdn.staticfile.org/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Font Awesome（图标，可选） -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- 基础结构（复用前端 base.css，但后台可以稍作调整） -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v={{ range(1,1000000)|random }}">
+
+<!-- 后台专用主题（相当于 themes/default.css 的后台版） -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/themes/admin.css') }}?v={{ range(1,1000000)|random }}">
+
+<!-- 如果需要额外后台专用样式，可在此添加 -->
+{% block extra_admin_styles %}{% endblock %}

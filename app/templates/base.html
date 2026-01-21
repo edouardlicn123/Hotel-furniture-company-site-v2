@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">  {# 前端全英文，建议使用 en #}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 统一 SEO 注入（必须放在 <head> 最前，确保 title 等优先渲染） -->
+    {% include 'partials/seo.html' %}
+    
+    <!-- ====================== CSS 加载区 ====================== -->
+    {% block extra_styles %}
+        {# 1. 第三方公共样式（Bootstrap、Font Awesome 等） #}
+        {% include 'partials/extra_styles.html' %}
+
+        {# 2. 项目核心样式 + 动态主题（从 settings.theme 加载） #}
+        {# 關鍵改動：全部加上 ?v={{ current_timestamp }} 防瀏覽器快取 #}
+        <link rel="stylesheet" 
+              href="{{ url_for('static', filename='css/base.css') }}?v={{ current_timestamp }}">
+        
+        <link rel="stylesheet" 
+              href="{{ url_for('static', filename='css/custom.css') }}?v={{ current_timestamp }}">
+        
+        {# 動態主題 CSS - 這行是最關鍵的防快取點 #}
+        <link rel="stylesheet" 
+              href="{{ url_for('static', filename='css/themes/' ~ (settings.theme or 'default') ~ '.css') }}?v={{ current_timestamp }}" 
+              id="theme-link">
+    {% endblock %}
+    <!-- ========================================================= -->
+
+    <!-- 注入全局配置给前端 JS 使用（统一、安全、可扩展） -->
+    <script>
+        window.APP_CONFIG = {
+            companyName: "{{ settings.company_name | e or 'Premium Hotel Furniture Manufacturer' }}",
+            siteMode: "{{ settings.mode }}",
+            theme: "{{ settings.theme or 'default' }}",
+            timestamp: {{ current_timestamp }}  // 直接使用全局注入的时间戳（防缓存）
+        };
+    </script>
+
+    {# 可选：预加载关键字体/图标，加速渲染 #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+    <!-- 前端导航菜单（动态显示公司名、模式切换等） -->
+    {% include 'partials/navbar.html' %}
+
+    <!-- Hero 区域：首页用大版，其他页面用小版，可被子模板覆盖 -->
+    {% block hero_section %}
+        {% if request.endpoint == 'main.index' %}
+            {% include 'partials/hero_large.html' %}
+        {% else %}
+            {% include 'partials/hero_small.html' %}
+        {% endif %}
+    {% endblock %}
+
+    <!-- 主体内容 -->
+    <main class="flex-grow-1 container my-5">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 页脚（动态公司名、联系方式等） -->
+    {% block footer %}
+        {% include 'partials/footer.html' %}
+    {% endblock %}
+
+    <!-- Bootstrap JS（使用国内稳定 CDN，defer 异步加载） -->
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js" defer></script>
+
+    <!-- 额外脚本区（可被子模板扩展） -->
+    {% block extra_scripts %}
+        {% include 'partials/extra_scripts.html' %}
+        
+        <!-- 全局 Hero 控制脚本（使用全局时间戳防缓存） -->
+        <script src="{{ url_for('static', filename='js/hero-config.js') }}?v={{ current_timestamp }}" defer></script>
+        
+        <!-- 购物车相关脚本（如果页面需要，也使用防缓存） -->
+        {% if 'cart' in request.path %}
+            <script src="{{ url_for('static', filename='js/cart.js') }}?v={{ current_timestamp }}" defer></script>
+        {% endif %}
+    {% endblock %}
+</body>
+
+</html>

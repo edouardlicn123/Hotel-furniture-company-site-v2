@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{# ==================================================== #}
+{# 统一主图逻辑：放在模板最顶层，确保所有 block 都能访问 #}
+{# 从 photos 字段取第一张作为主图（用于 hero 背景 + 页面主大图 + 购物车预览） #}
+{# 如果 photos 为空或第一张无效，则使用默认英雄图 #}
+{# ==================================================== #}
+{% set main_image = '' %}
+{% if product.photos and product.photos.strip() %}
+    {% set photos_list = product.photos.split(',') %}
+    {% set first_photo = photos_list[0].strip() %}
+    {# 过滤无效文件名（如 'None'、空字符串等） #}
+    {% if first_photo and first_photo not in ['None', 'none', 'null', ''] %}
+        {% set main_image = first_photo %}
+    {% endif %}
+{% endif %}
+
+{# 生成主图 URL，如果没有有效主图，使用默认背景图 #}
+{% set main_image_url = get_image_url('products', main_image) if main_image else url_for('static', filename='img/hero-default-small.jpg') %}
+
+{% block hero_section %}
+    {% set hero_title = product.name %}
+    {% set hero_subtitle = product.category.name if product.category else "Premium Hotel Furniture Solution" %}
+    
+    {% set hero_background = main_image_url %}
+    
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block title %}{{ product.name }} - {{ settings.company_name or 'Premium Hotel Furniture Manufacturer' }}{% endblock %}
+
+{% block content %}
+<div class="container my-5 pt-4">
+    <div class="row g-5">
+        <!-- Left: Images + Gallery + Description -->
+        <div class="col-lg-8">
+            <!-- 主图：与 hero 背景一致，使用 photos 第一张图片 -->
+            <div class="mb-5">
+                {# ==================================================== #}
+                {# 主图显示逻辑：与 hero 背景完全一致，使用 photos 第一张 #}
+                {# 如果没有有效图片，则显示默认占位图 + 提示 #}
+                {# ==================================================== #}
+                {% if main_image %}
+                <img src="{{ get_image_url('products', main_image) }}"
+                     class="img-fluid rounded-3 shadow-lg"
+                     alt="{{ product.name }} - Main Product View"
+                     loading="lazy"
+                     style="max-height: 680px; object-fit: cover; width: 100%;"
+                     onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                {% else %}
+                <div class="bg-light border rounded-3 d-flex align-items-center justify-content-center shadow-lg"
+                     style="height: 680px;">
+                    <div class="text-center">
+                        <i class="bi bi-image display-1 text-muted mb-3 d-block"></i>
+                        <p class="h4 text-muted mb-1">No Main Image Available</p>
+                        <small class="text-muted">No valid photos found in database</small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Product Gallery：显示所有 photos 图片 -->
+            {% if product.photos and product.photos.strip() %}
+            <h3 class="mb-4 fw-semibold">Product Gallery</h3>
+            <div class="row g-3">
+                {% for photo in product.photos.split(',') %}
+                    {% set photo_stripped = photo.strip() %}
+                    {# 过滤无效文件名 #}
+                    {% if photo_stripped and photo_stripped not in ['None', 'none', 'null', ''] %}
+                    <div class="col-6 col-md-4">
+                        <div class="gallery-item overflow-hidden rounded-3 shadow-sm">
+                            <img src="{{ get_image_url('products', photo_stripped) }}"
+                                 class="img-fluid w-100 gallery-img"
+                                 alt="{{ product.name }} - Gallery Image {{ loop.index }}"
+                                 loading="lazy"
+                                 onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Product Description -->
+            {% if product.description %}
+            <div class="mt-5">
+                <h3 class="mb-4 fw-semibold">Description</h3>
+                <div class="lead text-secondary lh-lg">
+                    {{ product.description | safe }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right: Specifications + Action Buttons (sticky) -->
+        <div class="col-lg-4">
+            <div class="card shadow-lg border-0 rounded-3 sticky-top" style="top: 100px;">
+                <div class="card-body p-4">
+                    <h4 class="card-title fw-bold mb-4">{{ product.name }}</h4>
+
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Product Code</strong>
+                            <span class="font-monospace text-end">{{ product.product_code }}</span>
+                        </li>
+
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Dimensions (mm)</strong>
+                            <span class="text-end">
+                                {% if product.length and product.width and product.height %}
+                                    {{ product.length }} × {{ product.width }} × {{ product.height }}
+                                    <small class="d-block text-muted mt-1">
+                                        ≈ {{ (product.length/25.4)|round(1) }} × {{ (product.width/25.4)|round(1) }} × {{ (product.height/25.4)|round(1) }} inches
+                                    </small>
+                                {% else %}
+                                    <em>N/A</em>
+                                {% endif %}
+                            </span>
+                        </li>
+
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Seat Height</strong>
+                            <span class="text-end">
+                                {% if product.seat_height %}
+                                    {{ product.seat_height }} mm
+                                    <small class="d-block text-muted mt-1">
+                                        ≈ {{ (product.seat_height/25.4)|round(1) }} inches
+                                    </small>
+                                {% else %}
+                                    <em>N/A</em>
+                                {% endif %}
+                            </span>
+                        </li>
+
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Base Material</strong>
+                            <span class="text-end">{{ product.base_material or 'N/A' }}</span>
+                        </li>
+
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Surface Material</strong>
+                            <span class="text-end">{{ product.surface_material or 'N/A' }}</span>
+                        </li>
+
+                        {% if product.applicable_space %}
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Applicable Space</strong>
+                            <span class="text-end">{{ product.applicable_space }}</span>
+                        </li>
+                        {% endif %}
+
+                        {% if product.featured_series %}
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>Featured In</strong>
+                            <span class="text-end">{{ product.featured_series }}</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-3">
+                        {% if settings.mode == 'official' %}
+                        <a href="{{ url_for('contact.contact_page') }}"
+                           class="btn btn-primary btn-lg rounded-pill">
+                            <i class="bi bi-envelope me-2"></i> Inquire Now
+                        </a>
+                        {% endif %}
+
+                        <button id="add-to-cart"
+                                class="btn btn-primary btn-lg rounded-pill"
+                                data-product-id="{{ product.id }}"
+                                data-product-code="{{ product.product_code }}"
+                                data-product-name="{{ product.name | e }}"
+                                data-product-image="{{ get_image_url('products', main_image) if main_image else '' }}">
+                            <i class="bi bi-cart-plus me-2"></i> Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container (Bootstrap 5) -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    <div id="cart-toast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">Cart Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>
+
+<!-- Lightweight Interaction JS (Add to Cart + Toast) -->
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const addBtn = document.getElementById('add-to-cart');
+    const toastEl = document.getElementById('cart-toast');
+    const toastBody = toastEl.querySelector('.toast-body');
+    const toast = new bootstrap.Toast(toastEl);
+
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            const product = {
+                product_code: addBtn.dataset.productCode,
+                name: addBtn.dataset.productName || 'Unnamed Product',
+                quantity: 1,
+                image: addBtn.dataset.productImage || ''
+            };
+
+            addToCart(product);
+
+            toastBody.textContent = `Added to cart: ${product.name} × 1`;
+            toastEl.classList.remove('bg-danger');
+            toastEl.classList.add('bg-success', 'text-white');
+            toast.show();
+        });
+    }
+
+    document.querySelectorAll('.gallery-img').forEach(img => {
+        img.addEventListener('mouseenter', () => {
+            img.style.transform = 'scale(1.08)';
+            img.style.transition = 'transform 0.4s ease';
+        });
+        img.addEventListener('mouseleave', () => {
+            img.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+
+<style>
+.gallery-item:hover .gallery-img {
+    transition: transform 0.4s ease;
+}
+</style>
+{% endblock %}

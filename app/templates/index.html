@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+    {% set hero_title = company_name %}
+    {% set hero_subtitle = "Professional hotel furniture manufacturer, providing high-end solutions for five-star hotels worldwide." %}
+    
+    {# 英雄区背景图：使用 get_image_url，确保走本地路径 #}
+    {% set hero_background = get_image_url('hero', 'home-hero.jpg') %}
+    
+    {% if settings.mode == 'official' %}
+      {% set hero_buttons %}
+          <a href="/products" class="btn btn-primary me-3">Export products</a>
+          <a href="/contact" class="btn btn-outline-dark">Contact us</a>
+      {% endset %}
+    {% endif %}
+
+    {% include 'partials/hero_large.html' %}
+{% endblock %}
+
+{% block content %}
+<!-- 动态专题展示 -->
+    {% include 'partials/featured_series.html' %}
+
+<!-- Why Choose Us Section -->
+<div class="container mt-5">
+    <h2 class="section-title text-center">Why Choose Us</h2>
+    <div class="row text-center g-5">
+        <div class="col-md-4">
+            <h4>Premium Materials</h4>
+            <p>Selected eco-friendly solid wood and high-grade fabrics</p>
+        </div>
+        <div class="col-md-4">
+            <h4>Original Design</h4>
+            <p>In-house design team offering bespoke solutions</p>
+        </div>
+        <div class="col-md-4">
+            <h4>Comprehensive Service</h4>
+            <p>Global delivery with professional installation and after-sales support</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

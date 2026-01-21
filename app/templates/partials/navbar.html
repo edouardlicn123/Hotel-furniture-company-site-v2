@@ -1,0 +1,79 @@
+{# app/templates/partials/navbar.html - 全站统一导航栏（2026-01 重构版 - 已移除旧版 Cart 链接） #}
+{# 变更记录： #}
+{# - 原 "Cart" 链接已完全删除，不再指向 /cart #}
+{# - 购物车入口改为模式条件显示：official → 在线询价车 / catalog → 选货清单 #}
+{# - Series 已替换原 Featured，链接指向 /series #}
+{# - catalog 模式下 Logo/公司名后显示 "Catalogue" 标识 #}
+{# - 修正 Products 链接端点：从 'products.list' 改为 'products.list_products'（修复 BuildError） #}
+{# - Logo 路径已改为 get_image_url()，彻底适配本地图片 + 统一防缓存 #}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top">
+    <div class="container">
+        {# 品牌区：Logo 或公司名 + catalog 模式标识 #}
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            {% if settings.logo %}
+                {# 有 Logo：显示图片 + 统一防缓存 #}
+                <img src="{{ get_image_url('logo', settings.logo) }}?v={{ current_timestamp }}"
+                     alt="{{ settings.company_name or 'Hotel Furniture Manufacturer' }}"
+                     id="navbar-logo"
+                     style="height: 60px; max-width: 180px; object-fit: contain;">
+                
+                {# catalog 模式下 Logo 右侧显示 Catalogue 标签 #}
+                {% if settings.mode == 'catalog' %}
+                <span class="ms-3 fw-bold text-uppercase text-primary fs-5">Catalogue</span>
+                {% endif %}
+            {% else %}
+                {# 无 Logo：显示公司名称 + catalog 标识 #}
+                <span class="fw-bold fs-4">{{ settings.company_name or 'Hotel Furniture Manufacturer' }}</span>
+                
+                {% if settings.mode == 'catalog' %}
+                <span class="ms-3 fw-bold text-uppercase text-primary fs-5">Catalogue</span>
+                {% endif %}
+            {% endif %}
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('series.list') }}">Series</a>
+                </li>
+                <li class="nav-item">
+                    {# 已修正：使用正确的端点名称 'products.list_products' #}
+                    <a class="nav-link" href="{{ url_for('products.list_products') }}">Products</a>
+                </li>
+
+                {# ==================== 仅 official 模式显示 About Us & Contact Us ==================== #}
+                {% if settings.mode == 'official' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.about') }}">About Us</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('contact.contact_page') }}">Contact Us</a>
+                </li>
+                {% endif %}
+                {# ================================================================================= #}
+
+                {# ==================== 购物车入口 - 根据模式显示（旧版 Cart 已移除） ==================== #}
+                <li class="nav-item">
+                    {% if settings.mode == 'official' %}
+                    <a class="nav-link" href="{{ url_for('cart.online_cart') }}">
+                        <i class="bi bi-cart-fill me-1"></i> Cart
+                    </a>
+                    {% elif settings.mode == 'catalog' %}
+                    <a class="nav-link" href="{{ url_for('cart.offline_cart') }}">
+                        <i class="bi bi-list-check me-1"></i> List
+                    </a>
+                    {% endif %}
+                </li>
+                {# ================================================================================= #}
+            </ul>
+        </div>
+    </div>
+</nav>

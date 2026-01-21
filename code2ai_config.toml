@@ -1,0 +1,56 @@
+# code2ai_config.toml - 项目专属源码汇总配置
+# 更新日期：2026-01-14
+# 新增：contact 页面全套、mail.py 优化版
+
+[include]
+extensions = [".py", ".html", ".css", ".js", ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".sh", ".md"]
+
+[special_include]
+# 路径包含这些关键词的 .css 文件都要包含
+themes_css = true
+
+# admin 目录下所有 .html
+admin_templates = true
+
+# 特定文件名（新增 contact 相关）
+cart_html       = "cart.html"
+contact_html    = "contact.html"          
+cart_js         = "cart.js"
+smtp_py         = "smtp.py"
+cart_py         = "cart.py"
+contact_py      = "contact.py"            
+mail_py         = "mail.py"
+init_schema_py  = "init_schema.py"
+requirements_txt= "requirements.txt"
+
+               
+
+[exclude]
+dirs = [
+    "__pycache__",
+    ".git",
+    ".idea",
+    ".vscode",
+    "node_modules",
+    "venv",
+    ".venv",
+    "instance",
+    "migrations/versions",
+    "code2ai",
+    "static/uploads"       # 上传图片目录
+]
+
+files = [
+    ".gitignore",
+    "site.db",
+    "db.sqlite3"
+]
+
+extensions = [
+    ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp", ".bmp",
+    ".woff", ".woff2", ".ttf", ".eot"
+]
+
+[output]
+default_dir = "code2ai"
+max_file_size_kb = 1000

@@ -1,0 +1,20 @@
+{# partials/style.html - 项目核心 CSS 加载 + 动态主题切换 #}
+
+<!-- 1. 基础结构（布局、组件，全变量驱动） -->
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/base.css') }}?v={{ range(1,1000000)|random }}">
+
+<!-- 2. 变量声明（必须在主题文件之前） -->
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/themes/variables.css') }}?v={{ range(1,1000000)|random }}">
+
+<!-- 3. 动态加载当前选择的主题（使用注入的 theme 变量） -->
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/themes/' ~ (theme or 'default') ~ '.css') }}"
+      id="theme-link">
+
+<!-- 4. 新增：Bootstrap Icons（全局引入，所有页面可用） -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      integrity="sha384-tbi1k4rT7m4l9u6j3o3pG1cS6r7vY9p6d7Yx0zG8dP9vZ6hY5fX0zZ0zZ0zZ0zZ0z"  {# 可选 integrity 校验 #}
+      crossorigin="anonymous">

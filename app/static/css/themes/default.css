@@ -1,0 +1,146 @@
+/* themes/mandarin-oriental.css - 默认主题，东方文华酒店奢华风格（修改版：主菜单整体灰底 80% 透明）*/
+
+:root {
+    /* 主配色 - 保持东方文华黑金 + 青瓷绿 */
+    --primary: #BFA46F;              /* 优雅暖金 */
+    --primary-dark: #A68A5C;
+    --primary-light: #F5E8D0;
+    --accent: #8FA89A;                /* 青瓷绿 */
+    --accent2: #A8B5AD;
+    --accent3: #1A1A1A;
+
+    /* 文字 */
+    --text-primary: #333333;
+    --text-secondary: #555555;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 新增主菜单灰色基底 */
+    --bg-main: #FAF6F0;
+    --bg-secondary: #F0E8E0;
+    --card-bg: #FFFFFF;
+    --navbar-bg: #333333;             /* 主菜单：中性深灰（帶金屬質感） */
+    --navbar-opacity: 0.6;             /* 整體透明度 80% */
+    --footer-bg: #1A1A1A;
+    --hero-overlay: linear-gradient(135deg, rgba(15, 15, 15, 0.6), rgba(143, 168, 154, 0.3));
+
+    /* 其他變數維持原樣 */
+    --border: #BFA46F;
+    --divider: #D4C9B8;
+    --shadow: 0 12px 35px rgba(191, 164, 111, 0.12);
+    --shadow-md: 0 6px 18px rgba(191, 164, 111, 0.08);
+    --shadow-hover: 0 25px 55px rgba(191, 164, 111, 0.18);
+    --hover-bg: rgba(191, 164, 111, 0.15);
+    --hover-text: #FFFFFF;
+    --success: #8FA89A;
+    --warning: #BFA46F;
+    --error: #A06868;
+    --gradient-primary: linear-gradient(135deg, #BFA46F, #A68A5C);
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #FAF6F0);
+}
+
+/* 全局背景 */
+body {
+    background: var(--bg-main) !important;
+}
+
+/* 【核心修改】主菜單：整體灰底色 + 80% 透明 */
+.navbar {
+    background-color: var(--navbar-bg) !important;
+    opacity: var(--navbar-opacity);          /* 80% 透明 */
+    border-bottom: 4px solid #BFA46F;        /* 金色底邊保留 */
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    backdrop-filter: blur(8px);              /* 增加玻璃模糊感，提升高端質感（現代瀏覽器支持） */
+}
+
+/* 滾動後：稍微提高不透明度 + 加強陰影（可讀性更好） */
+.navbar.scrolled {
+    opacity: 0.95;                           /* 滾動後變成 95% 不透明，避免過於透 */
+    box-shadow: var(--shadow-hover);
+    backdrop-filter: blur(12px);
+}
+
+/* 移除原本的深黑漸變（因為現在用統一灰底） */
+.navbar::before {
+    display: none;  /* 如果之前有偽元素，關掉 */
+}
+
+/* 主菜單文字 - 金白高對比（適應灰底） */
+.navbar-brand {
+    color: #BFA46F !important;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);  /* 加強陰影以確保在半透明灰底上可讀 */
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.95;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #BFA46F !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按鈕（不變，與灰底更協調） */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: none !important;
+    color: #000000 !important;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #A68A5C, #8B724A) !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+/* 卡片、Hero、頁腳（維持原樣，略） */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 28px;
+    border: none;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+}
+
+.hero-section {
+    color: var(--text-inverse) !important;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #BFA46F !important;
+    text-shadow: 0 0 20px rgba(191, 164, 111, 0.6), 0 4px 12px rgba(0, 0, 0, 0.6);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #1A1A1A, #000000);
+    color: #BFA46F;
+    border-top: 4px solid #BFA46F;
+}

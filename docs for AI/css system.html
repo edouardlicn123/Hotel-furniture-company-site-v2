@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网站 CSS 设计方案总结</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f9f9f9;
+            margin: 0;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2, h3, h4 {
+            color: #B8860B;
+            margin-top: 2em;
+        }
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 1em;
+        }
+        h2 {
+            font-size: 2rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.5em;
+        }
+        h3 {
+            font-size: 1.6rem;
+            margin-top: 1.8em;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95em;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        ul, ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+        li {
+            margin: 0.5em 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #B8860B;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+    </style>
+</head>
+<body>
+
+<h1>酒店家具公司网站 CSS 设计方案总结</h1>
+
+<p>此文档供AI后续开发使用。我们基于多次迭代调整，现将整个 CSS 架构和主题设计总结为一套完整、可维护、易扩展的方案，旨在提供灵活的多主题支持。</p>
+
+<h2>1. 设计思路</h2>
+<ul>
+    <li><strong>核心目标</strong>：创建一个变量驱动、模块化的 CSS 系统，支持后台一键切换主题，不影响基础结构。</li>
+    <li><strong>灵感来源</strong>：参考高端家具网站（如 Haworth 的极简专业、HAY 的色彩活力、Ligne Roset 的法国优雅），结合酒店场景摄影主导、大白空间、响应式需求。</li>
+    <li><strong>关键原则</strong>：
+        <ul>
+            <li>变量化一切：所有颜色、背景、阴影、渐变通过变量控制。</li>
+            <li>多主题支持：每个主题文件只负责“赋值 + 细微强化”，易于扩展。</li>
+            <li>视觉优化：英雄区叠加层确保文字可读；交互柔和；响应式优先。</li>
+            <li>酒店家具适配：主题以大色块/渐变为基调，突出产品照片（卡片白色对比）。</li>
+            <li>问题解决导向：高对比、实色覆盖，避免“玻璃感”或染色问题。</li>
+        </ul>
+    </li>
+    <li><strong>用户体验焦点</strong>：主题切换无缝；性能高；可访问性强。</li>
+</ul>
+
+<h2>2. 系统架构</h2>
+
+<h3>文件目录结构</h3>
+<pre>
+app/static/css/
+├── custom.css            ← 入口文件（仅导入 base + variables + 当前主题）
+├── base.css              ← 基础结构（布局、组件行为、动画，无颜色硬编码）
+└── themes/
+    ├── variables.css     ← 变量声明（共享清单，不赋值）
+    ├── default.css       ← 默认主题（系统将默认使用这个主题）
+    ├── dopamine.css      ← 多巴胺活力主题
+    ├── macaron.css       ← 马卡龙甜美主题
+    └── wafu-sakura.css   ← 和风粉色主题
+</pre>
+
+<h3>各文件职责</h3>
+<table>
+    <tr><th>文件</th><th>职责</th></tr>
+    <tr><td>custom.css</td><td>入口点，顺序导入（base 先、主题后）</td></tr>
+    <tr><td>base.css</td><td>核心骨架：布局、组件、响应式，所有视觉属性用变量</td></tr>
+    <tr><td>themes/variables.css</td><td>变量清单，仅声明（30+ 语义变量）</td></tr>
+    <tr><td>themes/*.css</td><td>具体主题：赋值变量 + 少量强化（如渐变、圆角）</td></tr>
+</table>
+
+<h3>主题切换机制</h3>
+<ul>
+    <li>后台联动：Settings.theme 字段（e.g., 'default'、'wafu-sakura'）</li>
+    <li>模板动态加载（base.html）：
+        <pre>&lt;link rel="stylesheet" href="{{ url_for('static', filename='css/themes/' ~ (settings.theme or 'default') ~ '.css') }}" id="theme-link"&gt;</pre>
+    </li>
+    <li>前端动态（可选）：JS 监听下拉切换 href，无刷新生效</li>
+</ul>
+
+<h2>3. 主题示例与设计细节</h2>
+<ul>
+    <li><strong>dopamine.css</strong>：活力爆棚（彩虹渐变 + 不透明菜单）</li>
+    <li><strong>macaron.css</strong>：甜美糖果（多色实块 + 深蓝按钮）</li>
+    <li><strong>wafu-sakura.css</strong>：和风粉色（统一粉调 + 柔和深粉菜单/按钮）</li>
+</ul>
+
+<p><strong>通用设计细节</strong>：</p>
+<ul>
+    <li>Hero 区：背景图 + 半透叠加，文字纯白 + 多层阴影</li>
+    <li>菜单/按钮：实色块 + 渐变，hover 放大/阴影增强</li>
+    <li>卡片：白色突出 + 浅渐变，圆润边角</li>
+    <li>响应式：clamp() 动态字体/间距</li>
+</ul>
+
+<h2>4. 实施指南与最佳实践</h2>
+<ul>
+    <li><strong>性能优化</strong>：压缩 CSS、懒加载图片、避免 !important</li>
+    <li><strong>与 Flask 集成</strong>：后台添加 theme 下拉，链接加随机版本号防缓存</li>
+    <li><strong>添加新主题</strong>：复制 existing.css → 修改变量 → 添加后台选项</li>
+    <li><strong>测试与兼容</strong>：主流浏览器、桌面/移动设备、Lighthouse 审计（目标 90+ 分）</li>
+    <li><strong>潜在扩展</strong>：
+        <ul>
+            <li>暗模式支持</li>
+            <li>高级动画（GSAP）</li>
+            <li>自定义字体（如 Noto Serif JP 提升和风）</li>
+            <li>A/B 测试主题转化率</li>
+        </ul>
+    </li>
+</ul>
+
+<p>此方案已成熟稳定，可直接用于后续开发与维护。</p>
+
+</body>
+</html>

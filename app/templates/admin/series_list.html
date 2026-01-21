@@ -1,0 +1,116 @@
+{% extends "admin/base.html" %}
+
+{% block title %}专题系列管理{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="h4 mb-0">专题系列管理</h3>
+            <small>展示酒店家具特色系列（最多支持分页浏览）</small>
+        </div>
+
+        <div class="card-body p-5">
+            <!-- 操作按钮 -->
+            <div class="mb-4 text-end">
+                <a href="{{ url_for('admin.feature.feature_add') }}" class="btn btn-primary btn-lg px-4">
+                    <i class="bi bi-plus-lg me-2"></i>添加新系列
+                </a>
+            </div>
+
+            <!-- 系列列表 -->
+            {% if series_list %}
+            <div class="row g-4">
+                {% for series in series_list %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm hover-shadow">
+                        {% if series.photos %}
+                            {% set first_photo = series.photos.split(',')[0].strip() %}
+                            <img src="{{ get_image_url('series', first_photo) }}"
+                                 class="card-img-top" style="height: 220px; object-fit: cover;" alt="{{ series.name }}"
+                                 loading="lazy"
+                                 onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                        {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 220px;">
+                                <span class="text-muted fs-4">暂无图片</span>
+                            </div>
+                        {% endif %}
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title mb-2">{{ series.name }}</h5>
+                            <p class="card-text text-muted small mb-2">Slug: {{ series.slug }}</p>
+                            <p class="card-text text-truncate mb-3" style="max-height: 60px; overflow: hidden;">
+                                {{ series.description or '暂无描述' }}
+                            </p>
+
+                            <div class="mt-auto d-flex gap-2">
+                                <a href="{{ url_for('admin.feature.feature_edit', series_id=series.id) }}"
+                                   class="btn btn-outline-primary btn-sm flex-fill">
+                                    <i class="bi bi-pencil-square me-1"></i>编辑
+                                </a>
+                                <form action="{{ url_for('admin.feature.feature_delete', series_id=series.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm flex-fill"
+                                            onclick="return confirm('确定要删除系列「{{ series.name }}」吗？此操作不可恢复！')">
+                                        <i class="bi bi-trash me-1"></i>删除
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="alert alert-info">
+                    <h5 class="mb-3">暂无专题系列</h5>
+                    <p class="text-muted mb-4">当前没有添加任何特色系列，请点击上方“添加新系列”按钮开始创建。</p>
+                    <a href="{{ url_for('admin.feature.feature_add') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-lg me-2"></i>立即添加系列
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 分页导航 -->
+            {% if pagination.pages > 1 %}
+            <nav aria-label="系列分页" class="mt-5">
+                <ul class="pagination pagination-lg justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num) }}" aria-label="上一页">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num == pagination.page %}
+                            <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for(request.endpoint, page=page_num) }}">{{ page_num }}</a></li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num) }}" aria-label="下一页">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+        <div class="card-footer bg-light text-muted text-center py-3">
+            <small>共 {{ pagination.total }} 个专题系列 • 当前第 {{ pagination.page }} / {{ pagination.pages }} 页</small>
+        </div>
+    </div>
+</div>
+{% endblock %}

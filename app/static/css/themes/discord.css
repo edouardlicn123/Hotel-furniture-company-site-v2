@@ -1,0 +1,182 @@
+/* themes/discord-blurple-deepgray.css - Discord风格主题（主菜单深灰色 + Hero蓝色） */
+
+:root {
+    /* 主配色 - Discord经典Blurple + 暗黑界面 */
+    --primary: #5865F2;              /* 主强调色：Blurple（链接、强调、按钮） */
+    --primary-dark: #4752C4;          /* 深Blurple（按钮hover） */
+    --primary-light: #7289DA;         /* 经典旧Blurple（边框、细部） */
+    --accent: #57F287;                /* 绿（成功、在线点缀） */
+    --accent2: #2C2F33;               /* 中灰黑（次背景） */
+    --accent3: #99AAB5;               /* 浅灰蓝（文字、次要） */
+
+    /* 文字 - 高对比暗黑专业感 */
+    --text-primary: #FFFFFF;
+    --text-secondary: #B9BBBE;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 全站Discord暗黑风格 */
+    --bg-main: #36393F;               /* 主背景：Discord暗黑主色 */
+    --bg-secondary: #2C2F33;          /* 次背景：侧栏色 */
+    --card-bg: #2F3136;               /* 卡片背景：聊天区色 */
+    --navbar-bg: #202225;             /* 主菜单：深灰色（用户最新要求，Discord经典顶部/侧栏色） */
+    --footer-bg: #23272A;             /* 页脚：最深黑 */
+    --hero-overlay: linear-gradient(135deg, rgba(88, 101, 242, 0.85), rgba(71, 82, 196, 0.7));
+
+    /* 边框与分割 - Blurple高光 */
+    --border: #5865F2;
+    --divider: #42464D;
+
+    /* 阴影 - 现代暗黑轻影 */
+    --shadow: 0 12px 35px rgba(88, 101, 242, 0.15);
+    --shadow-md: 0 6px 18px rgba(88, 101, 242, 0.10);
+    --shadow-hover: 0 25px 55px rgba(88, 101, 242, 0.25);
+
+    /* 悬停与交互 - Blurple高亮 */
+    --hover-bg: rgba(88, 101, 242, 0.15);     /* Blurple半透明hover，在深灰底上醒目 */
+    --hover-text: #FFFFFF;
+
+    /* 状态色 - Discord品牌协调 */
+    --success: #57F287;
+    --warning: #FEE75C;
+    --error: #ED4245;
+
+    /* 渐变 - 按钮专用Blurple渐变，菜单使用轻微深灰渐变 */
+    --gradient-primary: linear-gradient(135deg, #5865F2, #4752C4);
+    --gradient-navbar: linear-gradient(to right, #202225, #2C2F33);
+    --gradient-card: linear-gradient(to bottom, #2F3136, #36393F);
+}
+
+/* 主题特有强化 */
+body {
+    background: var(--bg-main) !important;
+    color: var(--text-primary);
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;          /* 深灰色实底 */
+    background-image: var(--gradient-navbar) !important; /* 轻微深灰渐变，增加层次 */
+    border-bottom: 4px solid #5865F2;                  /* Blurple底边，保持品牌高光 */
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #1E1F22, #202225) !important;
+    box-shadow: var(--shadow-hover);
+}
+
+/* 主菜单文字 - 白字 + Blurple品牌点缀 */
+.navbar-brand {
+    color: #5865F2 !important;                        /* 品牌名用Blurple突出 */
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.nav-link {
+    color: #DCDEDF !important;                        /* Discord标准导航文字色 */
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #FFFFFF !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按钮：经典Blurple渐变 */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #4752C4, #3A45A0) !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片 */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 18px;
+    border: none;
+    box-shadow: var(--shadow);
+    color: #FFFFFF;
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+    border: 1px solid #5865F2;
+}
+
+/* Hero 区 - 保持蓝色大背景 */
+.hero-section {
+    color: var(--text-inverse) !important;
+    background: #5865F2 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFFFFF !important;
+    text-shadow:
+        0 0 30px rgba(88, 101, 242, 0.9),
+        0 6px 20px rgba(0, 0, 0, 0.8);
+    font-weight: 900;
+    letter-spacing: -1px;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.8);
+    position: relative;
+    z-index: 2;
+}
+
+.hero-section .btn-primary,
+.hero-section .btn-outline-dark {
+    border: 3px solid #FFFFFF !important;
+    text-shadow: none;
+    font-weight: 800;
+}
+
+.hero-section .btn-primary:hover,
+.hero-section .btn-outline-dark:hover {
+    transform: scale(1.1);
+}
+
+/* 页脚 */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #23272A, #1E1F22);
+    color: #B9BBBE;
+    border-top: 4px solid #5865F2;
+}

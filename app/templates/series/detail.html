@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}{{ series.name }} - {{ settings.company_name or 'Premium Hotel Furniture Series' }}{% endblock %}
+
+{% block hero_section %}
+    {% set hero_title = series.name %}
+    {% set hero_subtitle = series.applicable_space.replace(',', ', ') if series.applicable_space else "Premium Hotel Furniture Series" %}
+    
+    {# ==================================================== #}
+    {# 英雄区背景图逻辑：使用 series.photos 的第一张作为主图 #}
+    {# 如果 photos 为空或第一张无效，则使用默认英雄图 #}
+    {# ==================================================== #}
+    {% set main_image = '' %}
+    {% if series.photos and series.photos.strip() %}
+        {% set photos_list = series.photos.split(',') %}
+        {% set first_photo = photos_list[0].strip() %}
+        {# 过滤无效文件名（如 'None'、空字符串等） #}
+        {% if first_photo and first_photo not in ['None', 'none', 'null', ''] %}
+            {% set main_image = first_photo %}
+        {% endif %}
+    {% endif %}
+    
+    {# 生成背景图 URL，如果没有有效主图，使用默认背景图 #}
+    {% set hero_background = get_image_url('series', main_image) if main_image else url_for('static', filename='img/hero-default-small.jpg') %}
+    
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5 pt-4">
+    <!-- 系列描述 -->
+    {% if series.description %}
+    <div class="row mb-5">
+        <div class="col-lg-10 mx-auto text-center">
+            <div class="lead text-secondary lh-lg">
+                {{ series.description | safe }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 系列图片画廊（无标题，显示所有 photos） -->
+    {% if series.photos and series.photos.strip() %}
+    <div class="mb-5">
+        <div class="row g-4">
+            {% for photo in series.photos.split(',') %}
+                {% set photo_stripped = photo.strip() %}
+                {# 过滤无效文件名 #}
+                {% if photo_stripped and photo_stripped not in ['None', 'none', 'null', ''] %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="gallery-item overflow-hidden rounded-3 shadow-sm">
+                        <img src="{{ get_image_url('series', photo_stripped) }}"
+                             class="img-fluid w-100 gallery-img"
+                             alt="{{ series.name }} - Gallery Image {{ loop.index }}"
+                             loading="lazy"
+                             onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 关联产品列表（缩小高度 + 字体大小） -->
+    <div class="products-section mt-4">
+        <h2 class="section-title text-center mb-4 fs-4">Products in This Series</h2>
+        
+        {% if products %}
+        <div class="product-grid">
+            {% for product in products %}
+            <a href="{{ url_for('products.product_detail', product_id=product.id) }}"
+               class="text-decoration-none product-card-link"
+               aria-label="View details of {{ product.name }}">
+                <div class="product-card d-flex flex-column h-100">
+                    <div class="product-card-img-wrapper">
+                        {# ==================================================== #}
+                        {# 产品卡片图片逻辑：优先使用 product.image #}
+                        {# 如果 product.image 为空，则使用 product.photos 的第一张 #}
+                        {# 如果 photos 也为空，则使用默认占位图 #}
+                        {# ==================================================== #}
+                        {% set product_main_image = '' %}
+                        {# 优先使用 image 字段 #}
+                        {% if product.image and product.image.strip() and product.image.strip() != 'None' %}
+                            {% set product_main_image = product.image.strip() %}
+                        {# 如果 image 为空，则取 photos 第一张 #}
+                        {% elif product.photos and product.photos.strip() %}
+                            {% set photos_list = product.photos.split(',') %}
+                            {% set first_photo = photos_list[0].strip() %}
+                            {% if first_photo and first_photo not in ['None', 'none', 'null', ''] %}
+                                {% set product_main_image = first_photo %}
+                            {% endif %}
+                        {% endif %}
+                        
+                        {# 显示图片 #}
+                        {% if product_main_image %}
+                        <img src="{{ get_image_url('products', product_main_image) }}"
+                             class="product-card-img-complete"
+                             alt="{{ product.name }} - Main Product Image"
+                             loading="lazy"
+                             onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='img/placeholder.jpg') }}"
+                             class="product-card-img-complete"
+                             alt="No image available for {{ product.name }}"
+                             loading="lazy">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-card-body mt-auto p-3">
+                        <h3 class="product-card-title mb-2 fs-5">{{ product.name }}</h3>
+                        <p class="product-card-brand text-muted mb-0 font-monospace small">
+                            {{ product.product_code }}
+                        </p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4 my-4">
+            <i class="bi bi-boxes display-1 text-muted mb-3 d-block"></i>
+            <h4 class="text-muted mb-3 fs-5">No Products in This Series Yet</h4>
+            <p class="text-muted small">
+                Products assigned to this series will appear here.<br>
+                <small>You can manage product-series associations in the admin panel.</small>
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 可选轻量交互：画廊 hover 微放大 + 产品卡片 hover 上浮 -->
+<style>
+    .gallery-item:hover .gallery-img {
+        transform: scale(1.06);
+        transition: transform 0.4s ease;
+    }
+    .product-card-link:hover .product-card {
+        transform: translateY(-8px);
+        transition: all 0.3s ease;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+    }
+</style>
+{% endblock %}

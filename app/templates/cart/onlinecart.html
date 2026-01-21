@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+    {% set hero_title = "Online Inquiry Cart" %}
+    {% set hero_subtitle = "Please confirm your selected items" %}
+    {% set hero_background = url_for('static', filename='img/about-hero.jpg') %}
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block title %}Online Inquiry Cart - One-Click WhatsApp Inquiry{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- WhatsApp 一鍵按鈕 -->
+    <div class="mb-5 d-flex align-items-center flex-wrap gap-4">
+        {% if settings.whatsapp1 %}
+            <a href="#" id="whatsapp-inquiry-btn" 
+               class="btn btn-success btn-lg rounded-pill whatsapp-contact-btn" 
+               target="_blank" style="font-size: 1.1rem;">
+                <i class="bi bi-whatsapp me-2"></i>
+                One-Click WhatsApp Inquiry
+            </a>
+            <div class="text-muted" style="font-size: 0.95rem;">
+                * Need WhatsApp installed or WhatsApp Web online.
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                <strong>Reminder:</strong> WhatsApp number has not been set in the backend yet. 
+                Please go to Settings and fill in <code>whatsapp1</code>.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 商品列表區 -->
+    <div class="card mb-5 shadow-sm" id="cart-container">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Selected Items (<span id="cart-count">0</span>)</h5>
+        </div>
+        <div class="card-body" id="cart-items">
+            <p class="text-center text-muted py-5">Your cart is empty. Please add products first.</p>
+        </div>
+        <div class="card-footer text-end">
+            <button id="clear-cart-btn" class="btn btn-outline-danger">Clear Cart</button>
+        </div>
+    </div>
+</div>
+
+<!-- WhatsApp 按鈕樣式 -->
+<style>
+    .whatsapp-contact-btn {
+        background: #25D366;
+        border: none;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .whatsapp-contact-btn:hover {
+        background: #20b058;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    /* 商品列表樣式優化 */
+    .cart-item {
+        border-bottom: 1px solid #eee;
+        padding: 1rem 0;
+    }
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+    .product-img {
+        width: 90px;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        background: #f8f9fa;
+    }
+    .product-info {
+        flex: 1;
+        min-width: 0;
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+<script>
+    const CART_KEY = 'hotel_furniture_cart_2026_v1';
+
+    function updateCartDisplay() {
+        const cart = getCart();
+        const countEl = document.getElementById('cart-count');
+        const itemsEl = document.getElementById('cart-items');
+
+        countEl.textContent = cart.length;
+
+        if (cart.length === 0) {
+            itemsEl.innerHTML = '<p class="text-center text-muted py-5">Your cart is empty. Please add products first.</p>';
+            return;
+        }
+
+        let html = '';
+        cart.forEach(item => {
+            // 圖片來源：優先主圖 → 多圖第一張 → placeholder
+            let imgSrc = item.image 
+                ? '{{ url_for("static", filename="uploads/products/") }}' + item.image
+                : (item.photos && item.photos.split(',')[0] 
+                    ? '{{ url_for("static", filename="uploads/products/") }}' + item.photos.split(',')[0].trim()
+                    : '{{ url_for("static", filename="img/placeholder.jpg") }}');
+
+            html += `
+                <div class="cart-item d-flex align-items-center gap-3">
+                    <img src="${imgSrc}" 
+                         alt="${item.name || 'Product'}" 
+                         class="product-img"
+                         onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'">
+                    <div class="product-info">
+                        <strong>${item.product_code}</strong><br>
+                        <small>${item.name || 'Unnamed Product'}</small>
+                    </div>
+                    <div class="text-end ms-auto">
+                        × ${item.quantity}<br>
+                        <small class="text-muted">${new Date(item.added_at).toLocaleString()}</small>
+                    </div>
+                </div>`;
+        });
+
+        itemsEl.innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', updateCartDisplay);
+    window.addEventListener('cartUpdated', updateCartDisplay);
+    window.addEventListener('storage', (e) => {
+        if (e.key === CART_KEY) updateCartDisplay();
+    });
+
+    document.getElementById('clear-cart-btn').addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear the cart? This action cannot be undone.')) {
+            clearCart();
+            updateCartDisplay();
+        }
+    });
+
+    // WhatsApp 一鍵發送（加入產品代碼 + 名稱 + 數量）
+    document.getElementById('whatsapp-inquiry-btn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        const cart = getCart();
+        
+        if (cart.length === 0) {
+            alert('Your cart is empty. Please add some products first.');
+            return;
+        }
+
+        let message = "Hello! I saw the following items in the Online Inquiry Cart on your website and would like to get a quotation:\n\n";
+        cart.forEach(item => {
+            message += `- ${item.product_code} (${item.name || 'Unnamed Product'}) × ${item.quantity}\n`;
+        });
+        message += "\nThank you for your reply!";
+
+        const phoneNumber = "{{ settings.whatsapp1 or '' }}".trim();
+
+        if (!phoneNumber) {
+            alert('WhatsApp number has not been set in the backend. Please contact the administrator.');
+            return;
+        }
+
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    });
+</script>
+{% endblock %}

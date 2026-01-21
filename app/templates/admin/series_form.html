@@ -1,0 +1,164 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ '添加' if not series else '编辑' }}专题系列{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            {{ '添加新专题系列' if not series else '编辑专题系列：' + series.name }}
+        </h2>
+        <a href="{{ url_for('admin.series.series_list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> 返回列表
+        </a>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="row">
+            <!-- 左侧：主要信息 + SEO -->
+            <div class="col-lg-8">
+                <!-- 基本信息卡片 -->
+                <div class="card mb-4 shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">基本信息</h5>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">系列名称 <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" 
+                                   value="{{ series.name if series else '' }}" required 
+                                   placeholder="例如：Nordic Minimalism Collection">
+                            <div class="form-text text-muted">
+                                前台展示的完整系列名称
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">系统名称（Slug） <span class="text-danger">*</span></label>
+                            <input type="text" name="slug" class="form-control" 
+                                   value="{{ series.slug if series else '' }}" required 
+                                   placeholder="例如：nordic-minimalism">
+                            <div class="form-text text-muted">
+                                用于 URL 和产品关联，必须唯一。<br>
+                                <strong>重要提示：</strong> 在产品编辑页的“精选系列”字段中填写此 slug（多个用英文逗号分隔），才能正确显示关联。
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">系列描述</label>
+                            <textarea name="description" class="form-control" rows="5" 
+                                      placeholder="描述系列的设计理念、特点、目标空间等...">{{ series.description if series else '' }}</textarea>
+                            <div class="form-text text-muted">
+                                将显示在系列详情页顶部，支持换行和简单格式
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">适用空间（逗号分隔）</label>
+                            <input type="text" name="applicable_space" class="form-control" 
+                                   value="{{ series.applicable_space if series else '' }}" 
+                                   placeholder="例如：Guest Room,Lobby,Suite,Restaurant">
+                            <div class="form-text text-muted">
+                                用于前台卡片下方显示，多个用英文逗号分隔
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEO 卡片 -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">SEO 设置（可选）</h5>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">SEO 标题</label>
+                            <input type="text" name="seo_title" class="form-control" 
+                                   value="{{ series.seo_title if series else '' }}" 
+                                   placeholder="建议：Nordic Minimalism Hotel Furniture | {company_name}">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">SEO 描述</label>
+                            <textarea name="seo_description" class="form-control" rows="4"
+                                      placeholder="160字符以内，用于搜索引擎结果页">{{ series.seo_description if series else '' }}</textarea>
+                        </div>
+                        
+                        <div class="mb-0">
+                            <label class="form-label">SEO 关键词（逗号分隔）</label>
+                            <input type="text" name="seo_keywords" class="form-control" 
+                                   value="{{ series.seo_keywords if series else '' }}" 
+                                   placeholder="nordic hotel furniture, minimalist design, scandinavian style">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：图片上传（sticky） -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">系列图片</h5>
+                        <p class="text-muted small mb-3">
+                            最多5张，第一张自动作为主图（用于列表、首页、Hero区）
+                        </p>
+
+                        <input type="file" name="photos" class="form-control mb-3" multiple accept="image/*">
+                        <div class="form-text text-muted mb-4">
+                            支持多选，一次性追加上传。建议使用高分辨率横图（16:9或4:3）
+                        </div>
+
+                        {% if series and series.photos %}
+                            <hr class="my-4">
+                            <p class="mb-3 fw-semibold">
+                                已上传图片（共 {{ series.photos.split(',')|length }} 张）：
+                            </p>
+                            <div class="row g-2">
+                                {% for photo in series.photos.split(',') %}
+                                    {% set photo_name = photo.strip() %}
+                                    <div class="col-6 col-sm-4">
+                                        <div class="position-relative overflow-hidden rounded">
+                                            <img src="{{ get_image_url('series', photo_name) }}"
+                                                 class="img-fluid shadow-sm w-100"
+                                                 style="height: 100px; object-fit: cover;"
+                                                 alt="系列图片 {{ loop.index }}"
+                                                 loading="lazy"
+                                                 onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="alert alert-info mt-3 small mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                当前版本不支持删除单张，如需替换请重新上传完整图片集
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="bi bi-images display-4 opacity-50"></i>
+                                <p class="mt-2 mb-0">暂无图片</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部操作按钮 -->
+        <div class="mt-5 text-center d-flex justify-content-center gap-3 flex-wrap">
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-save me-2"></i> 保存系列
+            </button>
+            <a href="{{ url_for('admin.series.series_list') }}" class="btn btn-outline-secondary btn-lg px-5">
+                <i class="bi bi-x-circle me-2"></i> 取消返回
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- 可选：表单提交加载状态（建议移到 custom.js） -->
+<script>
+document.querySelector('form').addEventListener('submit', function(e) {
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> 保存中...';
+});
+</script>
+{% endblock %}

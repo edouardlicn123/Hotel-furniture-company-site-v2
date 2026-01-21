@@ -1,0 +1,252 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {{ '编辑产品 - ' + product.name if product else '添加新产品' }}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            {% if product %}编辑产品：{{ product.name }}{% else %}添加新产品{% endif %}
+        </h2>
+        <a href="{{ url_for('admin.product.product_list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> 返回列表
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4 p-lg-5">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row g-5">
+                    <!-- 左侧：核心信息 -->
+                    <div class="col-lg-8">
+                        <!-- 基本信息 -->
+                        <div class="mb-5">
+                            <h5 class="fw-bold mb-4 text-primary">基本信息</h5>
+
+                            <div class="mb-4">
+                                <label for="name" class="form-label fw-semibold fs-5">
+                                    产品名称 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="name" name="name" required
+                                       value="{{ product.name if product else '' }}"
+                                       placeholder="例如：King Size Luxury Hotel Bed">
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="product_code" class="form-label fw-semibold fs-5">
+                                    产品编号 <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-light fw-bold">pc</span>
+                                    <input type="text" class="form-control" 
+                                           id="product_code" name="product_code"
+                                           pattern="[0-9]{9}" maxlength="9"
+                                           value="{{ product.product_code[2:] if product and product.product_code else '' }}"
+                                           placeholder="{% if product %}修改9位数字{% else %}留空自动生成{% endif %}"
+                                           {% if not product %}title="留空将自动生成唯一编号"{% endif %}>
+                                </div>
+                                <div class="form-text mt-2">
+                                    {% if product %}
+                                        当前完整编号： <code class="bg-light px-2 py-1">{{ product.product_code }}</code><br>
+                                        可修改中间9位数字（保存后自动补 pc 前缀），必须唯一。
+                                    {% else %}
+                                        <strong>推荐留空自动生成</strong>（格式：pc + 9位随机数字）
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="description" class="form-label fw-semibold fs-5">产品描述</label>
+                                <textarea class="form-control" id="description" name="description" rows="6"
+                                          placeholder="详细描述材质、工艺、适用场景、设计亮点等...">{{ product.description if product else '' }}</textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="category_id" class="form-label fw-semibold fs-5">
+                                    产品分类 <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select form-select-lg" id="category_id" name="category_id" required>
+                                    <option value="">请选择分类</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}" 
+                                            {% if product and product.category_id == cat.id %}selected{% endif %}>
+                                        {{ cat.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 规格参数 -->
+                        <div class="mb-5">
+                            <h5 class="fw-bold mb-4 text-primary">规格参数</h5>
+                            <div class="row g-4">
+                                <div class="col-md-3">
+                                    <label for="length" class="form-label">长度 (mm)</label>
+                                    <input type="number" class="form-control" id="length" name="length" 
+                                           min="0" value="{{ product.length if product else '' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="width" class="form-label">宽度 (mm)</label>
+                                    <input type="number" class="form-control" id="width" name="width" 
+                                           min="0" value="{{ product.width if product else '' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="height" class="form-label">高度 (mm)</label>
+                                    <input type="number" class="form-control" id="height" name="height" 
+                                           min="0" value="{{ product.height if product else '' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="seat_height" class="form-label">座高 (mm)</label>
+                                    <input type="number" class="form-control" id="seat_height" name="seat_height" 
+                                           min="0" value="{{ product.seat_height if product else '' }}"
+                                           placeholder="椅子/沙发专用">
+                                </div>
+                            </div>
+
+                            <div class="row g-4 mt-4">
+                                <div class="col-md-6">
+                                    <label for="base_material" class="form-label fw-semibold">基材</label>
+                                    <input type="text" class="form-control" id="base_material" name="base_material"
+                                           value="{{ product.base_material if product else '' }}"
+                                           placeholder="例如：Solid Wood, Metal Frame">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="surface_material" class="form-label fw-semibold">覆面</label>
+                                    <input type="text" class="form-control" id="surface_material" name="surface_material"
+                                           value="{{ product.surface_material if product else '' }}"
+                                           placeholder="例如：Premium Velvet, Top Grain Leather">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 分类标签 -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-4 text-primary">分类标签</h5>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label for="applicable_space" class="form-label fw-semibold">适用空间</label>
+                                    <input type="text" class="form-control" id="applicable_space" name="applicable_space"
+                                           value="{{ product.applicable_space if product else '' }}"
+                                           placeholder="Guest Room,Lobby,Suite">
+                                    <div class="form-text">多个用英文逗号分隔</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="featured_series" class="form-label fw-semibold">精选系列</label>
+                                    <input type="text" class="form-control" id="featured_series" name="featured_series"
+                                           value="{{ product.featured_series if product else '' }}"
+                                           placeholder="Modern Luxury,nordic-minimalism">
+                                    <div class="form-text">多个用英文逗号分隔，与系列 slug 匹配</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：图片管理 -->
+                    <div class="col-lg-4">
+                        <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                            <div class="card-body">
+                                <h5 class="card-title mb-4">产品图片管理</h5>
+
+                                <!-- 当前图片预览 -->
+                                {% if product and (product.image or product.photos) %}
+                                <div class="mb-4">
+                                    <p class="fw-semibold mb-3">
+                                        当前图片（主图 + 附加图共 {{ (1 if product.image else 0) + (product.photos.split(',')|length if product.photos else 0) }} 张）
+                                    </p>
+                                    <div class="row g-3">
+                                        {% if product.image %}
+                                        <div class="col-6 col-sm-4">
+                                            <div class="position-relative">
+                                                <img src="{{ get_image_url('products', product.image) }}"
+                                                     class="img-thumbnail w-100 shadow-sm"
+                                                     style="height: 120px; object-fit: cover;"
+                                                     alt="主图" loading="lazy"
+                                                     onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                                                <span class="position-absolute top-0 start-100 translate-middle badge bg-success rounded-pill">
+                                                    主图
+                                                </span>
+                                                <small class="d-block text-center text-muted mt-1 text-truncate">{{ product.image }}</small>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+
+                                        {% if product.photos %}
+                                            {% for photo in product.photos.split(',') %}
+                                            <div class="col-6 col-sm-4">
+                                                <div class="position-relative">
+                                                    <img src="{{ get_image_url('products', photo.strip()) }}"
+                                                         class="img-thumbnail w-100 shadow-sm"
+                                                         style="height: 120px; object-fit: cover;"
+                                                         alt="附加图 {{ loop.index }}" loading="lazy"
+                                                         onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                                                    <small class="d-block text-center text-muted mt-1 text-truncate">{{ photo.strip() }}</small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- 上传区域 -->
+                                <div class="mb-4">
+                                    <label for="photos" class="form-label fw-semibold fs-5">
+                                        {% if product %}追加上传图片{% else %}上传图片 <span class="text-danger">*</span>{% endif %}
+                                    </label>
+                                    <input type="file" class="form-control form-control-lg" 
+                                           id="photos" name="photos" multiple accept="image/*"
+                                           {% if not product %}required{% endif %}>
+                                    <div class="form-text mt-2">
+                                        {% if product %}
+                                            可追加最多 {{ 10 - (product.photos.split(',')|length if product.photos else 0) }} 张
+                                        {% else %}
+                                            支持多选，第一张自动设为主图<br>建议高清专业摄影图
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- 更换主图 -->
+                                {% if product %}
+                                <div class="mb-4">
+                                    <label for="image" class="form-label fw-semibold fs-5">更换主图</label>
+                                    <input type="file" class="form-control form-control-lg" 
+                                           id="image" name="image" accept="image/*">
+                                    <div class="form-text mt-2">
+                                        上传后将<strong>覆盖当前主图</strong>，用于列表与详情页展示
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提交按钮 -->
+                <div class="text-center mt-5 pt-4 border-top">
+                    <button type="submit" class="btn btn-primary btn-lg px-5 py-3">
+                        <i class="bi bi-save me-2"></i>
+                        {% if product %}保存修改{% else %}保存产品{% endif %}
+                    </button>
+                    <a href="{{ url_for('admin.product.product_list') }}" 
+                       class="btn btn-outline-secondary btn-lg px-5 py-3 ms-4">
+                        <i class="bi bi-x-circle me-2"></i> 取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 提交加载状态 -->
+<script>
+document.querySelector('form').addEventListener('submit', function() {
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> 保存中...';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{# app/templates/partials/featured_series.html - 首页专题系列展示区（优化版，已移除硬编码路径） #}
+
+<section class="container featured-section my-5">
+    <h2 class="section-title text-center mb-5">Featured Series</h2>
+    
+    <div class="product-grid">
+        {% if featured_series %}
+            {% for series in featured_series %}
+            <a href="{{ url_for('series.detail', slug=series.slug) }}" class="text-decoration-none">
+                <div class="product-card d-flex flex-column h-100">
+                    <!-- 图片区域 -->
+                    <div class="product-card-img-wrapper">
+                        {% set photo_list = series.photos.split(',') if series.photos else [] %}
+                        {% set first_photo = photo_list[0].strip() if photo_list else None %}
+                        {% if first_photo %}
+                            <img src="{{ get_image_url('series', first_photo) }}"
+                                 class="product-card-img-complete"
+                                 alt="{{ series.name }}"
+                                 loading="lazy"
+                                 onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'; this.onerror=null;">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='img/placeholder.jpg') }}"
+                                 class="product-card-img-complete"
+                                 alt="{{ series.name }}"
+                                 loading="lazy">
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 文字区域 -->
+                    <div class="product-card-body mt-auto text-center">
+                        <h3 class="product-card-title mb-2">{{ series.name }}</h3>
+                        <p class="product-card-brand mb-0 text-muted">
+                            {% if series.applicable_space %}
+                                {{ series.applicable_space.replace(',', ', ') }}
+                            {% else %}
+                                Luxury Hotel Collection
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted h5">No featured series available yet.</p>
+                <small class="text-muted">
+                    Please log in to admin panel → Series → Create new series and assign products.
+                </small>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- 查看所有系列按钮（仅当有数据时显示） -->
+    {% if featured_series %}
+    <div class="text-center mt-5">
+        <a href="{{ url_for('series.list') }}" class="btn btn-primary btn-lg w-30">
+            View All Series
+        </a>
+    </div>
+    {% endif %}
+</section>

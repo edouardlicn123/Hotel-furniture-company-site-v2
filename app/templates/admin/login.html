@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+
+{% block title %}后台登录{% endblock %}
+
+{% block hero_section %}{% endblock %}  <!-- 登录页不显示英雄区 -->
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-100">
+    <div class="col-md-4">
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-5">
+                <h3 class="text-center mb-4 fw-bold">后台登录</h3>
+
+                <!-- 這裡已經不需要再重複顯示閃現消息，因為 base.html 已處理 -->
+
+                <!-- 登录表单 -->
+                <form method="POST" action="{{ url_for('admin.main.login') }}">
+                    <div class="mb-4">
+                        <label for="username" class="form-label fw-bold">用户名</label>
+                        <input type="text" class="form-control form-control-lg" id="username" name="username" required autofocus placeholder="admin">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-bold">密码</label>
+                        <input type="password" class="form-control form-control-lg" id="password" name="password" required placeholder="admin123">
+                    </div>
+
+                    <!-- 记住我（可选） -->
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">记住我（下次自动登录）</label>
+                    </div>
+
+                    <!-- 提交按钮 -->
+                    <button type="submit" class="btn btn-primary btn-lg w-100">登录</button>
+                </form>
+
+                <!-- 提示信息 -->
+                <p class="text-center mt-4 text-muted small">
+                    默认账号：admin / admin123<br>
+                    如忘记密码，请联系管理员重置
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 可选：添加简单样式增强美观 -->
+<style>
+    .card {
+        max-width: 420px;
+        margin: 0 auto;
+        border-radius: 12px;
+    }
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    .form-control-lg {
+        height: calc(1.5em + 1rem + 2px);
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}

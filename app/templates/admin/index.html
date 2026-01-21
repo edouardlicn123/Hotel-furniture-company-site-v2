@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+
+{% block title %}后台首页{% endblock %}
+
+{% block hero_section %}
+<section class="hero-section" style="background-image: url('{{ url_for('static', filename='uploads/admin_hero.jpg') }}'); height: 20vh; min-height: 160px;">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1 class="h3 fw-bold mb-2">欢迎进入后台管理</h1>
+        <p class="mb-0 opacity-90">高效管理网站内容与设置</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row text-center g-4">
+        <div class="col-md-6">
+            <div class="product-card h-100 p-4">
+                <div class="product-card-body text-center">
+                    <i class="fas fa-cogs fa-3x text-primary mb-3"></i>
+                    <h3 class="product-card-title">网站设置</h3>
+                    <p class="text-muted">修改公司名称、主题等全局配置</p>
+                    <a href="/admin/settings" class="btn btn-primary">进入设置</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="product-card h-100 p-4">
+                <div class="product-card-body text-center">
+                    <i class="fas fa-boxes fa-3x text-success mb-3"></i>
+                    <h3 class="product-card-title">产品管理</h3>
+                    <p class="text-muted">添加、编辑、删除产品信息</p>
+                    <a href="/admin/products" class="btn btn-success">进入管理</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

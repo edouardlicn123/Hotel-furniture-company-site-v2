@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - {{ settings.company_name or 'Hotel Furniture' }}{% endblock %}
+
+{% block hero_section %}
+    {% set hero_title = "About Us" %}
+    {% set hero_subtitle = "Specializing in the design and manufacturing of luxury hotel furniture." %}
+    {% set hero_background = url_for('static', filename='img/about-hero.jpg') %}
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <!-- 基本情况 -->
+            {% if settings.basic_info %}
+            <section class="mb-5 text-center">
+                <div class="lead">
+                    {{ settings.basic_info | replace('\n', '<br>') | safe }}
+                </div>
+            </section>
+            {% else %}
+            <section class="mb-5 text-center text-muted">
+                <h4>公司介绍暂未设置</h4>
+                <p>请在后台“网站设置”中填写“基本情况”。</p>
+            </section>
+            {% endif %}
+
+            <!-- 企业优势 -->
+            {% if settings.company_advantages %}
+            <section class="mb-5">
+                <h3 class="section-title text-center mb-4">Our Strengths</h3>
+                <div class="lead">
+                    {{ settings.company_advantages | replace('\n', '<br>') | safe }}
+                </div>
+            </section>
+            {% else %}
+            <section class="mb-5 text-center text-muted">
+                <h4>企业优势暂未设置</h4>
+                <p>请在后台“网站设置”中填写“企业优势”。</p>
+            </section>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

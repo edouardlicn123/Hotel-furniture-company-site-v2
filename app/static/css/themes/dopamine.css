@@ -1,0 +1,170 @@
+/* themes/dopamine.css - 多巴胺活力配色主题（明亮轻快版，完全无白条） */
+
+:root {
+    /* 主配色 - 多巴胺经典高饱和但更轻快明亮 */
+    --primary: #FF6B9D;           /* 主强调色：明亮活力粉（替代原来的深粉） */
+    --primary-dark: #FF4D8A;       /* hover 深端：稍深但仍鲜活 */
+    --primary-light: #FFEBF0;      /* 极浅粉 - 边框、细部 */
+    --accent: #FF9500;             /* 活力橙黄 - 次强调、点缀 */
+    --accent2: #FFEB3B;            /* 亮黄 - 渐变高光 */
+
+    /* 文字 */
+    --text-primary: #222222;
+    --text-secondary: #555555;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 明亮快乐氛围 */
+    --bg-main: #FFF5FA;           /* 主背景：极浅活力粉，与菜单完美衔接，无任何白条 */
+    --bg-secondary: #FFF8FB;       /* 次背景：更浅粉 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #FF6B9D;          /* 主菜单：明亮轻快粉红实色块（不再深沉） */
+    --footer-bg: #1A1A1A;
+
+    /* Hero 叠加层 - 活力粉橙渐变，更热烈明亮 */
+    --hero-overlay: linear-gradient(135deg, rgba(255, 107, 157, 0.5), rgba(255, 149, 0, 0.35));
+
+    /* 边框与分割 */
+    --border: #FFD0E0;
+    --divider: #FFE5EE;
+
+    /* 阴影 - 轻快跳跃 */
+    --shadow: 0 12px 35px rgba(255, 107, 157, 0.18);
+    --shadow-md: 0 6px 18px rgba(255, 107, 157, 0.12);
+    --shadow-hover: 0 25px 55px rgba(255, 107, 157, 0.28);
+
+    /* 交互 */
+    --hover-bg: rgba(255, 255, 255, 0.4);
+    --hover-text: #FFFFFF;
+
+    /* 状态色 */
+    --success: #00D4A1;
+    --warning: #FF9500;
+    --error: #FF3B30;
+
+    /* 渐变 */
+    --gradient-primary: linear-gradient(135deg, #FF6B9D, #FF9500, #FFEB3B); /* 按钮彩虹渐变 */
+    --gradient-navbar: linear-gradient(to right, #FF6B9D, #FF8AB4);         /* 菜单浅粉渐变，轻快不重 */
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #FFF8FB);
+}
+
+/* 主题特有强化 */
+body {
+    background: linear-gradient(135deg,
+        #FFF0F5 0%,    /* 极浅樱花粉 */
+        #FFFBF0 18%,   /* 极浅橙光 */
+        #FFFBE0 36%,   /* 极浅柠檬黄 */
+        #F0FFF8 54%,   /* 极浅薄荷清新 */
+        #F5F0FF 72%,   /* 极浅薰衣草紫 */
+        #FFF5FA 100%   /* 回归你原有的极浅活力粉 */
+    ) !important;
+    background-attachment: fixed; /* 背景固定，滚动时不动，更有沉浸感 */
+    min-height: 100vh; /* 确保全屏覆盖 */
+}
+
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 4px solid #FF8AB4;       /* 浅粉边线，更柔和 */
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #FF4D8A, #FF7AA2) !important; /* 滚动后稍深但仍明亮 */
+    box-shadow: var(--shadow-hover);
+}
+
+/* 主菜单文字 - 白字高对比 */
+.navbar-brand {
+    color: #FFFFFF !important;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #FFFFFF !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 活力彩虹按钮 */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #FF4D8A, #FF9500, #FFA000) !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片 */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 28px;
+    border: none;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Hero 区 - 明亮活力风格 */
+.hero-section {
+    color: var(--text-inverse) !important;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFFFFF !important;
+    text-shadow:
+        0 0 20px rgba(255, 107, 157, 0.7),
+        0 4px 12px rgba(0, 0, 0, 0.6);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* 页脚 */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #1A1A1A, #000000);
+    color: #DDDDDD;
+}

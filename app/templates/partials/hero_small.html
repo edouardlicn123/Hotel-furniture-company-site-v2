@@ -1,0 +1,51 @@
+{# app/templates/partials/hero_small.html - 最终优化版（2026-01-21） #}
+{# 修复：彻底解决背景图 URL 渲染问题，去掉外层单引号，避免 Jinja2 未解析导致的 {{ url_for... }} 404 #}
+{# 背景图直接使用 {{ }} 渲染，确保浏览器正确解析为 /static/uploads/... #}
+{# 保留防缓存 ?v= 时间戳、公司名注入、画册模式适配 #}
+
+{% set company = settings.company_name or 'Premium Hotel Furniture Manufacturer' %}
+
+<section class="hero-section hero-small" id="page-hero"
+         style="background-image: url({{ hero_background if hero_background else get_image_url('hero', 'hero-default-small.jpg') }}?v={{ current_timestamp }});">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        {# 主标题：优先使用传入的 hero_title，否则根据模式自动生成（带公司名） #}
+        <h1 class="display-5 fw-bold">
+            {% if hero_title %}
+                {{ hero_title }}
+            {% else %}
+                {% if settings.mode == 'official' %}
+                    Welcome to {{ company }}
+                {% else %}
+                    Product Catalog - {{ company }}
+                {% endif %}
+            {% endif %}
+        </h1>
+
+        {# 副标题：优先使用传入的 hero_subtitle，否则提供模式友好的默认值 #}
+        <p class="lead mb-0">
+            {% if hero_subtitle %}
+                {{ hero_subtitle }}
+            {% else %}
+                {% if settings.mode == 'official' %}
+                    Luxury Hotel Furniture Manufacturer & Custom Solutions
+                {% else %}
+                    Browse our complete collection of premium hospitality furniture
+                {% endif %}
+            {% endif %}
+        </p>
+
+        {# 按钮区（可选）：仅当传入 hero_buttons 时才显示（与其他 hero 模板统一） #}
+        {% if hero_buttons %}
+        <div class="mt-4">
+            {{ hero_buttons | safe }}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{# 可选：注入公司名到 JS 全局变量，供其他前端动态使用 #}
+<script>
+    window.APP_CONFIG = window.APP_CONFIG || {};
+    window.APP_CONFIG.companyName = "{{ company | e }}";
+</script>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 浏览器标题 -->
+    <title>{% block title %}后台管理 - {{ company_name or 'XX酒店家具制造商' }}{% endblock %}</title>
+
+    <!-- 核心样式加载（与前端完全一致，支持主题切换） -->
+    {% block styles %}
+        {% include 'partials/admin_style.html' %}  <!-- 加载 base.css + variables.css + 当前主题 -->
+    {% endblock %}
+
+    <!-- 额外样式（如 Bootstrap、Font Awesome 等） -->
+    {% block extra_styles %}
+        {% include 'partials/extra_styles.html' %}
+    {% endblock %}
+
+    <!-- 页面特定样式 -->
+    {% block page_styles %}{% endblock %}
+</head>
+<body>
+    <!-- 后台专用导航栏 -->
+    {% include 'partials/admin_navbar.html' %}
+
+    <!-- 英雄区（可选，用于某些页面） -->
+    {% block hero_section %}{% endblock %}
+
+    <!-- 闪现消息 -->
+    <div class="container my-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' or category == 'danger' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- 主体内容 -->
+    <main class="container my-5">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 页脚（可选，管理员页面通常不需要，但保留兼容性） -->
+    {% block footer %}
+        <!-- 后台一般不显示前端页脚，可留空或自定义简洁版权 -->
+        <footer class="bg-dark text-white py-4 mt-5">
+            <div class="container text-center">
+                <small>&copy; {{ current_year | default('2026') }} {{ company_name or 'XX酒店家具制造商' }} 后台管理系统 All Rights Reserved.</small>
+            </div>
+        </footer>
+    {% endblock %}
+
+    <!-- Bootstrap JS Bundle（包含 Popper） -->
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js" defer></script>
+
+    <!-- 额外脚本（如自定义 JS） -->
+    {% block extra_scripts %}
+        {% include 'partials/extra_scripts.html' %}
+    {% endblock %}
+
+    <!-- 页面特定脚本 -->
+    {% block page_scripts %}{% endblock %}
+</body>
+</html>

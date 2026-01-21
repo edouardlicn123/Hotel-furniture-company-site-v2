@@ -1,0 +1,108 @@
+{# app/templates/partials/footer.html - 全站统一页脚（修复版：统一使用 settings. 前缀） #}
+
+<footer class="bg-dark text-white py-5 mt-5">
+    <div class="container">
+        <div class="row">
+
+            <!-- 公司简介（始终显示） -->
+            <div class="col-md-4 mb-4">
+                <h5>{{ settings.company_name or 'Hotel Furniture Manufacturer' }}</h5>
+                <p class="mb-0">
+                    Professional Hotel Furniture Manufacturer<br>
+                    Creating Premium Hospitality Spaces Worldwide
+                </p>
+            </div>
+
+            <!-- 快速链接（部分链接仅在 official 模式下显示） -->
+            <div class="col-md-4 mb-4">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="{{ url_for('main.index') }}" class="text-white">Home</a></li>
+                    <li><a href="{{ url_for('products.list_products') }}" class="text-white">Products</a></li>
+                    <li><a href="{{ url_for('series.list') }}" class="text-white">Series</a></li>
+
+                    {# 仅在 official 模式下显示 About Us 和 Contact Us #}
+                    {% if settings.mode == 'official' %}
+                    <li><a href="{{ url_for('main.about') }}" class="text-white">About Us</a></li>
+                    <li><a href="{{ url_for('main.contact') }}" class="text-white">Contact Us</a></li>
+                    {% endif %}
+
+                    <li><a href="{{ url_for('main.cart') }}" class="text-white">Inquiry Cart</a></li>
+                </ul>
+            </div>
+
+            {# 仅在 official 模式下显示联系信息列 #}
+            {% if settings.mode == 'official' %}
+            <div class="col-md-4 mb-4">
+                <h5>Contact Information</h5>
+
+                <!-- 电话 -->
+                <p class="mb-1">
+                    {% set phones = [] %}
+                    {% if settings.phone1 %}{{ phones.append(settings.phone1) or '' }}{% endif %}
+                    {% if settings.phone2 %}{{ phones.append(settings.phone2) or '' }}{% endif %}
+                    {% if settings.phone3 %}{{ phones.append(settings.phone3) or '' }}{% endif %}
+                    {% if phones %}
+                        Phone: {{ phones | join(', ') }}
+                    {% else %}
+                        Phone: Not available
+                    {% endif %}
+                </p>
+
+                <!-- 电邮 -->
+                <p class="mb-1">
+                    {% set emails = [] %}
+                    {% if settings.email1 %}{{ emails.append(settings.email1) or '' }}{% endif %}
+                    {% if settings.email2 %}{{ emails.append(settings.email2) or '' }}{% endif %}
+                    {% if settings.email3 %}{{ emails.append(settings.email3) or '' }}{% endif %}
+                    {% if emails %}
+                        Email: {{ emails | join(', ') }}
+                    {% else %}
+                        Email: Not available
+                    {% endif %}
+                </p>
+
+                <!-- WhatsApp -->
+                <p class="mb-1">
+                    {% set whatsapps = [] %}
+                    {% if settings.whatsapp1 %}{{ whatsapps.append(settings.whatsapp1) or '' }}{% endif %}
+                    {% if settings.whatsapp2 %}{{ whatsapps.append(settings.whatsapp2) or '' }}{% endif %}
+                    {% if whatsapps %}
+                        WhatsApp: {{ whatsapps | join(', ') }}
+                    {% else %}
+                        WhatsApp: Not available
+                    {% endif %}
+                </p>
+
+                <!-- WeChat -->
+                <p class="mb-1">
+                    {% set wechats = [] %}
+                    {% if settings.wechat1 %}{{ wechats.append(settings.wechat1) or '' }}{% endif %}
+                    {% if settings.wechat2 %}{{ wechats.append(settings.wechat2) or '' }}{% endif %}
+                    {% if wechats %}
+                        WeChat: {{ wechats | join(', ') }}
+                    {% else %}
+                        WeChat: Not available
+                    {% endif %}
+                </p>
+
+                <!-- 地址 -->
+                {% if settings.address %}
+                <p class="mb-0">
+                    Address:<br>
+                    {{ settings.address | replace('\n', '<br>') | safe }}
+                </p>
+                {% else %}
+                <p class="mb-0 text-muted">Address: Not set</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- 版权信息 -->
+        <div class="text-center mt-4">
+            <p class="mb-0">&copy; {{ current_year or '2026' }} {{ settings.company_name or 'Hotel Furniture Manufacturer' }}. All Rights Reserved.</p>
+        </div>
+    </div>
+</footer>

@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+    {% set hero_title = "Offline Inquiry Cart" %}
+    {% set hero_subtitle = "Please confirm your selected items (Offline Mode)" %}
+    {% set hero_background = url_for('static', filename='img/about-hero.jpg') %}
+    {% include 'partials/hero_small.html' %}
+{% endblock %}
+
+{% block title %}Offline Inquiry Cart - Screenshot & Excel Export{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- 主要操作按鈕區 -->
+    <div class="mb-5">
+        <div class="d-flex flex-wrap gap-3 justify-content-start align-items-center">
+            <button id="screenshot-btn" class="btn btn-primary btn-lg px-5 py-3 shadow">
+                <i class="bi bi-camera-fill me-2"></i>
+                One-Click Screenshot
+            </button>
+
+            <button id="export-xls-btn" class="btn btn-primary btn-lg px-5 py-3 shadow">
+                <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+                Export to Excel (.xlsx)
+            </button>
+
+            <div class="text-muted ms-3" style="font-size: 0.95rem;">
+                * For offline use: Save screenshot or Excel file and send to us manually
+            </div>
+        </div>
+    </div>
+
+    <!-- 商品列表區 -->
+    <div class="card mb-5 shadow-sm" id="cart-container">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Selected Items (Offline) (<span id="cart-count">0</span>)</h5>
+        </div>
+        <div class="card-body" id="cart-items">
+            <p class="text-center text-muted py-5">Your cart is empty. Please add products first.</p>
+        </div>
+        <div class="card-footer text-end">
+            <button id="clear-cart-btn" class="btn btn-outline-danger">
+                Clear Cart
+            </button>
+        </div>
+    </div>
+
+    <!-- 說明區 -->
+    <div class="alert alert-info mt-4">
+        <strong>Offline Inquiry Mode:</strong><br>
+        This page is designed for situations without internet or WhatsApp.<br>
+        You can:
+        <ul class="mb-0">
+            <li>Take a screenshot of this page (recommended to include all items)</li>
+            <li>Export the list as Excel file</li>
+            <li>Save/send the file(s) to our sales team via email or other channels</li>
+        </ul>
+    </div>
+</div>
+
+<!-- 必要的外部庫 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+    .btn-primary {
+        background: #0d6efd;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        background: #0b5ed7;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(13,110,253,0.25);
+    }
+
+    .btn-success {
+        background: #198754;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-success:hover {
+        background: #157347;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(25,135,84,0.25);
+    }
+
+    /* 新增：商品列表樣式優化 */
+    .cart-item {
+        border-bottom: 1px solid #eee;
+        padding: 1rem 0;
+    }
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+    .product-img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        background: #f8f9fa;
+    }
+    .product-info {
+        flex: 1;
+        min-width: 0;
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+<script>
+    const CART_KEY = 'hotel_furniture_cart_2026_v1';  // 與 online cart 共用同一個 key
+
+    // 更新購物車顯示（加入產品圖片）
+    function updateCartDisplay() {
+        const cart = getCart();
+        const countEl = document.getElementById('cart-count');
+        const itemsEl = document.getElementById('cart-items');
+
+        countEl.textContent = cart.length;
+
+        if (cart.length === 0) {
+            itemsEl.innerHTML = '<p class="text-center text-muted py-5">Your cart is empty. Please add products first.</p>';
+            return;
+        }
+
+        let html = '';
+        cart.forEach(item => {
+            // 優先使用主圖 image，若無則取多圖第一張，若都無則用 placeholder
+            let imgSrc = item.image 
+                ? '{{ url_for("static", filename="uploads/products/") }}' + item.image
+                : (item.photos && item.photos.split(',')[0] 
+                    ? '{{ url_for("static", filename="uploads/products/") }}' + item.photos.split(',')[0].trim()
+                    : '{{ url_for("static", filename="img/placeholder.jpg") }}');
+
+            html += `
+                <div class="cart-item d-flex align-items-center gap-3">
+                    <img src="${imgSrc}" 
+                         alt="${item.name || 'Product'}" 
+                         class="product-img"
+                         onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'">
+                    <div class="product-info">
+                        <strong>${item.product_code}</strong><br>
+                        <small>${item.name || 'Unnamed Product'}</small>
+                    </div>
+                    <div class="text-end ms-auto">
+                        × ${item.quantity}<br>
+                        <small class="text-muted">${new Date(item.added_at).toLocaleString()}</small>
+                    </div>
+                </div>`;
+        });
+
+        itemsEl.innerHTML = html;
+    }
+
+    // 初始化與事件監聽
+    document.addEventListener('DOMContentLoaded', updateCartDisplay);
+    window.addEventListener('cartUpdated', updateCartDisplay);
+    window.addEventListener('storage', (e) => {
+        if (e.key === CART_KEY) updateCartDisplay();
+    });
+
+    document.getElementById('clear-cart-btn').addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear the cart? This action cannot be undone.')) {
+            clearCart();
+            updateCartDisplay();
+        }
+    });
+
+    // ======================
+    // 一鍵螢幕截圖（保持原功能）
+    // ======================
+    document.getElementById('screenshot-btn').addEventListener('click', async () => {
+        if (getCart().length === 0) {
+            alert('Your cart is empty. Please add some products first.');
+            return;
+        }
+
+        try {
+            const element = document.getElementById('cart-container');
+            const canvas = await html2canvas(element, {
+                scale: 2,                 // 提高解析度
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+
+            const link = document.createElement('a');
+            link.download = `Hotel_Furniture_Inquiry_${new Date().toISOString().slice(0,10)}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            alert('Screenshot generated! Check your downloads folder.');
+        } catch (err) {
+            console.error('Screenshot failed:', err);
+            alert('Failed to generate screenshot. Please try again or take manual screenshot.');
+        }
+    });
+
+    // ======================
+    // 一鍵匯出 Excel（保持原功能）
+    // ======================
+    document.getElementById('export-xls-btn').addEventListener('click', () => {
+        const cart = getCart();
+
+        if (cart.length === 0) {
+            alert('Your cart is empty. Please add some products first.');
+            return;
+        }
+
+        // 準備 Excel 資料（可選擇是否加入圖片路徑）
+        const data = [
+            ["Product Code", "Product Name", "Quantity", "Added Time", "Image Path (for reference)"],
+            ...cart.map(item => [
+                item.product_code,
+                item.name || 'Unnamed Product',
+                item.quantity,
+                new Date(item.added_at).toLocaleString(),
+                item.image || (item.photos ? item.photos.split(',')[0] : 'No image')
+            ])
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        ws['!cols'] = [
+            { wch: 15 },  // Code
+            { wch: 40 },  // Name
+            { wch: 12 },  // Qty
+            { wch: 20 },  // Time
+            { wch: 30 }   // Image Path
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Inquiry Cart");
+
+        const fileName = `Hotel_Furniture_Inquiry_${new Date().toISOString().slice(0,10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+
+        alert('Excel file has been generated and downloaded!');
+    });
+</script>
+{% endblock %}

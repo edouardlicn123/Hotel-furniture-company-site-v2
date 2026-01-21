@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5 text-center py-5">
+    <h1 class="display-4 text-danger mb-4">413 - 文件太大</h1>
+    <p class="lead mb-4">{{ message }}</p>
+    <p class="text-muted mb-4">
+        建议使用图片压缩工具（如 TinyPNG、Squoosh）将单张图片控制在 5MB 以内。
+    </p>
+    <a href="{{ request.referrer or url_for('admin.product.product_list') }}" 
+       class="btn btn-primary btn-lg">
+        返回上一页
+    </a>
+</div>
+{% endblock %}

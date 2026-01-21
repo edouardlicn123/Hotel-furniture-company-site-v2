@@ -1,0 +1,163 @@
+/* themes/cat-machinery.css - CAT（Caterpillar）工程机械风格主题（经典黄黑强劲版） */
+
+:root {
+    /* 主配色 - CAT官方经典黄黑，强劲可靠工程感 */
+    --primary: #FFC500;              /* 主强调色：CAT官方亮黄（链接、强调） */
+    --primary-dark: #E0A800;          /* 深黄（按钮专用背景、hover） */
+    --primary-light: #FFF5D1;         /* 极浅黄（边框、细部） */
+    --accent: #000000;                /* 纯黑（辅助、次强调） */
+    --accent2: #1E1E1E;               /* 深灰黑（次背景） */
+    --accent3: #333333;               /* 中灰黑（页脚） */
+
+    /* 文字 - 高对比工业感 */
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 全站白底黑黄对比，专业突出机械内容 */
+    --bg-main: #FFFFFF;              /* 主背景：纯白（干净专业） */
+    --bg-secondary: #F8F8F8;         /* 次背景：浅灰白 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #000000;            /* 主菜单：纯黑实色（强劲稳重） */
+    --footer-bg: #000000;            /* 页脚：纯黑大色块 */
+    --hero-overlay: linear-gradient(135deg, rgba(255, 197, 0, 0.85), rgba(224, 168, 0, 0.7)); /* 黄叠加强劲活力 */
+
+    /* 边框与分割 - 黄高光 */
+    --border: #FFC500;
+    --divider: #333333;
+
+    /* 阴影 - 强劲黄光浮起感 */
+    --shadow: 0 12px 35px rgba(255, 197, 0, 0.15);
+    --shadow-md: 0 6px 18px rgba(255, 197, 0, 0.10);
+    --shadow-hover: 0 25px 55px rgba(255, 197, 0, 0.25);
+
+    /* 悬停与交互 - 黄高亮 */
+    --hover-bg: rgba(255, 197, 0, 0.2);
+    --hover-text: #FFFFFF;
+
+    /* 状态色 - 品牌协调 */
+    --success: #4CAF50;
+    --warning: #FFC500;
+    --error: #D32F2F;
+
+    /* 渐变 - 按钮专用黄渐变 */
+    --gradient-primary: linear-gradient(135deg, #FFC500, #E0A800);
+    --gradient-navbar: linear-gradient(to right, #000000, #1E1E1E);
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #F8F8F8);
+}
+
+/* 主题特有强化 */
+body {
+    background: var(--bg-main) !important; /* 纯白底，专业突出产品 */
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 6px solid #FFC500;       /* 粗黄底边，CAT标志性高光 */
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #000000, #111111) !important;
+    box-shadow: var(--shadow-hover);
+}
+
+/* 主菜单文字 - 黄黑高对比 */
+.navbar-brand {
+    color: #FFC500 !important;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #FFC500 !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按钮：强劲黄渐变 */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: 2px solid #FFC500 !important;
+    color: #000000 !important;              /* 黄底黑字，强工业对比 */
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: none;
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #E0A800, #CC9400) !important;
+    border-color: #E0A800 !important;
+    color: #000000 !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片 */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 28px;
+    border: 1px solid #EEEEEE;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+    border-color: #FFC500;
+}
+
+/* Hero 区 - 黄黑强劲叠加 */
+.hero-section {
+    color: var(--text-inverse) !important;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFC500 !important;
+    text-shadow:
+        0 0 20px rgba(255, 197, 0, 0.7),
+        0 4px 12px rgba(0, 0, 0, 0.8);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* 页脚 */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #000000, #111111);
+    color: #FFFFFF;
+    border-top: 6px solid #FFC500;  /* 上边粗黄条，强劲收尾 */
+}

@@ -1,0 +1,159 @@
+/* themes/wabi-sabi.css - 诧寂风主题（日本传统美学：拥抱不完美、自然与宁静） */
+
+:root {
+    /* 主配色 - 诧寂核心：大地、自然、岁月痕迹的低饱和色调 */
+    --primary: #8B7D6B;              /* 主强调色：陈年木褐（陶器/木纹感，替代粉色） */
+    --primary-dark: #6B5D4D;          /* 深端：更沉的褐灰（按钮、hover） */
+    --primary-light: #E8E3DC;         /* 极浅米灰（边框、细部） */
+    --accent: #A89B8C;               /* 次色：石灰灰（辅助背景） */
+    --accent2: #D4C9BE;               /* 浅土灰（次背景） */
+    --accent3: #B7A99A;               /* 暖灰褐（页脚） */
+
+    /* 文字 - 宁静可读，略带岁月感 */
+    --text-primary: #4A4A4A;
+    --text-secondary: #6B6B6B;
+    --text-inverse: #FFFFFF;
+
+    /* 背景 - 全站统一大地宁静色块 */
+    --bg-main: #E8E2D9;              /* 主背景：暖米灰（像旧纸或粗陶） */
+    --bg-secondary: #F2ECE4;         /* 次背景：更浅米白 */
+    --card-bg: #FFFFFF;
+    --navbar-bg: #8B7D6B;            /* 主菜单：陈年木褐实色（沉稳自然） */
+    --footer-bg: #B7A99A;            /* 页脚：暖灰褐大色块 */
+    --hero-overlay: rgba(139, 125, 107, 0.15); /* 极轻褐灰叠加，增加深度 */
+
+    /* 边框与分割 - 自然粗糙感 */
+    --border: #D4C9BE;
+    --divider: #C7BDB4;
+
+    /* 阴影 - 柔和自然光影，像晨雾或旧木 */
+    --shadow: 0 12px 35px rgba(139, 125, 107, 0.10);
+    --shadow-md: 0 6px 18px rgba(139, 125, 107, 0.06);
+    --shadow-hover: 0 25px 55px rgba(139, 125, 107, 0.15);
+
+    /* 悬停与交互 - 低调温柔过渡 */
+    --hover-bg: rgba(255, 255, 255, 0.3);
+    --hover-text: #FFFFFF;
+
+    /* 状态色 - 自然协调 */
+    --success: #8A9A7B;              /* 苔绿 */
+    --warning: #BFAF92;
+    --error: #A68A7B;
+
+    /* 渐变 - 按钮专用深褐渐变（沉稳不完美） */
+    --gradient-primary: linear-gradient(135deg, #8B7D6B, #6B5D4D);
+    --gradient-navbar: linear-gradient(to right, #8B7D6B, #9C8F7E);
+    --gradient-card: linear-gradient(to bottom, #FFFFFF, #F8F5F0);
+}
+
+/* 主题特有强化 */
+body {
+    background: var(--bg-main) !important; /* 暖米灰底，宁静如旧茶室 */
+}
+
+.navbar {
+    background: var(--navbar-bg) !important;
+    background-image: var(--gradient-navbar) !important;
+    border-bottom: 4px solid #9C8F7E;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+    background-image: linear-gradient(to right, #6B5D4D, #8B7D6B) !important;
+    box-shadow: var(--shadow-hover);
+}
+
+/* 主菜单文字 */
+.navbar-brand {
+    color: #FFFFFF !important;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.nav-link {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    opacity: 0.94;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #FFFFFF !important;
+    background-color: var(--hover-bg) !important;
+    opacity: 1;
+    border-radius: 30px;
+    transform: scale(1.08);
+}
+
+/* 按钮：深褐渐变，沉稳自然 */
+.btn-primary,
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+    background-color: transparent;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 1rem 3rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s ease;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    background-image: linear-gradient(135deg, #6B5D4D, #5A4C3D) !important;
+    transform: scale(1.06);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-dark {
+    background-image: var(--gradient-primary) !important;
+}
+
+/* 卡片 */
+.card, .product-card {
+    background: var(--card-bg);
+    background-image: var(--gradient-card);
+    border-radius: 28px;
+    border: none;
+    box-shadow: var(--shadow);
+}
+
+.product-card:hover {
+    transform: translateY(-18px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Hero 区 - 宁静叠加 */
+.hero-section {
+    color: var(--text-inverse) !important;
+}
+
+.hero-overlay {
+    background: var(--hero-overlay) !important;
+}
+
+.hero-content h1,
+.hero-content .display-4 {
+    color: #FFFFFF !important;
+    text-shadow:
+        0 0 15px rgba(139, 125, 107, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.4);
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero-content p,
+.hero-content .lead {
+    color: rgba(255, 255, 255, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* 页脚 */
+footer {
+    background: var(--footer-bg) !important;
+    background-image: linear-gradient(to bottom, #B7A99A, #C7BDB4);
+    color: var(--text-primary);
+}

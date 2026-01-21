@@ -1,0 +1,44 @@
+{# app/templates/partials/seo.html - 最终防弹版（零 {company_name} 字样） #}
+
+{# 定义公司名称 fallback #}
+{% set company = settings.company_name or 'Premium Hotel Furniture Manufacturer' %}
+
+{# 计算标题 - 所有地方都用变量 #}
+{% set page_base_title = 'Home' if settings.mode == 'official' else 'Product Catalog' %}
+{% set seo_title = page_title 
+                or (settings.seo_home_title if settings.mode == 'official' else settings.seo_products_title)
+                or (page_base_title ~ ' - ' ~ company) %}
+
+<title>{{ seo_title }}</title>
+
+<!-- Meta Description -->
+{% set seo_desc = page_description 
+                or (settings.seo_home_description if settings.mode == 'official' else settings.seo_products_description)
+                or ('Professional luxury hotel furniture manufacturer' if settings.mode == 'official' else 'Complete hotel furniture product catalog') %}
+<meta name="description" content="{{ seo_desc }}">
+
+<!-- Keywords -->
+{% set seo_kw = page_keywords 
+              or (settings.seo_home_keywords if settings.mode == 'official' else settings.seo_products_keywords)
+              or ('hotel furniture, luxury beds, custom sofas' if settings.mode == 'official' else 'hotel furniture catalog, wholesale beds') %}
+<meta name="keywords" content="{{ seo_kw }}">
+
+<link rel="canonical" href="{{ request.url }}">
+
+<!-- Open Graph -->
+<meta property="og:title" content="{{ seo_title }}">
+<meta property="og:description" content="{{ seo_desc }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ request.url }}">
+<meta property="og:site_name" content="{{ company }}">
+
+<!-- OG Image (如果有 logo) -->
+{% if settings.logo %}
+<meta property="og:image" content="{{ url_for('static', filename='uploads/logo/company_logo') }}?v=1">
+<meta property="og:image:alt" content="{{ company }}">
+{% endif %}
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ seo_title }}">
+<meta name="twitter:description" content="{{ seo_desc }}">
