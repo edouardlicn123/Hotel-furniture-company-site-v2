@@ -1,4 +1,4 @@
-/* base.css - 基础结构与通用组件（完整最新版：Logo 终极不透明 + 鲜艳强化版，无白底、无悬停放大） */
+/* base.css - 基础结构与通用组件（完整最新版：Logo 强制不透明 + 鲜艳强化，无白底、无悬停放大） */
 
 /* === 全局基础 === */
 body {
@@ -96,7 +96,7 @@ body {
     }
 }
 
-/* === 导航栏完整优化 + Logo 终极不透明/鲜艳强化（无白底、无悬停放大） === */
+/* === 导航栏完整优化 + Logo 强制不跟随主题半透明（终极隔离版） === */
 .navbar {
     background-color: var(--navbar-bg) !important;
     border-bottom: 1px solid var(--border);
@@ -118,32 +118,31 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-/* Logo 区域：只加必要定位和层级，确保不被透明影响 */
+/* 终极隔离：强制 Logo 容器及其子元素完全不透明，不受主题 opacity 影响 */
 .navbar-brand {
+    opacity: 1 !important;                   /* 强制 100% 不透明，覆盖主题设置 */
+    filter: none !important;                 /* 防止主题滤镜影响 */
+    backdrop-filter: none !important;
     position: relative !important;
-    z-index: 10 !important;                  /* 高层级，防止被覆盖 */
-    backdrop-filter: none !important;        /* 防止继承毛玻璃 */
+    z-index: 20 !important;                  /* 高层级，确保覆盖 */
 }
 
-/* Logo 图片：强制不透明 + 鲜艳强化（核心修复） */
+/* Logo 图片：双重强制不透明 + 鲜艳强化（让它看起来更有精神） */
 #navbar-logo {
+    opacity: 1 !important;
+    filter: brightness(1.08) contrast(1.18) saturate(1.25) !important; /* 轻微增强对比/饱和度 */
+    display: block;
     height: 80px;
     width: auto;
     max-width: 100%;
     object-fit: contain;
     transition: all 0.3s ease;
-    
-    /* 关键：强制图片鲜艳、不淡、不透 */
-    filter: brightness(1.08) contrast(1.18) saturate(1.25) !important;
-    opacity: 1 !important;
 }
 
-/* 文字公司名（无 Logo 时）也强制清晰 */
+/* 文字公司名（无 Logo 时）也强制不透明 */
 .navbar-brand span {
-    font-size: 1.8rem;
-    font-weight: 700;
+    opacity: 1 !important;
     color: var(--text-inverse) !important;
-    letter-spacing: -0.5px;
 }
 
 /* 响应式调整 */

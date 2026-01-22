@@ -1,4 +1,4 @@
-/* themes/mandarin-oriental.css - 默认主题，东方文华酒店奢华风格（修改版：主菜单整体灰底 80% 透明）*/
+/* themes/mandarin-oriental.css - 默认主题，东方文华酒店奢华风格（修改版：主菜单整体灰底 80% 透明 + Logo 强制不透明）*/
 
 :root {
     /* 主配色 - 保持东方文华黑金 + 青瓷绿 */
@@ -19,7 +19,7 @@
     --bg-secondary: #F0E8E0;
     --card-bg: #FFFFFF;
     --navbar-bg: #333333;             /* 主菜单：中性深灰（帶金屬質感） */
-    --navbar-opacity: 0.6;             /* 整體透明度 80% */
+    --navbar-opacity: 0.6;             /* 整體透明度 80%（保持原样） */
     --footer-bg: #1A1A1A;
     --hero-overlay: linear-gradient(135deg, rgba(15, 15, 15, 0.6), rgba(143, 168, 154, 0.3));
 
@@ -43,33 +43,49 @@ body {
     background: var(--bg-main) !important;
 }
 
-/* 【核心修改】主菜單：整體灰底色 + 80% 透明 */
+/* 【核心修改】主菜单：整体灰底色 + 80% 透明，但 Logo 区域强制不透明 */
 .navbar {
     background-color: var(--navbar-bg) !important;
-    opacity: var(--navbar-opacity);          /* 80% 透明 */
-    border-bottom: 4px solid #BFA46F;        /* 金色底邊保留 */
+    opacity: var(--navbar-opacity);          /* 保持整体 80% 透明 */
+    border-bottom: 4px solid #BFA46F;        /* 金色底边保留 */
     box-shadow: var(--shadow-md);
     transition: all 0.4s ease;
-    backdrop-filter: blur(8px);              /* 增加玻璃模糊感，提升高端質感（現代瀏覽器支持） */
+    backdrop-filter: blur(8px);              /* 玻璃模糊感 */
 }
 
-/* 滾動後：稍微提高不透明度 + 加強陰影（可讀性更好） */
+/* 滚动后：稍微提高不透明度 */
 .navbar.scrolled {
-    opacity: 0.95;                           /* 滾動後變成 95% 不透明，避免過於透 */
+    opacity: 0.95;
     box-shadow: var(--shadow-hover);
     backdrop-filter: blur(12px);
 }
 
-/* 移除原本的深黑漸變（因為現在用統一灰底） */
-.navbar::before {
-    display: none;  /* 如果之前有偽元素，關掉 */
+/* 关键修复：Logo 区域强制 100% 不透明，不受 navbar opacity 影响 */
+.navbar-brand {
+    opacity: 1 !important;                   /* 强制不透明 */
+    filter: none !important;                 /* 防止滤镜影响 */
+    backdrop-filter: none !important;
+    position: relative !important;
+    z-index: 10 !important;                  /* 高层级，确保覆盖 */
 }
 
-/* 主菜單文字 - 金白高對比（適應灰底） */
+/* Logo 图片：强制鲜艳、不淡、不透 */
+#navbar-logo {
+    opacity: 1 !important;
+    filter: brightness(1.08) contrast(1.18) saturate(1.25) !important; /* 轻微增强，让它更有精神 */
+    display: block;
+}
+
+/* 文字公司名（无 Logo 时）也强制不透明 */
+.navbar-brand span {
+    opacity: 1 !important;
+}
+
+/* 主菜单文字 - 金白高对比（适应灰底） */
 .navbar-brand {
     color: #BFA46F !important;
     font-weight: 800;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);  /* 加強陰影以確保在半透明灰底上可讀 */
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .nav-link {
@@ -87,7 +103,7 @@ body {
     transform: scale(1.08);
 }
 
-/* 按鈕（不變，與灰底更協調） */
+/* 按钮（不變，與灰底更協調） */
 .btn-primary,
 .btn-outline-dark {
     background-image: var(--gradient-primary) !important;
