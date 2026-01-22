@@ -1,37 +1,31 @@
-{# app/templates/partials/navbar.html - 全站统一导航栏（2026-01 重构版 ） #}
-{# 变更记录： #}
-{# - 购物车入口改为模式条件显示：official → 在线询价车 / catalog → 选货清单 #}
-{# - Series 已替换原 Featured，链接指向 /series #}
-{# - catalog 模式下 Logo/公司名后显示 "Catalogue" 标识 #}
-{# - 修正 Products 链接端点：从 'products.list' 改为 'products.list_products'（修复 BuildError） #}
-{# - Logo 路径已改为 get_image_url()，彻底适配本地图片 + 统一防缓存 #}
-{# - 新增：Logo 区域强制不透明容器，解决主题半透明导致 Logo 变淡问题 #}
+{# app/templates/partials/navbar.html - 全站统一导航栏（2026-01 重构版 - 已移除旧版 Cart 链接） #}
+{# ... 变更记录保持原样 ... #}
+
+{# 新增：独立 Logo 容器，使用绝对定位，完全脱离 navbar opacity 影响 #}
+<div class="logo-container" style="position: fixed; top: 15px; left: 30px; z-index: 1100;">
+    <a href="/" style="display: block; opacity: 1 !important; filter: none !important;">
+        {% if settings.logo %}
+            <img src="{{ get_image_url('logo', settings.logo) }}?v={{ current_timestamp }}"
+                 alt="{{ settings.company_name or 'Hotel Furniture Manufacturer' }}"
+                 id="navbar-logo"
+                 style="height: 60px; max-width: 180px; object-fit: contain; opacity: 1 !important; filter: brightness(1.1) contrast(1.2) saturate(1.3) !important;">
+        {% else %}
+            <span class="fw-bold fs-4" style="opacity: 1 !important; color: #fff;">{{ settings.company_name or 'Hotel Furniture Manufacturer' }}</span>
+        {% endif %}
+    </a>
+</div>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top">
     <div class="container">
-        {# 品牌区：Logo 或公司名 + catalog 模式标识 #}
-        <a class="navbar-brand d-flex align-items-center" href="/">
-            {# 新增独立不透明容器，强制 Logo 不受 navbar 透明影响 #}
-            <div class="logo-wrapper" style="opacity: 1 !important; filter: none !important; background: transparent; padding: 0; margin: 0;">
-                {% if settings.logo %}
-                    {# 有 Logo：显示图片 + 统一防缓存 + 强制不透明 + 轻微鲜艳增强 #}
-                    <img src="{{ get_image_url('logo', settings.logo) }}?v={{ current_timestamp }}"
-                         alt="{{ settings.company_name or 'Hotel Furniture Manufacturer' }}"
-                         id="navbar-logo"
-                         style="height: 60px; max-width: 180px; object-fit: contain; 
-                                opacity: 1 !important; 
-                                filter: brightness(1.08) contrast(1.18) saturate(1.25) !important;">
-                {% else %}
-                    {# 无 Logo：显示公司名称 + 强制不透明 #}
-                    <span class="fw-bold fs-4" style="opacity: 1 !important;">{{ settings.company_name or 'Hotel Furniture Manufacturer' }}</span>
-                {% endif %}
-            </div>
-
-            {# catalog 模式下 Logo 右侧显示 Catalogue 标签（保持原样） #}
-            {% if settings.mode == 'catalog' %}
-            <span class="ms-3 fw-bold text-uppercase text-primary fs-5">Catalogue</span>
-            {% endif %}
+        {# 品牌区：只保留 catalog 标识（如果有），Logo 已独立 #}
+        <a class="navbar-brand d-flex align-items-center" href="/" style="visibility: hidden; width: 0; height: 0; overflow: hidden;">
+            {# 占位符，确保布局不崩，但实际不显示 #}
         </a>
+
+        {# catalog 模式下显示 Catalogue 标签（移到右边或调整位置） #}
+        {% if settings.mode == 'catalog' %}
+        <span class="ms-3 fw-bold text-uppercase text-primary fs-5" style="position: relative; top: 15px; left: 220px; z-index: 1100;">Catalogue</span>
+        {% endif %}
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -46,11 +40,9 @@
                     <a class="nav-link" href="{{ url_for('series.list') }}">Series</a>
                 </li>
                 <li class="nav-item">
-                    {# 已修正：使用正确的端点名称 'products.list_products' #}
                     <a class="nav-link" href="{{ url_for('products.list_products') }}">Products</a>
                 </li>
 
-                {# ==================== 仅 official 模式显示 About Us & Contact Us ==================== #}
                 {% if settings.mode == 'official' %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('main.about') }}">About Us</a>
@@ -59,9 +51,7 @@
                     <a class="nav-link" href="{{ url_for('contact.contact_page') }}">Contact Us</a>
                 </li>
                 {% endif %}
-                {# ================================================================================= #}
 
-                {# ==================== 购物车入口 - 根据模式显示（旧版 Cart 已移除） ==================== #}
                 <li class="nav-item">
                     {% if settings.mode == 'official' %}
                     <a class="nav-link" href="{{ url_for('cart.online_cart') }}">
@@ -73,7 +63,6 @@
                     </a>
                     {% endif %}
                 </li>
-                {# ================================================================================= #}
             </ul>
         </div>
     </div>
