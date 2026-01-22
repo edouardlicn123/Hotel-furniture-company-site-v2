@@ -1,5 +1,6 @@
-/* base.css - 基础结构与通用组件（完整最新版：产品卡片图片背景恢复白色 + 所有优化整合） */
+/* base.css - 基础结构与通用组件（完整最新版：产品卡片图片背景恢复白色 + 所有优化整合 + Logo 不透明修复） */
 
+/* === 全局基础 === */
 body {
     font-family: "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
     background-color: var(--bg-main);
@@ -95,7 +96,7 @@ body {
     }
 }
 
-/* === 导航栏完整优化 === */
+/* === 导航栏完整优化 + Logo 不透明修复 === */
 .navbar {
     background-color: var(--navbar-bg) !important;
     border-bottom: 1px solid var(--border);
@@ -117,13 +118,25 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-/* Logo 优化：等比例占据导航栏高度的 90% */
+/* ★★★ Logo 区域：独立不透明底板 + 强制不透明确保 ★★★ */
+.navbar-brand {
+    position: relative;                     /* 建立定位上下文 */
+    background: rgba(255, 255, 255, 0.98) !important;  /* 接近纯白的不透明底（防止透出 navbar） */
+    padding: 8px 14px;                      /* 给 Logo 一点呼吸空间 */
+    border-radius: 10px;                    /* 轻微圆角，更现代 */
+    backdrop-filter: none !important;       /* 防止继承毛玻璃效果 */
+    z-index: 2;                             /* 确保在 navbar 之上 */
+}
+
+/* Logo 图片强制完全不透明 */
 #navbar-logo {
     height: 80px;
     width: auto;
     max-width: 100%;
     object-fit: contain;
     transition: all 0.3s ease;
+    opacity: 1 !important;                  /* 强制 100% 不透明 */
+    filter: brightness(1) !important;       /* 防止任何亮度/滤镜影响 */
 }
 
 /* 文字公司名样式（无 Logo 时显示） */
@@ -132,6 +145,12 @@ body {
     font-weight: 700;
     color: var(--text-inverse) !important;
     letter-spacing: -0.5px;
+}
+
+/* 可选：鼠标悬停时轻微放大 Logo，增加交互感 */
+.navbar-brand:hover #navbar-logo {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
 }
 
 /* 响应式：导航栏高度减小，Logo 自动等比例缩小 */
@@ -161,8 +180,16 @@ body {
         height: 60px;
     }
     
+    .navbar-brand {
+        padding: 6px 10px;              /* 手机端缩小内边距 */
+    }
+    
     .navbar-brand span {
         font-size: 1.5rem;
+    }
+    
+    #navbar-logo {
+        height: 60px;                   /* 手机端 Logo 适当缩小 */
     }
 }
 
