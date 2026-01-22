@@ -1,4 +1,4 @@
-/* base.css - 基础结构与通用组件（完整最新版：产品卡片图片背景恢复白色 + Logo 终极不透明强化版） */
+/* base.css - 基础结构与通用组件（完整最新版：Logo 终极不透明 + 鲜艳强化版，无白底、无悬停放大） */
 
 /* === 全局基础 === */
 body {
@@ -96,7 +96,7 @@ body {
     }
 }
 
-/* === 导航栏完整优化 + Logo 终极强化版（超级突出、不透、不淡） === */
+/* === 导航栏完整优化 + Logo 终极不透明/鲜艳强化（无白底、无悬停放大） === */
 .navbar {
     background-color: var(--navbar-bg) !important;
     border-bottom: 1px solid var(--border);
@@ -118,18 +118,14 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-/* Logo 区域：终极强化 - 纯白实底 + 大阴影 + 圆润胶囊 + 高层级 */
+/* Logo 区域：只加必要定位和层级，确保不被透明影响 */
 .navbar-brand {
     position: relative !important;
-    background: #ffffff !important;          /* 纯白色实底，彻底挡住一切透明 */
-    padding: 12px 24px !important;           /* 更大内边距，Logo 区域更醒目 */
-    border-radius: 50px !important;          /* 超级圆润胶囊形，高端大气 */
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important; /* 强烈立体阴影 */
-    backdrop-filter: none !important;
-    z-index: 20 !important;                  /* 最高层级，覆盖所有 */
+    z-index: 10 !important;                  /* 高层级，防止被覆盖 */
+    backdrop-filter: none !important;        /* 防止继承毛玻璃 */
 }
 
-/* Logo 图片：强制鲜艳、精神、不淡 */
+/* Logo 图片：强制不透明 + 鲜艳强化（核心修复） */
 #navbar-logo {
     height: 80px;
     width: auto;
@@ -137,7 +133,7 @@ body {
     object-fit: contain;
     transition: all 0.3s ease;
     
-    /* 终极滤镜强化：让 Logo 立刻看起来更鲜艳、更立体 */
+    /* 关键：强制图片鲜艳、不淡、不透 */
     filter: brightness(1.08) contrast(1.18) saturate(1.25) !important;
     opacity: 1 !important;
 }
@@ -146,18 +142,8 @@ body {
 .navbar-brand span {
     font-size: 1.8rem;
     font-weight: 700;
-    color: #000000 !important;               /* 强制黑色，更醒目 */
+    color: var(--text-inverse) !important;
     letter-spacing: -0.5px;
-}
-
-/* 悬停效果：整体上浮 + Logo 放大 + 阴影增强 */
-.navbar-brand:hover {
-    transform: translateY(-4px) !important;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3) !important;
-}
-
-.navbar-brand:hover #navbar-logo {
-    transform: scale(1.1) !important;
 }
 
 /* 响应式调整 */
@@ -168,9 +154,6 @@ body {
     .navbar.scrolled {
         height: 70px;
     }
-    .navbar-brand {
-        padding: 10px 20px !important;
-    }
 }
 
 @media (max-width: 992px) {
@@ -179,9 +162,6 @@ body {
     }
     .navbar.scrolled {
         height: 65px;
-    }
-    .navbar-brand {
-        padding: 8px 16px !important;
     }
 }
 
@@ -192,12 +172,11 @@ body {
     .navbar.scrolled {
         height: 60px;
     }
-    .navbar-brand {
-        padding: 6px 14px !important;
-    }
+    
     #navbar-logo {
         height: 60px;
     }
+    
     .navbar-brand span {
         font-size: 1.5rem;
     }
