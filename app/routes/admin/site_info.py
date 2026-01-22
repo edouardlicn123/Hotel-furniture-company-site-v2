@@ -5,7 +5,7 @@
 # - Logo 上传改用「先读内存 → 再写磁盘」方式，彻底解决 Windows [WinError 32] 文件占用问题
 # - 使用 BytesIO + shutil.copyfileobj 确保上传文件流及时关闭
 # - 其他逻辑保持不变，异常处理更清晰
-# - 所有用户提示为英文，日志记录完善
+# - 所有用户提示信息已更新为中文，日志记录完善
 
 from flask import Blueprint, render_template, request, current_app
 from flask_login import current_user
@@ -23,14 +23,14 @@ site_info_bp = Blueprint('site_info', __name__, url_prefix='/settings')
 @site_info_bp.route('/', methods=['GET', 'POST'])
 @admin_required
 def settings():
-    """Website global settings management"""
+    """网站全局设置管理"""
     settings = Settings.query.first()
     if not settings:
         settings = Settings()
         db.session.add(settings)
         db.session.commit()
 
-    # Load available themes
+    # 加载可用主题列表
     themes_dir = os.path.join(current_app.root_path, 'static', 'css', 'themes')
     theme_files = ['default']
     try:
@@ -40,29 +40,29 @@ def settings():
                     theme_files.append(f[:-4])
             theme_files.sort()
     except Exception as e:
-        current_app.logger.error(f"Failed to load themes directory: {e}")
+        current_app.logger.error(f"加载主题目录失败：{e}")
 
-    # Fix invalid theme
+    # 修复无效主题
     if settings.theme and settings.theme not in theme_files:
         settings.theme = 'default'
         db.session.commit()
 
     if request.method == 'POST':
         try:
-            # Basic settings
+            # 基本设置
             settings.company_name = request.form.get('company_name', '').strip()
 
             selected_theme = request.form.get('theme')
             settings.theme = selected_theme if selected_theme in theme_files else 'default'
 
-            # Website mode
+            # 网站模式
             settings.mode = request.form.get('mode', 'official')
 
-            # Company introduction
+            # 公司介绍
             settings.basic_info = request.form.get('basic_info') or None
             settings.company_advantages = request.form.get('company_advantages') or None
 
-            # Contact information
+            # 联系方式
             settings.phone1 = request.form.get('phone1') or None
             settings.phone2 = request.form.get('phone2') or None
             settings.phone3 = request.form.get('phone3') or None
@@ -72,13 +72,13 @@ def settings():
             settings.fax = request.form.get('fax') or None
             settings.address = request.form.get('address') or None
 
-            # Social contacts
+            # 社交联系方式
             settings.whatsapp1 = request.form.get('whatsapp1') or None
             settings.whatsapp2 = request.form.get('whatsapp2') or None
             settings.wechat1 = request.form.get('wechat1') or None
             settings.wechat2 = request.form.get('wechat2') or None
 
-            # SEO fields
+            # SEO 字段
             settings.seo_home_title = request.form.get('seo_home_title', '')
             settings.seo_home_description = request.form.get('seo_home_description', '')
             settings.seo_home_keywords = request.form.get('seo_home_keywords', '')
@@ -90,7 +90,7 @@ def settings():
             settings.seo_contact_title = request.form.get('seo_contact_title', '')
             settings.seo_contact_description = request.form.get('seo_contact_description', '')
 
-            # Logo upload handling - 使用内存缓冲方式（解决 Windows 文件占用问题）
+            # Logo 上传处理 - 使用内存缓冲方式（解决 Windows 文件占用问题）
             logo_file = request.files.get('logo')
             if logo_file and logo_file.filename:
                 upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'logo')
@@ -114,7 +114,7 @@ def settings():
                     with Image.open(file_content) as img:
                         if img.width > 600 or img.height > 300:
                             return flash_redirect(
-                                "Logo dimensions exceed 600×300, please upload a smaller image",
+                                "Logo 尺寸超过 600×300，请上传更小的图片",
                                 "danger",
                                 "admin.site_info.settings"
                             )
@@ -127,7 +127,7 @@ def settings():
                             try:
                                 os.remove(final_path)
                             except PermissionError:
-                                current_app.logger.warning("Old logo file locked, will overwrite directly")
+                                current_app.logger.warning("旧 Logo 文件被锁定，将直接覆盖")
 
                         # 从内存写入最终文件
                         with open(final_path, 'wb') as f:
@@ -135,31 +135,31 @@ def settings():
 
                         # 保存到数据库（只存文件名，不带路径）
                         settings.logo = final_filename
-                        current_app.logger.info(f"Logo updated successfully: {final_filename} by {current_user.username}")
+                        current_app.logger.info(f"Logo 更新成功：{final_filename}（由 {current_user.username} 操作）")
 
                     # 清理内存缓冲
                     file_content.close()
 
                 except Exception as e:
-                    current_app.logger.warning(f"Logo processing failed: {str(e)}")
+                    current_app.logger.warning(f"Logo 处理失败：{str(e)}")
                     return flash_redirect(
-                        f"Image processing failed: {str(e)}",
+                        f"图片处理失败：{str(e)}",
                         "danger",
                         "admin.site_info.settings"
                     )
 
             db.session.commit()
-            current_app.logger.info(f"Site settings updated by {current_user.username}")
+            current_app.logger.info(f"网站设置已由 {current_user.username} 更新")
             return flash_redirect(
-                "Website settings saved successfully!",
+                "网站设置保存成功！",
                 "success",
                 "admin.site_info.settings"
             )
 
         except Exception as e:
             db.session.rollback()
-            current_app.logger.exception("Failed to save site settings")
-            return flash_redirect(f"Save failed: {str(e)}", "danger", "admin.site_info.settings")
+            current_app.logger.exception("保存网站设置失败")
+            return flash_redirect(f"保存失败：{str(e)}", "danger", "admin.site_info.settings")
 
     return render_template(
         'admin/settings.html',

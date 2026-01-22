@@ -3,10 +3,9 @@
 # 更新日期：2026-01-19
 # 优化点：
 # - 测试邮件发送切换到 yagmail（彻底绕过 smtplib TLS/SSL EOF 握手问题）
-# - yagmail 兼容 Gmail / 163 / QQ 等所有预设（587 + STARTTLS 或 465 + SSL）
 # - 保留重试机制、详细日志、冷却机制
-# - 手动 AUTH LOGIN + base64 不再需要（yagmail 内部处理）
 # - 测试邮件内容保持不变
+
 
 from flask import Blueprint, render_template, request, current_app
 from flask_login import current_user
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 @smtp_bp.route('/', methods=['GET', 'POST'])
 @admin_required
 def smtp_settings():
-    """SMTP configuration management"""
+    """SMTP 配置管理"""
     config = SmtpConfig.query.first()
     if not config:
         config = SmtpConfig()
@@ -65,17 +64,17 @@ def smtp_settings():
             config.mail_username = request.form.get('mail_username', '').strip()
             config.mail_password = request.form.get('mail_password', '').strip()
             config.test_recipient = request.form.get('test_recipient', '').strip()
-            config.default_sender_name = request.form.get('default_sender_name', 'Hotel Furniture Site').strip()
+            config.default_sender_name = request.form.get('default_sender_name', '酒店家具官网').strip()
             config.is_active = 'is_active' in request.form
 
             db.session.commit()
-            current_app.logger.info(f"SMTP settings updated by {current_user.username}")
-            return flash_redirect("SMTP configuration saved successfully!", "success", "admin.smtp.smtp_settings")
+            current_app.logger.info(f"SMTP 设置已由 {current_user.username} 更新")
+            return flash_redirect("SMTP 配置保存成功！", "success", "admin.smtp.smtp_settings")
 
         except Exception as e:
             db.session.rollback()
-            current_app.logger.exception("Failed to save SMTP settings")
-            return flash_redirect(f"Save failed: {str(e)}", "danger", "admin.smtp.smtp_settings")
+            current_app.logger.exception("保存 SMTP 配置失败")
+            return flash_redirect(f"保存失败：{str(e)}", "danger", "admin.smtp.smtp_settings")
 
     return render_template('admin/smtp.html', config=config)
 
@@ -83,17 +82,17 @@ def smtp_settings():
 @smtp_bp.route('/test', methods=['POST'])
 @admin_required
 def test_send():
-    """Test SMTP connection and send a test email using yagmail"""
+    """使用 yagmail 测试 SMTP 连接并发送测试邮件"""
     config = SmtpConfig.query.first()
     if not config:
-        return flash_redirect("No SMTP configuration found. Please save settings first.", "danger", "admin.smtp.smtp_settings")
+        return flash_redirect("未找到 SMTP 配置，请先保存设置。", "danger", "admin.smtp.smtp_settings")
 
     if not config.mail_username or not config.mail_password:
-        return flash_redirect("Incomplete SMTP configuration (missing username or password). Cannot test.", "danger", "admin.smtp.smtp_settings")
+        return flash_redirect("SMTP 配置不完整（缺少用户名或密码），无法测试。", "danger", "admin.smtp.smtp_settings")
 
     recipient = request.form.get('test_recipient') or config.test_recipient
     if not recipient:
-        return flash_redirect("Please provide a test recipient email address.", "warning", "admin.smtp.smtp_settings")
+        return flash_redirect("请提供测试收件人邮箱地址。", "warning", "admin.smtp.smtp_settings")
 
     mail_server = config.mail_server
     mail_port = config.mail_port
@@ -103,15 +102,15 @@ def test_send():
     mail_password = config.mail_password
 
     current_app.logger.info(
-        f"SMTP test started by {current_user.username} | "
-        f"Recipient: {recipient} | Server: {mail_server}:{mail_port} | "
-        f"SSL: {mail_use_ssl} | TLS: {mail_use_tls}"
+        f"SMTP 测试由 {current_user.username} 发起 | "
+        f"收件人：{recipient} | 服务器：{mail_server}:{mail_port} | "
+        f"SSL：{mail_use_ssl} | TLS：{mail_use_tls}"
     )
 
     retries = 2
     for attempt in range(1, retries + 1):
         try:
-            current_app.logger.info(f"Attempt {attempt}/{retries}: Sending via yagmail")
+            current_app.logger.info(f"第 {attempt}/{retries} 次尝试：使用 yagmail 发送")
 
             # yagmail 自动处理 TLS/SSL，根据参数判断
             yag = yagmail.SMTP(
@@ -125,21 +124,21 @@ def test_send():
 
             # 构建测试邮件内容
             body = (
-                "This is a test email to verify your SMTP configuration.\n\n"
-                f"Sent at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-                "If you received this, the configuration is working correctly.\n\n"
-                "Hotel Furniture Website"
+                "这是一封测试邮件，用于验证您的 SMTP 配置是否正常。\n\n"
+                f"发送时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                "如果您收到此邮件，说明配置正确。\n\n"
+                "酒店家具官网"
             )
 
             yag.send(
                 to=recipient,
-                subject=f"SMTP Test Email - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (Attempt {attempt})",
+                subject=f"SMTP 测试邮件 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}（第 {attempt} 次）",
                 contents=body
             )
 
-            current_app.logger.info(f"SMTP test email sent successfully to {recipient} via yagmail")
+            current_app.logger.info(f"SMTP 测试邮件成功发送至 {recipient}（使用 yagmail）")
             return flash_redirect(
-                f"Test email sent successfully to {recipient}! Please check inbox (or spam/promotions folder).",
+                f"测试邮件已成功发送至 {recipient}！请检查收件箱（或垃圾邮件/推广邮件文件夹）。",
                 "success",
                 "admin.smtp.smtp_settings"
             )
@@ -148,17 +147,17 @@ def test_send():
             error_msg = str(e)
             full_trace = traceback.format_exc()
 
-            current_app.logger.warning(f"SMTP test failed (attempt {attempt}/{retries}): {error_msg}")
-            current_app.logger.debug(f"Full traceback:\n{full_trace}")
+            current_app.logger.warning(f"SMTP 测试失败（第 {attempt}/{retries} 次）：{error_msg}")
+            current_app.logger.debug(f"完整 traceback：\n{full_trace}")
 
             if attempt < retries:
-                current_app.logger.info("Retrying in 5 seconds...")
+                current_app.logger.info("5 秒后重试...")
                 time.sleep(5)
                 continue
             else:
                 return flash_redirect(
-                    f"Test failed after {retries} attempts: {error_msg}. "
-                    "Common fixes: Check app password/authorization code, close VPN, try phone hotspot.",
+                    f"经过 {retries} 次尝试后测试失败：{error_msg}。 "
+                    "常见解决方法：检查应用专用密码/授权码、关闭 VPN、尝试手机热点、确认端口和加密方式。",
                     "danger",
                     "admin.smtp.smtp_settings"
                 )

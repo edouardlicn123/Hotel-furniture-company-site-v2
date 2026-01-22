@@ -6,7 +6,7 @@
 # - 顶层导入 admin_required, flash_redirect, get_paginated_query
 # - 列表页使用通用分页助手
 # - 图片处理使用 ImageService（本地上传，支持多图追加 + 限制5张）
-# - 所有用户提示为英文，日志记录完善
+# - 所有用户提示信息已更新为中文，日志记录完善
 # - 异常处理健壮（rollback + 详细日志）
 # - 添加上传/删除日志，便于调试
 # - 确保 slug 唯一检查排除自身
@@ -29,7 +29,7 @@ series_bp = Blueprint('series', __name__, url_prefix='/series')
 @series_bp.route('/page/<int:page>')
 @admin_required
 def series_list(page=1):
-    """Featured Series list page - with pagination"""
+    """专题系列列表页 - 支持分页"""
     pagination = get_paginated_query(
         FeatureSeries,
         page=page,
@@ -46,14 +46,14 @@ def series_list(page=1):
 @series_bp.route('/add', methods=['GET', 'POST'])
 @admin_required
 def series_add():
-    """Add new featured series"""
+    """新增专题系列"""
     if request.method == 'GET':
         return render_template('admin/series_form.html', series=None)
 
     try:
         name = request.form.get('name', '').strip()
         if not name:
-            return flash_redirect("Series name cannot be empty", "danger", "admin.series.series_add")
+            return flash_redirect("系列名称不能为空", "danger", "admin.series.series_add")
 
         slug = request.form.get('slug', '').strip()
         if not slug:
@@ -61,7 +61,7 @@ def series_add():
             slug = ''.join(c for c in slug if c.isalnum() or c == '-')
 
         if FeatureSeries.query.filter_by(slug=slug).first():
-            return flash_redirect(f"Slug '{slug}' already exists", "danger", "admin.series.series_add")
+            return flash_redirect(f"Slug '{slug}' 已存在", "danger", "admin.series.series_add")
 
         description = request.form.get('description') or None
         applicable_space = request.form.get('applicable_space') or None
@@ -69,7 +69,7 @@ def series_add():
         seo_description = request.form.get('seo_description') or None
         seo_keywords = request.form.get('seo_keywords') or None
 
-        # Handle multiple image upload (max 5) using ImageService
+        # 处理多图上传（最多5张） - 使用 ImageService
         extra_files = request.files.getlist('photos')
         new_photos = ImageService.save_multiple(
             files=extra_files,
@@ -79,11 +79,11 @@ def series_add():
         )
 
         if len(new_photos) < len(extra_files):
-            current_app.logger.warning(f"Some images failed to upload for series '{name}': only {len(new_photos)} succeeded")
+            current_app.logger.warning(f"系列 '{name}' 部分图片上传失败：仅成功 {len(new_photos)} 张")
 
         photos_str = ','.join(new_photos) if new_photos else None
 
-        # Create series
+        # 创建系列
         series = FeatureSeries(
             name=name,
             slug=slug,
@@ -98,23 +98,23 @@ def series_add():
         db.session.add(series)
         db.session.commit()
 
-        current_app.logger.info(f"Featured series added: {name} (slug: {slug}) by {current_user.username} | Photos: {len(new_photos)}")
+        current_app.logger.info(f"专题系列新增成功：{name} (slug: {slug}) 由 {current_user.username} 操作 | 图片数量：{len(new_photos)}")
         return flash_redirect(
-            f"Featured series '{name}' added successfully!",
+            f"专题系列 '{name}' 添加成功！",
             "success",
             "admin.series.series_list"
         )
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.exception("Failed to add featured series")
-        return flash_redirect(f"Save failed: {str(e)}", "danger", "admin.series.series_add")
+        current_app.logger.exception("新增专题系列失败")
+        return flash_redirect(f"保存失败：{str(e)}", "danger", "admin.series.series_add")
 
 
 @series_bp.route('/edit/<int:series_id>', methods=['GET', 'POST'])
 @admin_required
 def series_edit(series_id):
-    """Edit existing featured series"""
+    """编辑专题系列"""
     series = FeatureSeries.query.get_or_404(series_id)
 
     if request.method == 'GET':
@@ -123,11 +123,11 @@ def series_edit(series_id):
     try:
         name = request.form.get('name', '').strip()
         if not name:
-            return flash_redirect("Series name cannot be empty", "danger", "admin.series.series_edit", series_id=series_id)
+            return flash_redirect("系列名称不能为空", "danger", "admin.series.series_edit", series_id=series_id)
 
-        # Check name uniqueness (exclude self)
+        # 检查名称唯一性（排除自身）
         if name != series.name and FeatureSeries.query.filter_by(name=name).first():
-            return flash_redirect(f"Series name '{name}' already exists", "danger", "admin.series.series_edit", series_id=series_id)
+            return flash_redirect(f"系列名称 '{name}' 已存在", "danger", "admin.series.series_edit", series_id=series_id)
 
         slug = request.form.get('slug', '').strip()
         if not slug:
@@ -135,7 +135,7 @@ def series_edit(series_id):
             slug = ''.join(c for c in slug if c.isalnum() or c == '-')
 
         if slug != series.slug and FeatureSeries.query.filter_by(slug=slug).first():
-            return flash_redirect(f"Slug '{slug}' already exists", "danger", "admin.series.series_edit", series_id=series_id)
+            return flash_redirect(f"Slug '{slug}' 已存在", "danger", "admin.series.series_edit", series_id=series_id)
 
         series.name = name
         series.slug = slug
@@ -145,7 +145,7 @@ def series_edit(series_id):
         series.seo_description = request.form.get('seo_description') or None
         series.seo_keywords = request.form.get('seo_keywords') or None
 
-        # Append new images (max total 5)
+        # 追加新图片（总共最多5张）
         current_count = len(series.photos.split(',')) if series.photos else 0
         remain_slots = max(0, 5 - current_count)
 
@@ -161,48 +161,48 @@ def series_edit(series_id):
             if new_photos:
                 existing = series.photos.split(',') if series.photos else []
                 series.photos = ','.join(existing + new_photos)
-                current_app.logger.info(f"Added {len(new_photos)} new images to series '{name}'")
+                current_app.logger.info(f"为系列 '{name}' 添加 {len(new_photos)} 张新图片")
         elif request.files.getlist('photos'):
-            current_app.logger.info(f"Ignored additional uploads for series '{name}' (reached 5-image limit)")
+            current_app.logger.info(f"忽略系列 '{name}' 的额外上传图片（已达5张上限）")
 
         db.session.commit()
 
-        current_app.logger.info(f"Featured series updated: {name} (slug: {slug}) by {current_user.username} | New photos added: {len(new_photos)}")
+        current_app.logger.info(f"专题系列更新成功：{name} (slug: {slug}) 由 {current_user.username} 操作 | 新增图片：{len(new_photos)}")
         return flash_redirect(
-            f"Featured series '{name}' updated successfully!",
+            f"专题系列 '{name}' 更新成功！",
             "success",
             "admin.series.series_list"
         )
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.exception("Failed to update featured series")
-        return flash_redirect(f"Update failed: {str(e)}", "danger", "admin.series.series_edit", series_id=series_id)
+        current_app.logger.exception("更新专题系列失败")
+        return flash_redirect(f"更新失败：{str(e)}", "danger", "admin.series.series_edit", series_id=series_id)
 
 
 @series_bp.route('/delete/<int:series_id>', methods=['POST'])
 @admin_required
 def series_delete(series_id):
-    """Delete featured series (also cleans up all associated images)"""
+    """删除专题系列（同时清理所有关联图片）"""
     series = FeatureSeries.query.get_or_404(series_id)
     name = series.name
 
     try:
-        # Clean up images using unified service
+        # 使用统一服务清理图片
         deleted_count = ImageService.delete_multiple(series.photos, subdir='series')
-        current_app.logger.info(f"Deleted {deleted_count} images for series '{name}'")
+        current_app.logger.info(f"删除系列 '{name}' 的 {deleted_count} 张图片")
 
         db.session.delete(series)
         db.session.commit()
 
-        current_app.logger.info(f"Featured series deleted: {name} (id: {series_id}) by {current_user.username}")
+        current_app.logger.info(f"专题系列已永久删除：{name} (id: {series_id}) 由 {current_user.username} 操作")
         return flash_redirect(
-            f"Featured series '{name}' has been permanently deleted",
+            f"专题系列 '{name}' 已永久删除",
             "success",
             "admin.series.series_list"
         )
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.exception("Failed to delete featured series")
-        return flash_redirect(f"Delete failed: {str(e)}", "danger", "admin.series.series_list")
+        current_app.logger.exception("删除专题系列失败")
+        return flash_redirect(f"删除失败：{str(e)}", "danger", "admin.series.series_list")

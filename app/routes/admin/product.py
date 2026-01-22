@@ -6,7 +6,7 @@
 # - 顶层导入 admin_required, flash_redirect, save_admin_upload, delete_admin_file, get_paginated_query
 # - 列表页使用通用分页助手
 # - 图片上传统一使用 save_admin_upload
-# - 所有用户提示为英文，日志记录完善
+# - 所有用户提示信息已更新为中文，日志记录完善
 # - 异常处理健壮（rollback + 详细日志）
 # - 修复主图更换 bug：确保新上传主图正确覆盖旧值（包括旧值为 "None" 字符串的情况）
 # - 添加上传日志，便于调试
@@ -59,13 +59,13 @@ def product_add():
     try:
         name = request.form.get('name', '').strip()
         if not name:
-            return flash_redirect("Product name cannot be empty", "danger", "admin.product.product_add")
+            return flash_redirect("产品名称不能为空", "danger", "admin.product.product_add")
 
         # 产品编号：优先用户输入，否则自动生成
         product_code = request.form.get('product_code', '').strip()
         if product_code:
             if Product.query.filter_by(product_code=product_code).first():
-                return flash_redirect(f"Product code '{product_code}' already exists", "danger", "admin.product.product_add")
+                return flash_redirect(f"产品编号 '{product_code}' 已存在", "danger", "admin.product.product_add")
         else:
             product_code = generate_product_code()  # 保留原有生成逻辑
 
@@ -103,10 +103,10 @@ def product_add():
             )
             if success:
                 image_filename = filename
-                current_app.logger.info(f"New product main image uploaded: {filename}")
+                current_app.logger.info(f"新增产品主图上传成功：{filename}")
             else:
-                current_app.logger.warning(f"Main image upload failed: {error}")
-                return flash_redirect(f"Main image upload failed: {error}", "danger", "admin.product.product_add")
+                current_app.logger.warning(f"主图上传失败：{error}")
+                return flash_redirect(f"主图上传失败：{error}", "danger", "admin.product.product_add")
 
         # 多图上传（追加，支持多张）
         photos = []
@@ -120,7 +120,7 @@ def product_add():
                 )
                 if success:
                     photos.append(filename)
-                    current_app.logger.info(f"New product extra image uploaded: {filename}")
+                    current_app.logger.info(f"新增产品额外图片上传成功：{filename}")
 
         photos_str = ','.join(photos) if photos else None
 
@@ -145,17 +145,17 @@ def product_add():
         db.session.add(product)
         db.session.commit()
 
-        current_app.logger.info(f"Product added: {name} (code: {product_code}) by {current_user.username}")
+        current_app.logger.info(f"产品新增成功：{name} (编号：{product_code}) 由 {current_user.username} 操作")
         return flash_redirect(
-            f"Product '{name}' added successfully! Code: {product_code}",
+            f"产品 '{name}' 添加成功！编号：{product_code}",
             "success",
             "admin.product.product_list"
         )
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.exception("Failed to add product")
-        return flash_redirect(f"Save failed: {str(e)}", "danger", "admin.product.product_add")
+        current_app.logger.exception("新增产品失败")
+        return flash_redirect(f"保存失败：{str(e)}", "danger", "admin.product.product_add")
 
 
 @product_bp.route('/edit/<int:product_id>', methods=['GET', 'POST'])
@@ -171,7 +171,7 @@ def product_edit(product_id):
     try:
         name = request.form.get('name', '').strip()
         if not name:
-            return flash_redirect("Product name cannot be empty", "danger", "admin.product.product_edit", product_id=product_id)
+            return flash_redirect("产品名称不能为空", "danger", "admin.product.product_edit", product_id=product_id)
 
         product.name = name
         product.description = request.form.get('description') or None
@@ -208,12 +208,12 @@ def product_edit(product_id):
                 # 删除旧主图（如果存在且不是 "None"）
                 if product.image and product.image.strip() and product.image.strip() != 'None':
                     delete_admin_file(product.image.strip(), subdir='products')
-                    current_app.logger.info(f"Deleted old main image: {product.image}")
+                    current_app.logger.info(f"删除旧主图：{product.image}")
                 product.image = filename
-                current_app.logger.info(f"Main image replaced with: {filename}")
+                current_app.logger.info(f"主图已替换为：{filename}")
             else:
-                current_app.logger.warning(f"Main image replace failed: {error}")
-                flash(f"Main image upload failed: {error}", "warning")
+                current_app.logger.warning(f"主图替换失败：{error}")
+                flash(f"主图上传失败：{error}", "warning")
 
         # 追加多图（不替换原有）
         extra_files = request.files.getlist('photos')
@@ -227,26 +227,26 @@ def product_edit(product_id):
                 )
                 if success:
                     new_photos.append(filename)
-                    current_app.logger.info(f"Extra image uploaded: {filename}")
+                    current_app.logger.info(f"额外图片上传成功：{filename}")
 
         if new_photos:
             existing = product.photos.split(',') if product.photos else []
             product.photos = ','.join(existing + new_photos)
-            current_app.logger.info(f"Added {len(new_photos)} extra images")
+            current_app.logger.info(f"新增 {len(new_photos)} 张额外图片")
 
         db.session.commit()
 
-        current_app.logger.info(f"Product updated: {name} (code: {product.product_code}) by {current_user.username}")
+        current_app.logger.info(f"产品更新成功：{name} (编号：{product.product_code}) 由 {current_user.username} 操作")
         return flash_redirect(
-            f"Product '{name}' updated successfully!",
+            f"产品 '{name}' 更新成功！",
             "success",
             "admin.product.product_list"
         )
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.exception("Failed to update product")
-        return flash_redirect(f"Update failed: {str(e)}", "danger", "admin.product.product_edit", product_id=product_id)
+        current_app.logger.exception("更新产品失败")
+        return flash_redirect(f"更新失败：{str(e)}", "danger", "admin.product.product_edit", product_id=product_id)
 
 
 @product_bp.route('/delete/<int:product_id>', methods=['POST'])
@@ -272,22 +272,22 @@ def product_delete(product_id):
         db.session.delete(product)
         db.session.commit()
 
-        current_app.logger.info(f"Product deleted: {name} (code: {product_code}) by {current_user.username}")
+        current_app.logger.info(f"产品已删除：{name} (编号：{product_code}) 由 {current_user.username} 操作")
         return flash_redirect(
-            f"Product '{name}' (Code: {product_code}) has been permanently deleted",
+            f"产品 '{name}' (编号：{product_code}) 已永久删除",
             "success",
             "admin.product.product_list"
         )
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.exception("Failed to delete product")
-        return flash_redirect(f"Delete failed: {str(e)}", "danger", "admin.product.product_list")
+        current_app.logger.exception("删除产品失败")
+        return flash_redirect(f"删除失败：{str(e)}", "danger", "admin.product.product_list")
 
 
 # 保留原有辅助函数（可考虑逐步迁移到 admin_utils.py）
 def generate_product_code():
-    """Generate unique product code: pc + 9 random digits"""
+    """生成唯一产品编号：pc + 9位随机数字"""
     import random
     import string
     while True:

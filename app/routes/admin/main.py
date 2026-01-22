@@ -7,6 +7,7 @@
 # - 移除调试 print，改用 current_app.logger
 # - 增强安全性：登录失败记录警告日志
 # - 支持 next 参数安全校验（防止开放重定向）
+# - 所有用户提示信息已更新为中文，日志记录完善
 
 from flask import Blueprint, render_template, request, redirect, url_for, current_app
 from flask_login import current_user, login_user, logout_user
@@ -47,7 +48,7 @@ def login():
 
         if user and check_password_hash(user.password, password):
             login_user(user, remember=remember)
-            current_app.logger.info(f"Admin login success: {username} from {request.remote_addr}")
+            current_app.logger.info(f"管理员登录成功：{username} 来自 {request.remote_addr}")
 
             # 支持安全的 next 参数（防止开放重定向攻击）
             next_page = request.args.get('next')
@@ -56,7 +57,7 @@ def login():
             else:
                 return flash_redirect("登录成功！欢迎回来", "success", "admin.main.index")
         else:
-            current_app.logger.warning(f"Admin login failed: {username} from {request.remote_addr}")
+            current_app.logger.warning(f"管理员登录失败：{username} 来自 {request.remote_addr}")
             return flash_redirect("用户名或密码错误，请重试", "danger", "admin.main.login")
 
     # GET 或验证失败
@@ -69,5 +70,5 @@ def logout():
     """登出"""
     username = current_user.username
     logout_user()
-    current_app.logger.info(f"Admin logout: {username}")
+    current_app.logger.info(f"管理员已安全退出：{username}")
     return flash_redirect("已安全退出登录", "info", "main.index")  # 回到前端首页
